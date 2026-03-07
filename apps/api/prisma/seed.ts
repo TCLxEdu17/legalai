@@ -66,7 +66,7 @@ async function main() {
       baseUrl: 'https://scon.stj.jus.br/SCON/',
       sourceType: 'html-list',
       parserType: 'html-list',
-      scheduleCron: '0 2 * * *',
+      scheduleCron: '*/20 * * * *',
       isActive: false,
       configJson: {
         listSelector: 'a.resultado-ementa',
