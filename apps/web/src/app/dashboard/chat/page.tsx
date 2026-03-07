@@ -319,7 +319,10 @@ export default function ChatPage() {
                 <button
                   key={s}
                   type="button"
-                  onClick={() => reset({ message: s })}
+                  onClick={() => {
+                    reset({ message: '' });
+                    sendMutation.mutate({ message: s, sessionId: activeSessionId });
+                  }}
                   className="text-xs px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-full hover:bg-brand-100 transition-colors text-left"
                 >
                   {s}
