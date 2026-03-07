@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 228 96% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 228 96% 60%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Scrollbar customizada */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+@layer utilities {
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+}
+
+/* Estilos para markdown no chat */
+.prose-legal {
+  @apply text-slate-700 leading-relaxed;
+}
+
+.prose-legal h2 {
+  @apply text-slate-900 font-semibold text-base mt-4 mb-2 pb-1 border-b border-slate-200;
+}
+
+.prose-legal h3 {
+  @apply text-slate-800 font-medium text-sm mt-3 mb-1;
+}
+
+.prose-legal p {
+  @apply mb-3 text-sm;
+}
+
+.prose-legal ul, .prose-legal ol {
+  @apply mb-3 pl-5 text-sm;
+}
+
+.prose-legal li {
+  @apply mb-1;
+}
+
+.prose-legal blockquote {
+  @apply border-l-4 border-brand-300 pl-4 italic text-slate-600 my-3;
+}
+
+.prose-legal strong {
+  @apply font-semibold text-slate-800;
+}
+
+.prose-legal em {
+  @apply text-slate-600;
+}
+
+.prose-legal code {
+  @apply bg-slate-100 px-1 py-0.5 rounded text-xs font-mono;
+}
+
+/* Animação de digitação */
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0; }
+}
+
+.typing-indicator span {
+  @apply inline-block w-1.5 h-1.5 bg-slate-400 rounded-full mx-0.5;
+  animation: blink 1.4s ease-in-out infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}

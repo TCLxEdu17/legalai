@@ -1,0 +1,313 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector"), uuidOssp(map: "uuid-ossp")]
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum UploadStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ProcessingStatus {
+  NOT_STARTED
+  CHUNKING
+  EMBEDDING
+  INDEXED
+  FAILED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum DocumentSourceType {
+  MANUAL
+  AUTOMATIC
+}
+
+enum IngestionJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  PARTIAL
+  FAILED
+}
+
+enum IngestionTrigger {
+  MANUAL
+  AUTOMATIC
+}
+
+enum IngestionItemStatus {
+  PENDING
+  PROCESSING
+  INDEXED
+  SKIPPED
+  FAILED
+}
+
+// ============================================================
+// USERS
+// ============================================================
+
+model User {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(USER)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  uploadedDocuments JurisprudenceDocument[]
+  chatSessions      ChatSession[]
+  refreshTokens     RefreshToken[]
+  apiKeys           ApiKey[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ============================================================
+// JURISPRUDENCIAS
+// ============================================================
+
+model JurisprudenceDocument {
+  id               String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title            String
+  fileName         String           @map("file_name")
+  fileType         String           @map("file_type")
+  filePath         String           @map("file_path")
+  fileSize         Int              @map("file_size")
+  originalText     String?          @map("original_text") @db.Text
+  cleanedText      String?          @map("cleaned_text") @db.Text
+
+  // Metadados jurídicos
+  tribunal         String?
+  processNumber    String?          @map("process_number")
+  relator          String?
+  judgmentDate     DateTime?        @map("judgment_date")
+  theme            String?
+  keywords         String[]         @default([])
+  summary          String?          @db.Text
+
+  // Controle de origem (manual ou automática)
+  sourceType       DocumentSourceType @default(MANUAL) @map("source_type")
+  sourceId         String?          @map("source_id") @db.Uuid
+  sourceUrl        String?          @map("source_url")
+  externalDocumentId String?        @map("external_document_id")
+  contentHash      String?          @map("content_hash")
+
+  // Status
+  uploadStatus     UploadStatus     @default(PENDING) @map("upload_status")
+  processingStatus ProcessingStatus @default(NOT_STARTED) @map("processing_status")
+  processingError  String?          @map("processing_error") @db.Text
+  chunkCount       Int              @default(0) @map("chunk_count")
+
+  // Auditoria
+  createdById      String           @map("created_by_id") @db.Uuid
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  createdBy        User             @relation(fields: [createdById], references: [id])
+  chunks           JurisprudenceChunk[]
+
+  @@index([tribunal])
+  @@index([theme])
+  @@index([uploadStatus])
+  @@index([processingStatus])
+  @@index([sourceType])
+  @@index([contentHash])
+  @@map("jurisprudence_documents")
+}
+
+model JurisprudenceChunk {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId  String   @map("document_id") @db.Uuid
+  chunkIndex  Int      @map("chunk_index")
+  content     String   @db.Text
+  tokenCount  Int      @default(0) @map("token_count")
+
+  // Embedding armazenado como vetor (pgvector)
+  // Nota: gerenciado via Prisma.$queryRaw por limitação do provider
+  embeddingModel String @default("text-embedding-3-small") @map("embedding_model")
+
+  // Metadados do chunk
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  document    JurisprudenceDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("jurisprudence_chunks")
+}
+
+// ============================================================
+// CHAT
+// ============================================================
+
+model ChatSession {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String   @default("Nova consulta")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sessionId String      @map("session_id") @db.Uuid
+  role      MessageRole
+  content   String      @db.Text
+
+  // Metadados de RAG (somente para mensagens do assistente)
+  sources   Json?       @default("[]")
+  metadata  Json?       @default("{}")
+
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("chat_messages")
+}
+
+// ============================================================
+// FONTES EXTERNAS AUTOMÁTICAS
+// ============================================================
+
+model ExternalSource {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name          String
+  description   String?
+  baseUrl       String    @map("base_url")
+  sourceType    String    @default("html-list") @map("source_type")
+  parserType    String    @default("html-list") @map("parser_type")
+  scheduleCron  String    @default("0 2 * * *") @map("schedule_cron")
+  isActive      Boolean   @default(true) @map("is_active")
+  configJson    Json      @default("{}") @map("config_json")
+  lastRunAt     DateTime? @map("last_run_at")
+  lastSuccessAt DateTime? @map("last_success_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  ingestionJobs IngestionJob[]
+
+  @@index([isActive])
+  @@map("external_sources")
+}
+
+// ============================================================
+// INGESTÃO — JOBS E ITENS
+// ============================================================
+
+model IngestionJob {
+  id             String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sourceType     DocumentSourceType @map("source_type")
+  sourceId       String?            @map("source_id") @db.Uuid
+  triggerType    IngestionTrigger   @map("trigger_type")
+  status         IngestionJobStatus @default(PENDING)
+  startedAt      DateTime?          @map("started_at")
+  finishedAt     DateTime?          @map("finished_at")
+  itemsFound     Int                @default(0) @map("items_found")
+  itemsProcessed Int                @default(0) @map("items_processed")
+  itemsIndexed   Int                @default(0) @map("items_indexed")
+  itemsSkipped   Int                @default(0) @map("items_skipped")
+  errorMessage   String?            @map("error_message") @db.Text
+  logsJson       Json               @default("[]") @map("logs_json")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+
+  source         ExternalSource?    @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  items          IngestionItem[]
+
+  @@index([status])
+  @@index([sourceId])
+  @@index([createdAt])
+  @@map("ingestion_jobs")
+}
+
+model IngestionItem {
+  id                 String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  jobId              String              @map("job_id") @db.Uuid
+  externalIdentifier String?             @map("external_identifier")
+  sourceUrl          String?             @map("source_url")
+  title              String?
+  status             IngestionItemStatus @default(PENDING)
+  errorMessage       String?             @map("error_message") @db.Text
+  documentId         String?             @map("document_id") @db.Uuid
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  job IngestionJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([status])
+  @@map("ingestion_items")
+}
+
+// ============================================================
+// API KEYS
+// ============================================================
+
+model ApiKey {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name       String
+  keyHash    String    @unique @map("key_hash")
+  keyPrefix  String    @map("key_prefix")
+  userId     String    @map("user_id") @db.Uuid
+  isActive   Boolean   @default(true) @map("is_active")
+  lastUsedAt DateTime? @map("last_used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([keyHash])
+  @@map("api_keys")
+}
