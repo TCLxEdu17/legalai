@@ -35,9 +35,8 @@ coverage/
 # Prisma
 apps/api/prisma/migrations/*/migration_lock.toml
 
-# Uploads
+# Uploads (arquivos enviados pelos usuários, não o módulo)
 apps/api/uploads/
-uploads/
 
 # TypeScript
 *.tsbuildinfo
