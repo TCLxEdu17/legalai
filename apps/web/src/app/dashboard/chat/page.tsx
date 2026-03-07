@@ -141,9 +141,49 @@ export default function ChatPage() {
   });
 
   const onSubmit = (data: MessageForm) => {
-    reset();
+    reset({ message: '' });
     sendMutation.mutate({ message: data.message, sessionId: activeSessionId });
   };
+
+  // Sugestões de follow-up baseadas no conteúdo da última resposta
+  const followUpSuggestions = (() => {
+    const lastAssistant = [...messages].reverse().find((m) => m.role === 'ASSISTANT' && !m.isLoading);
+    if (!lastAssistant || isLoading) return [];
+
+    const text = lastAssistant.content.toLowerCase();
+    const suggestions: string[] = [];
+
+    if (text.match(/prazo|prescri|decad|tempest/))
+      suggestions.push('Qual o prazo exato e como ele se conta?');
+    if (text.match(/recurso|apela|agravo|embarg/))
+      suggestions.push('Quais os requisitos de admissibilidade desse recurso?');
+    if (text.match(/contrato|cláusula|rescis/))
+      suggestions.push('Quais cláusulas são consideradas abusivas nesse tipo de contrato?');
+    if (text.match(/indeniza|dano|repara/))
+      suggestions.push('Como calcular o valor da indenização nesse caso?');
+    if (text.match(/trabalhist|clt|emprego|demiss/))
+      suggestions.push('Quais as verbas rescisórias devidas nessa situação?');
+    if (text.match(/tribut|imposto|fisco|receita/))
+      suggestions.push('Existe possibilidade de exclusão de multa ou juros?');
+    if (text.match(/tutela|liminar|antecip|urgên/))
+      suggestions.push('Como fundamentar o requisito de urgência para o juiz?');
+    if (text.match(/súmula|tese|jurisprud|precedent/))
+      suggestions.push('Essa tese já foi aplicada no meu tribunal?');
+
+    // Sempre adiciona sugestões genéricas até completar 3
+    const genericas = [
+      'Quais as exceções a essa regra?',
+      'Qual a jurisprudência mais recente sobre isso?',
+      'Como esse entendimento se aplica na prática?',
+      'Existe risco de decisão contrária? Como mitigar?',
+    ];
+    for (const s of genericas) {
+      if (suggestions.length >= 3) break;
+      if (!suggestions.includes(s)) suggestions.push(s);
+    }
+
+    return suggestions.slice(0, 3);
+  })();
 
   const startNewChat = () => {
     setActiveSessionId(undefined);
@@ -272,6 +312,21 @@ export default function ChatPage() {
 
         {/* Input */}
         <div className="shrink-0 bg-white border-t border-slate-200 p-4">
+          {/* Sugestões de follow-up */}
+          {followUpSuggestions.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {followUpSuggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => reset({ message: s })}
+                  className="text-xs px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-full hover:bg-brand-100 transition-colors text-left"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex gap-3">
               <div className="flex-1">
