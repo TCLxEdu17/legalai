@@ -152,6 +152,10 @@ class ApiClient {
     return data;
   }
 
+  async deleteAccount() {
+    await this.client.delete('/users/me');
+  }
+
   // ==================== SOURCES ====================
   async getSources() {
     const { data } = await this.client.get('/sources');

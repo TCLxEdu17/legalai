@@ -3,9 +3,12 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Body,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -61,5 +64,13 @@ export class UsersController {
   @ApiOperation({ summary: 'Atualizar usuário (admin)' })
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);
+  }
+
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Excluir própria conta e todos os dados (LGPD)' })
+  @ApiResponse({ status: 204, description: 'Conta excluída com sucesso' })
+  deleteAccount(@CurrentUser('id') id: string) {
+    return this.usersService.deleteAccount(id);
   }
 }

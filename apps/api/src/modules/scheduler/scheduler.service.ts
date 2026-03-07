@@ -20,6 +20,7 @@ export class SchedulerService implements OnModuleInit {
   async onModuleInit() {
     this.logger.log('Inicializando scheduler de fontes automáticas...');
     await this.syncCronJobs();
+    this.registerPurgeJob();
   }
 
   /**
@@ -70,6 +71,36 @@ export class SchedulerService implements OnModuleInit {
     } catch (err) {
       this.logger.error(`Erro ao registrar cron para "${sourceName}": ${err.message}`);
     }
+  }
+
+  /** Purga chats com mais de 90 dias — roda todo dia às 03h (LGPD) */
+  private registerPurgeJob() {
+    const job = new CronJob('0 3 * * *', async () => {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 90);
+
+      const sessions = await this.prisma.chatSession.findMany({
+        where: { updatedAt: { lt: cutoff } },
+        select: { id: true },
+      });
+
+      if (sessions.length === 0) return;
+
+      const sessionIds = sessions.map((s) => s.id);
+
+      const { count: msgs } = await this.prisma.chatMessage.deleteMany({
+        where: { sessionId: { in: sessionIds } },
+      });
+      const { count: sess } = await this.prisma.chatSession.deleteMany({
+        where: { id: { in: sessionIds } },
+      });
+
+      this.logger.log(`[LGPD] Purga: ${sess} sessões e ${msgs} mensagens com +90 dias removidas`);
+    });
+
+    this.schedulerRegistry.addCronJob('lgpd_purge', job);
+    job.start();
+    this.logger.log('Job de purga LGPD registrado (diário às 03h)');
   }
 
   async removeSourceJob(sourceId: string) {

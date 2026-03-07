@@ -115,4 +115,21 @@ export class UsersService {
       },
     });
   }
+
+  async deleteAccount(id: string) {
+    await this.findById(id);
+
+    // Cascata manual: mensagens → sessões → api keys → refresh tokens → usuário
+    await this.prisma.$transaction([
+      this.prisma.chatMessage.deleteMany({
+        where: { session: { userId: id } },
+      }),
+      this.prisma.chatSession.deleteMany({ where: { userId: id } }),
+      this.prisma.apiKey.deleteMany({ where: { userId: id } }),
+      this.prisma.refreshToken.deleteMany({ where: { userId: id } }),
+      this.prisma.user.delete({ where: { id } }),
+    ]);
+
+    this.logger.log(`Conta excluída (LGPD): userId=${id}`);
+  }
 }

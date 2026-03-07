@@ -5,10 +5,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Settings, Users, Plus, Loader2, Shield, CheckCircle } from 'lucide-react';
+import { Settings, Users, Plus, Loader2, Shield, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
-import { getStoredUser } from '@/lib/auth';
+import { getStoredUser, logout } from '@/lib/auth';
 import { extractApiErrorMessage, formatDateTime } from '@/lib/utils';
 
 const newUserSchema = z.object({
@@ -25,7 +26,19 @@ export default function ConfiguracoesPage() {
   useEffect(() => { setCurrentUser(getStoredUser()); }, []);
   const [activeTab, setActiveTab] = useState<'system' | 'users'>('system');
   const [showNewUser, setShowNewUser] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: () => apiClient.deleteAccount(),
+    onSuccess: async () => {
+      toast.success('Conta excluída. Até logo.');
+      await logout();
+      router.replace('/login');
+    },
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
 
   const { data: users = [], isLoading: loadingUsers } = useQuery<any[]>({
     queryKey: ['users'],
@@ -132,6 +145,41 @@ export default function ConfiguracoesPage() {
               Este sistema é uma ferramenta de apoio. As respostas não substituem
               análise jurídica formal e devem sempre ser validadas por profissional habilitado.
             </p>
+          </div>
+
+          {/* Exclusão de conta (LGPD) */}
+          <div className="bg-white border border-red-200 rounded-xl p-6">
+            <h3 className="font-semibold text-red-700 mb-1 flex items-center gap-2">
+              <Trash2 className="w-4 h-4" /> Excluir minha conta
+            </h3>
+            <p className="text-slate-500 text-sm mb-4">
+              Remove permanentemente sua conta, histórico de conversas e chaves de API. Ação irreversível.
+            </p>
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+              >
+                Solicitar exclusão de dados
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-red-700 font-medium">Tem certeza? Isso não pode ser desfeito.</p>
+                <button
+                  onClick={() => deleteAccountMutation.mutate()}
+                  disabled={deleteAccountMutation.isPending}
+                  className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-60 transition-colors"
+                >
+                  {deleteAccountMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirmar exclusão'}
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
