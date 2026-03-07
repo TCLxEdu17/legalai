@@ -13,6 +13,48 @@ import { extractApiErrorMessage, formatRelativeTime } from '@/lib/utils';
 import type { ChatMessage, ChatSession } from '@/types';
 import { cn } from '@/lib/utils';
 
+const EXAMPLE_QUESTIONS = [
+  // Processo Civil
+  'Quais os requisitos para tutela de urgência antecipada e como argumentar pelo cabimento?',
+  'Como funciona a desconsideração da personalidade jurídica no CPC e no CDC?',
+  'Quais são os efeitos da revelia e quando ela não se aplica?',
+  'Como calcular e comprovar o dano moral em ação indenizatória?',
+  'Quais são os fundamentos para pedir a inversão do ônus da prova?',
+  'Como funciona a execução de título extrajudicial e quais os embargos cabíveis?',
+  // Direito do Trabalho
+  'Quais verbas rescisórias são devidas em demissão sem justa causa após a Reforma Trabalhista?',
+  'Como configurar assédio moral no ambiente de trabalho para fins processuais?',
+  'Quais os requisitos para reconhecimento de vínculo empregatício de trabalhador informal?',
+  'Como funciona a prescrição trabalhista após a Emenda Constitucional 45?',
+  // Direito do Consumidor
+  'Quais as hipóteses de responsabilidade objetiva do fornecedor no CDC?',
+  'Como aplicar o prazo decadencial para reclamar vício do produto ou serviço?',
+  'Quais práticas abusivas são vedadas pelo CDC em contratos de adesão?',
+  // Direito Tributário
+  'Quais as súmulas do STJ sobre juros e correção em contratos bancários?',
+  'Como funciona a exclusão do ICMS da base de cálculo do PIS/COFINS após o STF?',
+  'Quais os limites da responsabilidade tributária do sócio-gerente pela Súmula 435 do STJ?',
+  'Como impugnar a CDA e quais os vícios que a tornam nula?',
+  // Direito Penal
+  'Quais os requisitos para concessão de habeas corpus preventivo?',
+  'Como funciona a colaboração premiada e quais seus efeitos no processo?',
+  'Quais as condições para substituição de pena privativa de liberdade por restritiva de direitos?',
+  // Direito Civil
+  'Quais os requisitos para usucapião urbana especial e como provar a posse?',
+  'Como funciona a responsabilidade civil objetiva por fato de terceiro?',
+  'Quais cláusulas contratuais podem ser anuladas por abuso do direito?',
+  'Como se aplica a teoria da imprevisão para revisão de contratos?',
+  // Temas atuais
+  'Qual o entendimento atual do STJ sobre superendividamento e renegociação de dívidas?',
+  'Como funciona a proteção de dados pessoais (LGPD) e responsabilidade civil por vazamento?',
+  'Quais os direitos do devedor na execução fiscal e como opor exceção de pré-executividade?',
+];
+
+function getRandomExamples(n: number) {
+  const shuffled = [...EXAMPLE_QUESTIONS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, n);
+}
+
 const messageSchema = z.object({
   message: z
     .string()
@@ -37,6 +79,7 @@ export default function ChatPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [examples] = useState(() => getRandomExamples(4));
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -282,16 +325,12 @@ export default function ChatPage() {
                 Seu assistente jurídico. Pergunte sobre legislação, jurisprudência, prazos, estratégias processuais ou qualquer questão de direito brasileiro.
               </p>
               <div className="mt-6 space-y-2">
-                {[
-                  'Quais os requisitos para tutela de urgência antecipada e como argumentar pelo cabimento?',
-                  'Qual o prazo prescricional para ação de reparação de danos morais e como se conta?',
-                  'Como funciona a desconsideração da personalidade jurídica no CPC e no CDC?',
-                  'Quais as súmulas do STJ sobre juros em contratos bancários?',
-                ].map((example) => (
+                {examples.map((example) => (
                   <button
                     key={example}
                     onClick={() => {
-                      reset({ message: example });
+                      reset({ message: '' });
+                      sendMutation.mutate({ message: example, sessionId: activeSessionId });
                     }}
                     className="block w-full text-left px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 hover:border-brand-200 hover:text-brand-700 transition-colors"
                   >
