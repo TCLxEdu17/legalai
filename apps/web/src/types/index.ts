@@ -117,4 +117,7 @@ export interface DocumentStats {
   totalChunks: number;
   byStatus: Record<string, number>;
   topTribunais: Array<{ tribunal: string; count: number }>;
+  topThemes: Array<{ theme: string; count: number }>;
+  growth: { lastWeek: number; lastMonth: number };
+  bySource: Record<string, number>;
 }

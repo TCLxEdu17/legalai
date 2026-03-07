@@ -188,6 +188,8 @@ export default function ChatPage() {
     sendMutation.mutate({ message: data.message, sessionId: activeSessionId });
   };
 
+  const isLoading = sendMutation.isPending;
+
   // Sugestões de follow-up baseadas no conteúdo da última resposta
   const followUpSuggestions = (() => {
     const lastAssistant = [...messages].reverse().find((m) => m.role === 'ASSISTANT' && !m.isLoading);
@@ -236,8 +238,6 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const isLoading = sendMutation.isPending;
 
   return (
     <div className="flex h-full gap-0 -m-6 overflow-hidden">

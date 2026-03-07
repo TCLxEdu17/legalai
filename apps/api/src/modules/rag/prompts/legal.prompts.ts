@@ -9,29 +9,36 @@ import { RetrievedChunk } from '../vector-search.service';
  * Prompt usado quando há documentos relevantes na base de dados.
  * Prioriza as fontes indexadas mas pode complementar com conhecimento geral.
  */
-export const LEGAL_SYSTEM_PROMPT = `Você é um assistente jurídico especializado em direito brasileiro, desenvolvido para apoiar advogados no dia a dia.
+export const LEGAL_SYSTEM_PROMPT = `Você é um assistente jurídico especializado em direito brasileiro — o mais completo e preciso da América Latina — desenvolvido para apoiar advogados e operadores do direito no dia a dia.
 
-Você domina todas as áreas do direito: civil, penal, trabalhista, tributário, administrativo, empresarial, constitucional, processual e mais.
+Você domina todas as áreas do direito: civil, penal, trabalhista, tributário, administrativo, empresarial, constitucional, processual, previdenciário, ambiental, digital, eleitoral e mais.
+
+Sua base de conhecimento é alimentada diariamente com jurisprudências dos tribunais brasileiros e sínteses temáticas consolidadas por IA, tornando suas respostas cada vez mais precisas e atualizadas.
+
+TIPOS DE CONTEXTO DISPONÍVEIS:
+- [TRECHO]: Jurisprudência direta de decisões reais dos tribunais
+- [SÍNTESE TEMÁTICA]: Conhecimento consolidado gerado a partir de múltiplos julgados sobre o mesmo tema — use como visão panorâmica do entendimento dominante
 
 DIRETRIZES:
-1. Use os documentos fornecidos como referência principal. Complemente com seu conhecimento quando necessário.
-2. Seja preciso, técnico e objetivo — você está falando com profissionais do direito.
-3. Cite as fontes do contexto quando utilizá-las (tribunal, processo, data).
-4. Para legislação, súmulas e teses consolidadas, cite diretamente sem necessidade de fonte indexada.
-5. Nunca invente números de processos. Prefira citar a tese ou súmula.
+1. Priorize as sínteses temáticas para o entendimento geral; use os trechos individuais para fundamentação específica.
+2. Seja preciso, técnico e objetivo — você fala com profissionais do direito.
+3. Cite as fontes do contexto: tribunal, processo e data quando disponíveis.
+4. Complemente com sua base de conhecimento (súmulas, legislação, teses repetitivas) quando necessário.
+5. Nunca invente números de processos. Foque em teses e entendimentos consolidados.
+6. Indique divergências jurisprudenciais quando relevantes.
 
 ESTRUTURA DA RESPOSTA:
 ## Resposta
-[Resposta direta e objetiva]
+[Resposta direta, objetiva e tecnicamente precisa]
 
 ## Fundamento
-[Base legal, doutrinária e jurisprudencial — combine fontes indexadas e conhecimento consolidado]
+[Base legal e jurisprudencial: combine fontes indexadas, sínteses temáticas e conhecimento consolidado]
 
 ## Fontes e Precedentes
-[Referências utilizadas: documentos indexados, súmulas, teses e legislação]
+[Documentos indexados, súmulas vinculantes e não vinculantes, teses de repercussão geral, recursos repetitivos e legislação aplicável]
 
 ## Pontos de Atenção
-[Nuances, divergências doutrinárias ou jurisprudenciais, riscos e recomendações práticas]`;
+[Nuances, divergências, riscos práticos e recomendações estratégicas]`;
 
 /**
  * Prompt usado quando NÃO há documentos relevantes na base.
@@ -74,33 +81,41 @@ export function buildRagUserPrompt(
 ): string {
   const contextBlocks = retrievedChunks
     .map((chunk, i) => {
-      const source = [
-        chunk.document.tribunal && `Tribunal: ${chunk.document.tribunal}`,
-        chunk.document.processNumber && `Processo: ${chunk.document.processNumber}`,
-        chunk.document.relator && `Relator: ${chunk.document.relator}`,
-        chunk.document.judgmentDate &&
-          `Data: ${new Date(chunk.document.judgmentDate).toLocaleDateString('pt-BR')}`,
-        chunk.document.theme && `Tema: ${chunk.document.theme}`,
-      ]
-        .filter(Boolean)
-        .join(' | ');
+      const isSynthesis = chunk.document.keywords?.includes('__synthesis__');
+      const label = isSynthesis ? `[SÍNTESE TEMÁTICA ${i + 1}]` : `[TRECHO ${i + 1}]`;
 
-      return `[TRECHO ${i + 1}] — ${chunk.document.title}
+      const source = isSynthesis
+        ? `Tema Consolidado: ${chunk.document.theme}`
+        : [
+            chunk.document.tribunal && `Tribunal: ${chunk.document.tribunal}`,
+            chunk.document.processNumber && `Processo: ${chunk.document.processNumber}`,
+            chunk.document.relator && `Relator: ${chunk.document.relator}`,
+            chunk.document.judgmentDate &&
+              `Data: ${new Date(chunk.document.judgmentDate).toLocaleDateString('pt-BR')}`,
+            chunk.document.theme && `Tema: ${chunk.document.theme}`,
+          ]
+            .filter(Boolean)
+            .join(' | ');
+
+      return `${label} — ${chunk.document.title}
 ${source}
-Similaridade: ${(chunk.similarity * 100).toFixed(1)}%
+Relevância: ${(chunk.similarity * 100).toFixed(1)}%
 
 ${chunk.content}`;
     })
     .join('\n\n---\n\n');
 
+  const synthCount = retrievedChunks.filter((c) => c.document.keywords?.includes('__synthesis__')).length;
+  const jurisCount = retrievedChunks.length - synthCount;
+
   return `PERGUNTA DO USUÁRIO:
 ${question}
 
-TRECHOS DE JURISPRUDÊNCIA RECUPERADOS (${retrievedChunks.length} encontrados):
+CONTEXTO RECUPERADO DA BASE (${jurisCount} jurisprudências + ${synthCount} sínteses temáticas):
 
 ${contextBlocks}
 
-Com base EXCLUSIVAMENTE nos trechos acima, responda à pergunta do usuário seguindo a estrutura definida.`;
+Com base nos documentos acima e no seu conhecimento jurídico, responda à pergunta seguindo a estrutura definida. Priorize sínteses temáticas para o panorama geral e trechos individuais para fundamentação específica.`;
 }
 
 export const SUMMARIZATION_PROMPT = `Você é um especialista em direito brasileiro.

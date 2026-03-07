@@ -100,6 +100,38 @@ export class RagService {
   }
 
   /**
+   * Gera síntese consolidada de um tema jurídico a partir de múltiplos documentos.
+   * Usada pelo job de consolidação diária para enriquecer a base de conhecimento.
+   */
+  async summarizeTheme(theme: string, context: string): Promise<string> {
+    const completion = await this.aiProvider.generateChatCompletion(
+      [
+        {
+          role: 'system',
+          content: `Você é um especialista em direito brasileiro com profundo conhecimento jurisprudencial.
+Sua tarefa é elaborar uma SÍNTESE TEMÁTICA consolidada sobre o tema "${theme}".
+
+A síntese deve:
+1. Apresentar a tese jurídica dominante sobre o tema
+2. Identificar convergências e divergências entre os julgados
+3. Citar as principais posições dos tribunais superiores
+4. Destacar a evolução jurisprudencial recente
+5. Indicar os fundamentos legais e constitucionais centrais
+6. Apontar pontos controvertidos e tendências
+
+Use linguagem técnica e seja completo. Mínimo de 400 palavras.`,
+        },
+        {
+          role: 'user',
+          content: `Tema: ${theme}\n\nDocumentos para síntese:\n\n${context.slice(0, 12000)}`,
+        },
+      ],
+      { temperature: 0.3, maxTokens: 2000 },
+    );
+    return completion.content;
+  }
+
+  /**
    * Resume uma jurisprudência completa.
    */
   async summarizeDocument(text: string): Promise<string> {

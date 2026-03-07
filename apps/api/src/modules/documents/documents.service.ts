@@ -138,20 +138,36 @@ export class DocumentsService {
   }
 
   async getStats() {
-    const [total, byStatus, byTribunal, totalChunks] = await Promise.all([
-      this.prisma.jurisprudenceDocument.count(),
-      this.prisma.jurisprudenceDocument.groupBy({
-        by: ['processingStatus'],
-        _count: true,
-      }),
-      this.prisma.jurisprudenceDocument.groupBy({
-        by: ['tribunal'],
-        _count: true,
-        orderBy: { _count: { tribunal: 'desc' } },
-        take: 10,
-      }),
-      this.prisma.jurisprudenceChunk.count(),
-    ]);
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const [total, byStatus, byTribunal, totalChunks, byTheme, newThisWeek, newThisMonth, bySource] =
+      await Promise.all([
+        this.prisma.jurisprudenceDocument.count(),
+        this.prisma.jurisprudenceDocument.groupBy({ by: ['processingStatus'], _count: true }),
+        this.prisma.jurisprudenceDocument.groupBy({
+          by: ['tribunal'],
+          _count: true,
+          orderBy: { _count: { tribunal: 'desc' } },
+          take: 10,
+        }),
+        this.prisma.jurisprudenceChunk.count(),
+        this.prisma.jurisprudenceDocument.groupBy({
+          by: ['theme'],
+          _count: true,
+          orderBy: { _count: { theme: 'desc' } },
+          take: 12,
+          where: { theme: { not: null }, processingStatus: 'INDEXED' },
+        }),
+        this.prisma.jurisprudenceDocument.count({
+          where: { processingStatus: 'INDEXED', createdAt: { gte: sevenDaysAgo } },
+        }),
+        this.prisma.jurisprudenceDocument.count({
+          where: { processingStatus: 'INDEXED', createdAt: { gte: thirtyDaysAgo } },
+        }),
+        this.prisma.jurisprudenceDocument.groupBy({ by: ['sourceType'], _count: true }),
+      ]);
 
     return {
       totalDocuments: total,
@@ -162,7 +178,15 @@ export class DocumentsService {
       }, {}),
       topTribunais: byTribunal
         .filter((t: any) => t.tribunal)
-        .map((t: any) => ({ tribunal: t.tribunal, count: t._count })),
+        .map((t: any) => ({ tribunal: t.tribunal, count: t._count as number })),
+      topThemes: byTheme
+        .filter((t: any) => t.theme)
+        .map((t: any) => ({ theme: t.theme as string, count: t._count as number })),
+      growth: { lastWeek: newThisWeek, lastMonth: newThisMonth },
+      bySource: bySource.reduce((acc: Record<string, number>, s: any) => {
+        acc[s.sourceType] = s._count;
+        return acc;
+      }, {}),
     };
   }
 }

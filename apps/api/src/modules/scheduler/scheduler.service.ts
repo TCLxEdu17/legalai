@@ -21,6 +21,7 @@ export class SchedulerService implements OnModuleInit {
     this.logger.log('Inicializando scheduler de fontes automáticas...');
     await this.syncCronJobs();
     this.registerPurgeJob();
+    this.registerKnowledgeConsolidationJob();
   }
 
   /**
@@ -71,6 +72,29 @@ export class SchedulerService implements OnModuleInit {
     } catch (err) {
       this.logger.error(`Erro ao registrar cron para "${sourceName}": ${err.message}`);
     }
+  }
+
+  /**
+   * Job diário de consolidação de conhecimento — roda às 04h.
+   * Para cada tema com >= 3 docs, gera uma síntese AI e a indexa na base vetorial.
+   * Isso faz o RAG "aprender" com o acúmulo de jurisprudências.
+   */
+  private registerKnowledgeConsolidationJob() {
+    const job = new CronJob('0 4 * * *', async () => {
+      this.logger.log('[CONSOLIDAÇÃO] Iniciando consolidação diária de conhecimento...');
+      try {
+        const result = await this.ingestionService.consolidateKnowledge();
+        this.logger.log(
+          `[CONSOLIDAÇÃO] Concluída: ${result.themesProcessed} temas processados, ${result.errors.length} erros`,
+        );
+      } catch (err) {
+        this.logger.error(`[CONSOLIDAÇÃO] Erro fatal: ${err.message}`);
+      }
+    });
+
+    this.schedulerRegistry.addCronJob('knowledge_consolidation', job);
+    job.start();
+    this.logger.log('Job de consolidação de conhecimento registrado (diário às 04h)');
   }
 
   /** Purga chats com mais de 90 dias — roda todo dia às 03h (LGPD) */

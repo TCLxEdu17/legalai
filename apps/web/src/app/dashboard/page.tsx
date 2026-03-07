@@ -2,11 +2,132 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-import { MessageSquare, FileText, Upload, Database, ArrowRight, Zap } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import {
+  MessageSquare,
+  FileText,
+  Upload,
+  Database,
+  ArrowRight,
+  Zap,
+  TrendingUp,
+  BookOpen,
+  Scale,
+  Activity,
+} from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { getStoredUser } from '@/lib/auth';
 import type { DocumentStats, User } from '@/types';
+
+// Hook de contador animado (count-up com easing)
+function useCountUp(target: number, duration = 1200): number {
+  const [value, setValue] = useState(0);
+  const startRef = useRef<number | null>(null);
+  const frameRef = useRef<number | null>(null);
+  const prevTarget = useRef(0);
+
+  useEffect(() => {
+    if (target === prevTarget.current) return;
+    prevTarget.current = target;
+    startRef.current = null;
+
+    const from = value;
+    const range = target - from;
+
+    const animate = (timestamp: number) => {
+      if (!startRef.current) startRef.current = timestamp;
+      const elapsed = timestamp - startRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setValue(Math.round(from + eased * range));
+      if (progress < 1) frameRef.current = requestAnimationFrame(animate);
+    };
+
+    frameRef.current = requestAnimationFrame(animate);
+    return () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, duration]);
+
+  return value;
+}
+
+function LiveBadge() {
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-medium text-emerald-700">
+      <span className="relative flex w-2 h-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex rounded-full w-2 h-2 bg-emerald-500" />
+      </span>
+      Base atualizando diariamente
+    </span>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  bgColor,
+  iconColor,
+  sub,
+}: {
+  label: string;
+  value: number;
+  icon: React.ElementType;
+  bgColor: string;
+  iconColor: string;
+  sub?: string;
+}) {
+  const animated = useCountUp(value);
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-4 hover:shadow-sm transition-shadow">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-slate-500 text-xs font-medium">{label}</p>
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${bgColor}`}>
+          <Icon className={`w-4 h-4 ${iconColor}`} />
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-slate-900 tabular-nums">
+        {animated.toLocaleString('pt-BR')}
+      </p>
+      {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
+    </div>
+  );
+}
+
+function ThemeBar({ theme, count, max }: { theme: string; count: number; max: number }) {
+  const pct = max > 0 ? Math.round((count / max) * 100) : 0;
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(pct), 120);
+    return () => clearTimeout(t);
+  }, [pct]);
+
+  const COLORS = [
+    'bg-brand-500', 'bg-violet-500', 'bg-emerald-500', 'bg-amber-500',
+    'bg-sky-500', 'bg-rose-500', 'bg-teal-500', 'bg-orange-500',
+    'bg-indigo-500', 'bg-pink-500', 'bg-cyan-500', 'bg-lime-600',
+  ];
+  const idx = Math.abs((theme.charCodeAt(0) ?? 0) + (theme.charCodeAt(1) ?? 0)) % COLORS.length;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-slate-700 font-medium truncate pr-2 max-w-[200px]" title={theme}>
+          {theme}
+        </span>
+        <span className="text-xs text-slate-400 tabular-nums shrink-0">{count}</span>
+      </div>
+      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-700 ease-out ${COLORS[idx]}`}
+          style={{ width: `${width}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -15,7 +136,16 @@ export default function DashboardPage() {
   const { data: stats } = useQuery<DocumentStats>({
     queryKey: ['document-stats'],
     queryFn: () => apiClient.getDocumentStats(),
+    refetchInterval: 30_000,
   });
+
+  // Extraídos no topo para respeitar regras dos hooks
+  const totalDocs = stats?.totalDocuments ?? 0;
+  const totalChunks = stats?.totalChunks ?? 0;
+  const indexed = stats?.byStatus?.INDEXED ?? 0;
+  const lastWeek = stats?.growth?.lastWeek ?? 0;
+  const topThemes = stats?.topThemes ?? [];
+  const maxThemeCount = topThemes[0]?.count ?? 1;
 
   const quickActions = [
     {
@@ -23,7 +153,6 @@ export default function DashboardPage() {
       icon: MessageSquare,
       title: 'Nova consulta jurídica',
       description: 'Faça uma pergunta à IA com base nas jurisprudências indexadas',
-      color: 'bg-brand-50 text-brand-600 border-brand-100',
       iconBg: 'bg-brand-600',
     },
     {
@@ -31,7 +160,6 @@ export default function DashboardPage() {
       icon: FileText,
       title: 'Ver jurisprudências',
       description: 'Consulte e gerencie os documentos indexados na base',
-      color: 'bg-slate-50 text-slate-700 border-slate-200',
       iconBg: 'bg-slate-600',
     },
     ...(user?.role === 'ADMIN'
@@ -41,8 +169,14 @@ export default function DashboardPage() {
             icon: Upload,
             title: 'Upload de documento',
             description: 'Adicione novas jurisprudências à base de conhecimento',
-            color: 'bg-emerald-50 text-emerald-700 border-emerald-100',
             iconBg: 'bg-emerald-600',
+          },
+          {
+            href: '/dashboard/fontes',
+            icon: Activity,
+            title: 'Fontes automáticas',
+            description: 'Gerencie fontes e acompanhe o crescimento diário da base',
+            iconBg: 'bg-violet-600',
           },
         ]
       : []),
@@ -50,58 +184,107 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Boas-vindas */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-1">
-          Olá, {user?.name?.split(' ')[0] || 'Usuário'}
-        </h1>
-        <p className="text-slate-500">
-          Assistente jurídico com IA — consulte jurisprudências com linguagem natural.
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">
+            Olá, {user?.name?.split(' ')[0] || 'Usuário'}
+          </h1>
+          <p className="text-slate-500 text-sm">
+            Assistente jurídico com IA — base de jurisprudências crescendo diariamente.
+          </p>
+        </div>
+        <LiveBadge />
+      </div>
+
+      {/* Stats principais animados */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard
+          label="Documentos"
+          value={totalDocs}
+          icon={FileText}
+          bgColor="bg-brand-50"
+          iconColor="text-brand-600"
+          sub="total na base"
+        />
+        <StatCard
+          label="Chunks vetorizados"
+          value={totalChunks}
+          icon={Database}
+          bgColor="bg-violet-50"
+          iconColor="text-violet-600"
+          sub="fragmentos semânticos"
+        />
+        <StatCard
+          label="Indexados"
+          value={indexed}
+          icon={Zap}
+          bgColor="bg-emerald-50"
+          iconColor="text-emerald-600"
+          sub="prontos para busca"
+        />
+        <StatCard
+          label="Esta semana"
+          value={lastWeek}
+          icon={TrendingUp}
+          bgColor="bg-amber-50"
+          iconColor="text-amber-600"
+          sub="novos documentos"
+        />
+      </div>
+
+      {/* Banner de crescimento */}
+      <div className="bg-gradient-to-r from-brand-50 via-slate-50 to-violet-50 border border-brand-100 rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Scale className="w-4 h-4 text-brand-600" />
+          <h2 className="text-sm font-semibold text-brand-800">
+            Maior base de jurisprudências com IA da América Latina
+          </h2>
+        </div>
+        <div className="grid grid-cols-3 gap-6 mb-3">
+          <div>
+            <p className="text-3xl font-bold text-brand-700 tabular-nums">
+              {totalDocs.toLocaleString('pt-BR')}
+            </p>
+            <p className="text-xs text-brand-500 mt-0.5">jurisprudências indexadas</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-emerald-700 tabular-nums">
+              +{stats?.growth?.lastWeek ?? 0}
+            </p>
+            <p className="text-xs text-emerald-600 mt-0.5">adicionados esta semana</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-violet-700 tabular-nums">
+              +{stats?.growth?.lastMonth ?? 0}
+            </p>
+            <p className="text-xs text-violet-500 mt-0.5">adicionados este mês</p>
+          </div>
+        </div>
+        <p className="text-xs text-slate-500">
+          Fontes RSS ativas coletam novos julgados diariamente. Sínteses temáticas geradas por IA consolidam o conhecimento por área do direito.
         </p>
       </div>
 
-      {/* Stats */}
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            {
-              label: 'Documentos',
-              value: stats.totalDocuments,
-              icon: FileText,
-              color: 'text-blue-600',
-            },
-            {
-              label: 'Chunks indexados',
-              value: stats.totalChunks,
-              icon: Database,
-              color: 'text-violet-600',
-            },
-            {
-              label: 'Indexados',
-              value: stats.byStatus?.INDEXED || 0,
-              icon: Zap,
-              color: 'text-emerald-600',
-            },
-            {
-              label: 'Processando',
-              value: (stats.byStatus?.CHUNKING || 0) + (stats.byStatus?.EMBEDDING || 0),
-              icon: Zap,
-              color: 'text-amber-600',
-            },
-          ].map(({ label, value, icon: Icon, color }) => (
-            <div
-              key={label}
-              className="bg-white border border-slate-200 rounded-xl p-4"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-slate-500 text-xs font-medium">{label}</p>
-                <Icon className={`w-4 h-4 ${color}`} />
-              </div>
-              <p className="text-2xl font-bold text-slate-900">
-                {value.toLocaleString('pt-BR')}
-              </p>
+      {/* Vertentes jurídicas */}
+      {topThemes.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <BookOpen className="w-4 h-4 text-slate-500" />
+            <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+              Vertentes jurídicas na base
+            </h2>
+            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+              {topThemes.length} temas
+            </span>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
+              {topThemes.map(({ theme, count }) => (
+                <ThemeBar key={theme} theme={theme} count={count} max={maxThemeCount} />
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       )}
 
@@ -118,9 +301,7 @@ export default function DashboardPage() {
               className="group bg-white border border-slate-200 rounded-xl p-5 hover:border-brand-200 hover:shadow-sm transition-all"
             >
               <div className="flex items-start gap-4">
-                <div
-                  className={`w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center shrink-0`}
-                >
+                <div className={`w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center shrink-0`}>
                   <Icon className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">

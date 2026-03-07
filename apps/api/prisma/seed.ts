@@ -58,26 +58,78 @@ async function main() {
     console.log(`Demo já existe: ${demoEmail}`);
   }
 
-  // Criar fontes de demonstração para o painel de fontes automáticas
+  // Fontes automáticas curadas — RSS feeds de portais jurídicos brasileiros ativos
   const demoSources = [
     {
+      name: 'Conjur — Notícias e Jurisprudência',
+      description: 'Consultor Jurídico — portal líder em notícias jurídicas, decisões e análises do direito brasileiro',
+      baseUrl: 'https://www.conjur.com.br',
+      sourceType: 'rss',
+      parserType: 'rss',
+      scheduleCron: '0 6 * * *',
+      isActive: true,
+      configJson: {
+        feedUrl: 'https://www.conjur.com.br/rss.xml',
+        maxItems: 30,
+      },
+    },
+    {
+      name: 'Migalhas — Direito em Foco',
+      description: 'Migalhas — notícias, decisões e análises jurídicas diárias',
+      baseUrl: 'https://www.migalhas.com.br',
+      sourceType: 'rss',
+      parserType: 'rss',
+      scheduleCron: '30 6 * * *',
+      isActive: true,
+      configJson: {
+        feedUrl: 'https://www.migalhas.com.br/rss',
+        maxItems: 25,
+      },
+    },
+    {
+      name: 'Jota — Análise Jurídica',
+      description: 'Jota — jornalismo jurídico especializado em STF, STJ e poder público',
+      baseUrl: 'https://www.jota.info',
+      sourceType: 'rss',
+      parserType: 'rss',
+      scheduleCron: '0 7 * * *',
+      isActive: true,
+      configJson: {
+        feedUrl: 'https://www.jota.info/feed',
+        maxItems: 20,
+      },
+    },
+    {
+      name: 'JusBrasil — Jurisprudência STF',
+      description: 'Notícias e análises de julgados do Supremo Tribunal Federal via JusBrasil',
+      baseUrl: 'https://www.jusbrasil.com.br',
+      sourceType: 'rss',
+      parserType: 'rss',
+      scheduleCron: '0 8 * * *',
+      isActive: true,
+      configJson: {
+        feedUrl: 'https://www.jusbrasil.com.br/noticias/rss',
+        maxItems: 20,
+      },
+    },
+    {
       name: 'STJ — Pesquisa de Jurisprudência',
-      description: 'Superior Tribunal de Justiça — base de jurisprudências para demonstração',
+      description: 'Superior Tribunal de Justiça — base de jurisprudências (configurar seletores)',
       baseUrl: 'https://scon.stj.jus.br/SCON/',
       sourceType: 'html-list',
       parserType: 'html-list',
-      scheduleCron: '*/20 * * * *',
+      scheduleCron: '0 2 * * *',
       isActive: false,
       configJson: {
         listSelector: 'a.resultado-ementa',
         contentSelector: '.texto-ementa',
         maxPages: 3,
-        note: 'Fonte de demonstração — configure os seletores corretos antes de ativar',
+        note: 'Configure os seletores corretos antes de ativar',
       },
     },
     {
       name: 'TJSP — Acórdãos',
-      description: 'Tribunal de Justiça de São Paulo — acórdãos e decisões',
+      description: 'Tribunal de Justiça de São Paulo — acórdãos e decisões (configurar seletores)',
       baseUrl: 'https://esaj.tjsp.jus.br/cjsg/resultadoCompleta.do',
       sourceType: 'html-list',
       parserType: 'html-list',
@@ -87,7 +139,7 @@ async function main() {
         listSelector: 'a.docLink',
         contentSelector: '.ementaClass',
         maxPages: 2,
-        note: 'Fonte de demonstração — configure os seletores corretos antes de ativar',
+        note: 'Configure os seletores corretos antes de ativar',
       },
     },
   ];

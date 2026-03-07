@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Settings, Users, Plus, Loader2, Shield, Trash2 } from 'lucide-react';
+import { Settings, Users, Plus, Loader2, Shield, Trash2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';

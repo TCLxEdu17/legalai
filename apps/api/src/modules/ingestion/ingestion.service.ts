@@ -355,6 +355,131 @@ export class IngestionService {
     return set;
   }
 
+  /**
+   * Consolida o conhecimento por tema jurídico:
+   * Para cada tema com >= 3 docs indexados, gera uma síntese AI e a reindexada na base vetorial.
+   * Isso faz o RAG "aprender" — as sínteses temáticas ficam disponíveis para busca semântica.
+   */
+  async consolidateKnowledge(): Promise<{ themesProcessed: number; errors: string[] }> {
+    this.logger.log('Iniciando consolidação de conhecimento por tema...');
+    const errors: string[] = [];
+    let themesProcessed = 0;
+
+    // Temas com >= 3 docs indexados (exclui sínteses anteriores)
+    const themes = await this.prisma.jurisprudenceDocument.groupBy({
+      by: ['theme'],
+      _count: true,
+      where: {
+        theme: { not: null },
+        processingStatus: 'INDEXED',
+        NOT: { keywords: { has: '__synthesis__' } },
+      },
+      having: { theme: { _count: { gte: 3 } } },
+      orderBy: { _count: { theme: 'desc' } },
+      take: 20,
+    });
+
+    for (const row of themes) {
+      const theme = row.theme as string;
+
+      try {
+        // Verifica se já existe síntese recente (últimos 3 dias) para este tema
+        const recentSynthesis = await this.prisma.jurisprudenceDocument.findFirst({
+          where: {
+            theme,
+            keywords: { has: '__synthesis__' },
+            createdAt: { gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+          },
+        });
+
+        if (recentSynthesis) {
+          this.logger.debug(`Síntese recente já existe para tema: "${theme}", pulando...`);
+          continue;
+        }
+
+        // Coleta os 8 docs mais recentes do tema
+        const docs = await this.prisma.jurisprudenceDocument.findMany({
+          where: {
+            theme,
+            processingStatus: 'INDEXED',
+            NOT: { keywords: { has: '__synthesis__' } },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 8,
+          select: {
+            title: true,
+            tribunal: true,
+            processNumber: true,
+            judgmentDate: true,
+            cleanedText: true,
+            summary: true,
+          },
+        });
+
+        if (docs.length < 3) continue;
+
+        // Monta contexto para síntese
+        const context = docs
+          .map((d, i) => {
+            const meta = [
+              d.tribunal && `Tribunal: ${d.tribunal}`,
+              d.processNumber && `Processo: ${d.processNumber}`,
+              d.judgmentDate && `Data: ${new Date(d.judgmentDate).toLocaleDateString('pt-BR')}`,
+            ]
+              .filter(Boolean)
+              .join(' | ');
+
+            const text = (d.summary || d.cleanedText || '').slice(0, 1500);
+            return `[DOC ${i + 1}] ${d.title}\n${meta}\n${text}`;
+          })
+          .join('\n\n---\n\n');
+
+        // Gera síntese via IA
+        const synthesisText = await this.ragService.summarizeTheme(theme, context);
+
+        if (!synthesisText || synthesisText.trim().length < 200) continue;
+
+        // Cria documento de síntese
+        const systemUser = await this.getOrCreateSystemUser();
+        const doc = await this.prisma.jurisprudenceDocument.create({
+          data: {
+            title: `Síntese Temática: ${theme}`,
+            fileName: `synthesis_${Date.now()}.txt`,
+            fileType: 'txt',
+            filePath: '',
+            fileSize: synthesisText.length,
+            originalText: synthesisText,
+            cleanedText: synthesisText,
+            theme,
+            keywords: ['__synthesis__', theme],
+            sourceType: 'AUTOMATIC',
+            uploadStatus: 'COMPLETED',
+            processingStatus: 'CHUNKING',
+            createdById: systemUser.id,
+          },
+        });
+
+        // Gera embeddings da síntese
+        const chunks = this.chunkingService.chunkText(synthesisText);
+        await this.embeddingsService.generateAndStoreEmbeddings(doc.id, chunks, this.embeddingModel);
+
+        await this.prisma.jurisprudenceDocument.update({
+          where: { id: doc.id },
+          data: { processingStatus: 'INDEXED', chunkCount: chunks.length },
+        });
+
+        themesProcessed++;
+        this.logger.log(`Síntese criada para tema "${theme}" (${chunks.length} chunks)`);
+      } catch (err) {
+        errors.push(`Tema "${theme}": ${err.message}`);
+        this.logger.error(`Erro ao consolidar tema "${theme}": ${err.message}`);
+      }
+    }
+
+    this.logger.log(`Consolidação concluída: ${themesProcessed} temas processados`);
+    return { themesProcessed, errors };
+  }
+
   private async getOrCreateSystemUser() {
     let user = await this.prisma.user.findFirst({
       where: { email: 'system@legalai.internal' },
