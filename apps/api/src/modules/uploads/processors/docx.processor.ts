@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as fs from 'fs/promises';
 import * as mammoth from 'mammoth';
 import { IFileProcessor, FileProcessorResult } from './file-processor.interface';
 
@@ -7,10 +6,9 @@ import { IFileProcessor, FileProcessorResult } from './file-processor.interface'
 export class DocxProcessor implements IFileProcessor {
   private readonly logger = new Logger(DocxProcessor.name);
 
-  async process(filePath: string): Promise<FileProcessorResult> {
-    this.logger.debug(`Processando DOCX: ${filePath}`);
+  async process(buffer: Buffer): Promise<FileProcessorResult> {
+    this.logger.debug(`Processando DOCX (${buffer.length} bytes)`);
 
-    const buffer = await fs.readFile(filePath);
     const result = await mammoth.extractRawText({ buffer });
 
     if (result.messages.length > 0) {

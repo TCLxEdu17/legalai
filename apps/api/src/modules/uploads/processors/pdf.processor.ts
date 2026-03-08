@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as fs from 'fs/promises';
 import * as pdfParse from 'pdf-parse';
 import { IFileProcessor, FileProcessorResult } from './file-processor.interface';
 
@@ -7,10 +6,8 @@ import { IFileProcessor, FileProcessorResult } from './file-processor.interface'
 export class PdfProcessor implements IFileProcessor {
   private readonly logger = new Logger(PdfProcessor.name);
 
-  async process(filePath: string): Promise<FileProcessorResult> {
-    this.logger.debug(`Processando PDF: ${filePath}`);
-
-    const buffer = await fs.readFile(filePath);
+  async process(buffer: Buffer): Promise<FileProcessorResult> {
+    this.logger.debug(`Processando PDF (${buffer.length} bytes)`);
 
     try {
       const data = await pdfParse(buffer);

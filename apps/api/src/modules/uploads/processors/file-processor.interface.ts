@@ -5,5 +5,5 @@ export interface FileProcessorResult {
 }
 
 export interface IFileProcessor {
-  process(filePath: string): Promise<FileProcessorResult>;
+  process(buffer: Buffer): Promise<FileProcessorResult>;
 }

@@ -14,7 +14,6 @@ import { DocxProcessor } from './processors/docx.processor';
 import { TextProcessor } from './processors/text.processor';
 import { ProcessingStatus, UploadStatus } from '@prisma/client';
 import * as path from 'path';
-import * as fs from 'fs/promises';
 
 export interface UploadDocumentDto {
   title: string;
@@ -30,7 +29,6 @@ export interface UploadDocumentDto {
 @Injectable()
 export class UploadsService {
   private readonly logger = new Logger(UploadsService.name);
-  private readonly uploadDir: string;
   private readonly embeddingModel: string;
 
   constructor(
@@ -43,7 +41,6 @@ export class UploadsService {
     private readonly docxProcessor: DocxProcessor,
     private readonly textProcessor: TextProcessor,
   ) {
-    this.uploadDir = configService.get<string>('app.upload.dir', './uploads');
     this.embeddingModel = configService.get<string>(
       'app.ai.openai.embeddingModel',
       'text-embedding-3-small',
@@ -59,17 +56,16 @@ export class UploadsService {
 
     const fileType = this.getFileType(file.mimetype, file.originalname);
     if (!fileType) {
-      await this.cleanupFile(file.path);
       throw new BadRequestException('Tipo de arquivo não suportado. Use PDF, DOCX ou TXT.');
     }
 
-    // Criar registro no banco com status PENDING
+    // Criar registro no banco com status PROCESSING
     const document = await this.prisma.jurisprudenceDocument.create({
       data: {
         title: dto.title.trim(),
         fileName: file.originalname,
         fileType,
-        filePath: file.path,
+        filePath: '',
         fileSize: file.size,
         tribunal: dto.tribunal?.trim() || null,
         processNumber: dto.processNumber?.trim() || null,
@@ -83,9 +79,9 @@ export class UploadsService {
       },
     });
 
-    // Processar de forma assíncrona (não bloquear a resposta HTTP)
-    // Em produção, isso seria delegado para uma fila (BullMQ/Redis)
-    this.processDocumentAsync(document.id, file, dto).catch((err) => {
+    // Processar em background sem bloquear a resposta HTTP
+    const buffer = file.buffer;
+    this.processDocumentAsync(document.id, buffer, file.mimetype, file.originalname, dto).catch((err) => {
       this.logger.error(`Falha no processamento do documento ${document.id}:`, err.stack);
     });
 
@@ -107,15 +103,17 @@ export class UploadsService {
    */
   private async processDocumentAsync(
     documentId: string,
-    file: Express.Multer.File,
+    buffer: Buffer,
+    mimetype: string,
+    originalname: string,
     dto: UploadDocumentDto,
   ): Promise<void> {
     try {
-      // Etapa 1: Extração de texto
+      // Etapa 1: Extração de texto do buffer (sem disco)
       await this.updateStatus(documentId, UploadStatus.PROCESSING, ProcessingStatus.CHUNKING);
 
-      const processor = this.getProcessor(file.mimetype, file.originalname);
-      const extracted = await processor.process(file.path);
+      const processor = this.getProcessor(mimetype, originalname);
+      const extracted = await processor.process(buffer);
 
       const extractedText = extracted.text?.trim() || '';
 
@@ -248,9 +246,4 @@ export class UploadsService {
     return this.textProcessor;
   }
 
-  private async cleanupFile(filePath: string) {
-    try {
-      await fs.unlink(filePath);
-    } catch {}
-  }
 }
