@@ -77,10 +77,10 @@ export class RagService {
     // 3. Construir mensagens para o LLM
     const messages = this.buildMessages(question, retrievedChunks, sessionHistory);
 
-    // 4. Gerar resposta
+    // 4. Gerar resposta — sem contexto usa temperatura maior para explorar conhecimento amplo
     const completion = await this.aiProvider.generateChatCompletion(messages, {
-      temperature: hasContext ? 0.2 : 0.4,
-      maxTokens: 3000,
+      temperature: hasContext ? 0.15 : 0.3,
+      maxTokens: 4500,
     });
 
     // 5. Agrupar fontes por documento
