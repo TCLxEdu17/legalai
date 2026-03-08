@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
+import * as https from 'https';
 import { ICollector, CollectorConfig, CollectedItem } from './collector.interface';
+
+const httpsAgentLenient = new https.Agent({ rejectUnauthorized: false });
 
 @Injectable()
 export class RssCollector implements ICollector {
@@ -8,6 +11,30 @@ export class RssCollector implements ICollector {
 
   // Cache do conteúdo extraído no feed para usar em fetchItem sem nova request
   private readonly contentCache = new Map<string, { title: string; content: string; metadata: any }>();
+
+  private sanitizeXml(xml: string): string {
+    return xml
+      // & solto (não seguido de nome_entidade;) → &amp;
+      .replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[\da-fA-F]+);)/g, '&amp;')
+      // atributos sem valor: <tag attr> → <tag attr="">
+      .replace(/<([^>]*)\s([a-zA-Z][a-zA-Z0-9_:-]*)(\s|>)/g, (m, pre, attr, suf) => {
+        if (m.includes('=')) return m;
+        return `<${pre} ${attr}=""${suf}`;
+      });
+  }
+
+  private async fetchFeedXml(feedUrl: string): Promise<string> {
+    const response = await axios.get(feedUrl, {
+      timeout: 15000,
+      httpsAgent: httpsAgentLenient,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; LegalAI-Bot/1.0)',
+        Accept: 'application/rss+xml, application/xml, text/xml, */*',
+      },
+      responseType: 'text',
+    });
+    return response.data as string;
+  }
 
   async discoverItems(
     config: CollectorConfig,
@@ -24,7 +51,9 @@ export class RssCollector implements ICollector {
 
     try {
       this.logger.debug(`Lendo feed RSS: ${feedUrl}`);
-      const feed = await parser.parseURL(feedUrl);
+      const rawXml = await this.fetchFeedXml(feedUrl);
+      const cleanedXml = this.sanitizeXml(rawXml);
+      const feed = await parser.parseString(cleanedXml);
 
       const items = (feed.items || []).slice(0, maxItems).filter((item: any) => item.link);
 
