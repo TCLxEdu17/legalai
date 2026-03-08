@@ -1,8 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
+import { LogOut, User as UserIcon, ChevronDown, Sun, Moon } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { logout, getStoredUser } from '@/lib/auth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -10,12 +11,17 @@ import type { User } from '@/types';
 
 export function Header() {
   const router = useRouter();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setUser(getStoredUser());
+    setMounted(true);
   }, []);
+
+  const isDark = resolvedTheme === 'dark';
 
   const handleLogout = async () => {
     await logout();
@@ -26,6 +32,17 @@ export function Header() {
   return (
     <header className="h-14 bg-[#101010]/80 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between px-6 shrink-0 relative z-20">
       <div />
+      <div className="flex items-center gap-2">
+        {/* Theme toggle */}
+        {mounted && (
+          <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors text-slate-400 hover:text-slate-200"
+            title={isDark ? 'Modo claro' : 'Modo escuro'}
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        )}
       <div className="relative">
         <button
           onClick={() => setOpen((v) => !v)}
@@ -60,6 +77,7 @@ export function Header() {
             </div>
           </>
         )}
+      </div>
       </div>
     </header>
   );
