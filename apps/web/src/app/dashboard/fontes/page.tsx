@@ -126,6 +126,14 @@ export default function FontesPage() {
     onError: (err) => toast.error(extractApiErrorMessage(err)),
   });
 
+  const runAllMutation = useMutation({
+    mutationFn: () => apiClient.runAllSources(),
+    onSuccess: (data) => {
+      toast.success(`${data.message}`);
+    },
+    onError: (err) => toast.error(extractApiErrorMessage(err)),
+  });
+
   const onSubmit = (data: SourceForm) => {
     createMutation.mutate(data);
   };
@@ -140,13 +148,23 @@ export default function FontesPage() {
             Configure fontes externas para atualização automática da base de jurisprudências.
           </p>
         </div>
-        <button
-          onClick={() => { setShowForm(true); setEditingId(null); reset(); }}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nova Fonte
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => runAllMutation.mutate()}
+            disabled={runAllMutation.isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {runAllMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+            Iniciar Todas
+          </button>
+          <button
+            onClick={() => { setShowForm(true); setEditingId(null); reset(); }}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Fonte
+          </button>
+        </div>
       </div>
 
       {/* Formulário */}

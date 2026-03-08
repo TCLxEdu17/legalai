@@ -31,9 +31,15 @@ export class IngestionController {
   @ApiOperation({ summary: 'Executar ingestão manual de uma fonte' })
   @ApiParam({ name: 'sourceId', type: String })
   runSource(@Param('sourceId', ParseUUIDPipe) sourceId: string) {
-    // Executar em background para não bloquear o HTTP
     this.ingestionService.runForSource(sourceId, 'MANUAL').catch(() => {});
     return { message: 'Ingestão iniciada. Acompanhe em /ingestion/jobs' };
+  }
+
+  @Post('sources/run-all')
+  @ApiOperation({ summary: 'Executar ingestão de todas as fontes ativas' })
+  async runAll() {
+    const count = await this.ingestionService.runAllActiveSources();
+    return { message: `Ingestão iniciada para ${count} fonte(s) ativa(s).`, count };
   }
 
   @Get('jobs')

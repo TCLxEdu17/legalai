@@ -233,6 +233,11 @@ class ApiClient {
     return data;
   }
 
+  async runAllSources() {
+    const { data } = await this.client.post('/ingestion/sources/run-all');
+    return data;
+  }
+
   // ==================== API KEYS ====================
   async getApiKeys() {
     const { data } = await this.client.get('/api-keys');

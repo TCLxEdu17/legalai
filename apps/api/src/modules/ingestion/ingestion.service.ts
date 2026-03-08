@@ -295,6 +295,23 @@ export class IngestionService {
     };
   }
 
+  async runAllActiveSources(): Promise<number> {
+    const sources = await this.prisma.externalSource.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+    });
+
+    this.logger.log(`[RunAll] Iniciando ingestão de ${sources.length} fontes ativas`);
+
+    for (const source of sources) {
+      this.runForSource(source.id, 'MANUAL').catch((err) =>
+        this.logger.warn(`[RunAll] Erro na fonte "${source.name}": ${err.message}`),
+      );
+    }
+
+    return sources.length;
+  }
+
   async findAllJobs(page = 1, limit = 20, sourceId?: string) {
     const where: any = {};
     if (sourceId) where.sourceId = sourceId;
