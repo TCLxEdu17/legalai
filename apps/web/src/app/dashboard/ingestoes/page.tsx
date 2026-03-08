@@ -88,7 +88,7 @@ export default function IngestoesPage() {
               cls: 'text-brand-400',
             },
           ].map((stat) => (
-            <div key={stat.label} className="bg-[#111118] border border-white/[0.07] rounded-xl p-4">
+            <div key={stat.label} className="bg-[#141414] border border-white/[0.07] rounded-xl p-4">
               <p className="text-xs text-slate-500 font-medium mb-1">{stat.label}</p>
               <p className={cn('text-2xl font-bold', stat.cls)}>{stat.value}</p>
             </div>
@@ -97,7 +97,7 @@ export default function IngestoesPage() {
       )}
 
       {/* Tabela */}
-      <div className="bg-[#111118] border border-white/[0.07] rounded-xl overflow-hidden">
+      <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="text-center py-12 text-slate-500">
             <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -183,7 +183,7 @@ export default function IngestoesPage() {
 
                   {/* Expandido: logs e itens */}
                   {isExpanded && (
-                    <div className="border-t border-white/[0.05] bg-[#0d0d15] px-4 py-4 space-y-3">
+                    <div className="border-t border-white/[0.05] bg-[#0f0f0f] px-4 py-4 space-y-3">
                       {/* Métricas detalhadas mobile */}
                       <div className="grid grid-cols-4 gap-3 sm:hidden">
                         {[

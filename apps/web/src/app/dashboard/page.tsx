@@ -234,7 +234,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Banner de crescimento */}
-      <div className="bg-gradient-to-r from-brand-600/10 via-[#111118] to-violet-600/10 border border-brand-500/20 rounded-xl p-5">
+      <div className="bg-gradient-to-r from-brand-600/10 via-[#141414] to-violet-600/10 border border-brand-500/20 rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
           <Scale className="w-4 h-4 text-brand-400" />
           <h2 className="text-sm font-semibold text-brand-300">
@@ -278,7 +278,7 @@ export default function DashboardPage() {
               {topThemes.length} temas
             </span>
           </div>
-          <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-5">
+          <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
             <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
               {topThemes.map(({ theme, count }) => (
                 <ThemeBar key={theme} theme={theme} count={count} max={maxThemeCount} />
@@ -298,7 +298,7 @@ export default function DashboardPage() {
             <Link
               key={href}
               href={href}
-              className="group bg-[#111118] border border-white/[0.07] rounded-xl p-5 hover:border-brand-500/30 hover:bg-white/[0.04] transition-all"
+              className="group bg-[#141414] border border-white/[0.07] rounded-xl p-5 hover:border-brand-500/30 hover:bg-white/[0.04] transition-all"
             >
               <div className="flex items-start gap-4">
                 <div className={`w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center shrink-0`}>
@@ -323,7 +323,7 @@ export default function DashboardPage() {
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
             Tribunais na base
           </h2>
-          <div className="bg-[#111118] border border-white/[0.07] rounded-xl divide-y divide-white/[0.05]">
+          <div className="bg-[#141414] border border-white/[0.07] rounded-xl divide-y divide-white/[0.05]">
             {stats.topTribunais.slice(0, 5).map(({ tribunal, count }) => (
               <div key={tribunal} className="flex items-center justify-between px-4 py-3">
                 <span className="text-sm text-slate-300 font-medium">{tribunal}</span>

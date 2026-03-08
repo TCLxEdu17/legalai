@@ -142,7 +142,7 @@ export default function UploadPage() {
                 'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors',
                 isDragActive
                   ? 'border-brand-400 bg-brand-600/10'
-                  : 'border-white/10 bg-[#0d0d15] hover:border-brand-500/40 hover:bg-white/[0.03]',
+                  : 'border-white/10 bg-[#0f0f0f] hover:border-brand-500/40 hover:bg-white/[0.03]',
               )}
             >
               <input {...getInputProps()} />
@@ -163,7 +163,7 @@ export default function UploadPage() {
           <input
             {...register('title')}
             placeholder="Ex: REsp 1234567/SP — Responsabilidade Civil"
-            className="w-full px-4 py-2.5 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-lg
+            className="w-full px-4 py-2.5 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg
                        placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
           {errors.title && (
@@ -185,7 +185,7 @@ export default function UploadPage() {
                 {...register(name as any)}
                 type={type || 'text'}
                 placeholder={placeholder}
-                className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-lg
+                className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg
                            placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
@@ -197,7 +197,7 @@ export default function UploadPage() {
           <input
             {...register('theme')}
             placeholder="Ex: Responsabilidade civil, contratos, tributário..."
-            className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-lg
+            className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg
                        placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
         </div>
@@ -209,7 +209,7 @@ export default function UploadPage() {
           <input
             {...register('keywords')}
             placeholder="dano moral, CDC, relação de consumo"
-            className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-lg
+            className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg
                        placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
         </div>

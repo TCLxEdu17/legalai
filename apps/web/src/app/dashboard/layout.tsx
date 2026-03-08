@@ -46,7 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [checkSession]);
 
   return (
-    <div className="flex h-screen bg-[#08080f] overflow-hidden">
+    <div className="flex h-screen bg-[#0a0a0a] overflow-hidden">
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header />

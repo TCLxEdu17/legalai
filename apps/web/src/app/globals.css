@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    --background: 240 20% 4%;
-    --foreground: 213 31% 91%;
-    --card: 240 15% 6%;
-    --card-foreground: 213 31% 91%;
-    --popover: 240 15% 7%;
-    --popover-foreground: 213 31% 91%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 91%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 91%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 91%;
     --primary: 228 96% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 240 10% 12%;
-    --secondary-foreground: 213 31% 75%;
-    --muted: 240 10% 10%;
-    --muted-foreground: 215 20% 45%;
-    --accent: 240 10% 14%;
-    --accent-foreground: 213 31% 85%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 75%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 85%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 240 10% 12%;
-    --input: 240 10% 12%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
     --ring: 228 96% 60%;
     --radius: 0.5rem;
   }
@@ -31,10 +31,10 @@
   }
 
   body {
-    @apply bg-[#08080f] text-slate-100 font-sans antialiased;
+    @apply bg-[#0a0a0a] text-slate-100 font-sans antialiased;
   }
 
-  /* Reflexo de luz que varre a tela continuamente */
+  /* Reflexo de luz sutil que varre a tela continuamente */
   body::before {
     content: '';
     position: fixed;
@@ -42,9 +42,9 @@
     pointer-events: none;
     z-index: 0;
     background:
-      radial-gradient(ellipse 80% 60% at 15% 40%, rgba(59, 85, 245, 0.04) 0%, transparent 65%),
-      radial-gradient(ellipse 60% 50% at 85% 20%, rgba(98, 128, 253, 0.03) 0%, transparent 55%),
-      radial-gradient(ellipse 40% 30% at 50% 80%, rgba(37, 53, 234, 0.02) 0%, transparent 60%);
+      radial-gradient(ellipse 80% 60% at 15% 40%, rgba(255,255,255,0.015) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 50% at 85% 20%, rgba(255,255,255,0.010) 0%, transparent 55%),
+      radial-gradient(ellipse 40% 30% at 50% 80%, rgba(255,255,255,0.008) 0%, transparent 60%);
     animation: aurora-shift 16s ease-in-out infinite alternate;
   }
 
@@ -72,7 +72,7 @@
 /* Brilho suave de borda */
 @keyframes border-glow {
   0%, 100% { box-shadow: 0 0 0 0 transparent; }
-  50%       { box-shadow: 0 0 12px 1px rgba(98, 128, 253, 0.08); }
+  50%       { box-shadow: 0 0 12px 1px rgba(255, 255, 255, 0.06); }
 }
 
 /* Fade-in de cards */
@@ -95,8 +95,8 @@
 
 /* Pulso suave */
 @keyframes softGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(98, 128, 253, 0); }
-  50%       { box-shadow: 0 0 20px 2px rgba(98, 128, 253, 0.07); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+  50%       { box-shadow: 0 0 20px 2px rgba(255, 255, 255, 0.05); }
 }
 
 /* ======= UTILITY CLASSES ======= */
@@ -105,7 +105,7 @@
 .dark-card {
   position: relative;
   overflow: hidden;
-  background: #111118;
+  background: #141414;
   border: 1px solid rgba(255,255,255,0.07);
 }
 
@@ -140,7 +140,7 @@
 }
 
 .shimmer {
-  background: linear-gradient(90deg, #16161f 25%, #1e1e2a 50%, #16161f 75%);
+  background: linear-gradient(90deg, #1c1c1c 25%, #222222 50%, #1c1c1c 75%);
   background-size: 600px 100%;
   animation: shimmer 1.8s infinite linear;
 }

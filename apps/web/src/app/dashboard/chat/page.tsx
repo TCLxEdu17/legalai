@@ -254,7 +254,7 @@ export default function ChatPage() {
     <div className="flex h-full gap-0 -m-6 overflow-hidden">
       {/* Sidebar de sessões */}
       {showSidebar && (
-        <div className="w-64 bg-[#0a0a12] border-r border-white/[0.06] flex flex-col shrink-0">
+        <div className="w-64 bg-[#0a0a0a] border-r border-white/[0.06] flex flex-col shrink-0">
           <div className="p-4 border-b border-white/[0.05]">
             <button
               onClick={startNewChat}
@@ -305,9 +305,9 @@ export default function ChatPage() {
       )}
 
       {/* Área principal do chat */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#08080f]">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#0a0a0a]">
         {/* Toggle sidebar */}
-        <div className="flex items-center gap-2 px-4 py-3 bg-[#0d0d16]/80 border-b border-white/[0.06] shrink-0 backdrop-blur-sm">
+        <div className="flex items-center gap-2 px-4 py-3 bg-[#101010]/80 border-b border-white/[0.06] shrink-0 backdrop-blur-sm">
           <button
             onClick={() => setShowSidebar((v) => !v)}
             className="text-slate-500 hover:text-slate-300 transition-colors"
@@ -348,7 +348,7 @@ export default function ChatPage() {
                       reset({ message: '' });
                       sendMutation.mutate({ message: example, sessionId: activeSessionId });
                     }}
-                    className="block w-full text-left px-4 py-2.5 bg-[#111118] border border-white/[0.07] rounded-lg text-xs text-slate-400 hover:border-brand-500/30 hover:text-brand-400 transition-colors"
+                    className="block w-full text-left px-4 py-2.5 bg-[#141414] border border-white/[0.07] rounded-lg text-xs text-slate-400 hover:border-brand-500/30 hover:text-brand-400 transition-colors"
                   >
                     "{example}"
                   </button>
@@ -366,7 +366,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input */}
-        <div className="shrink-0 bg-[#0d0d16]/80 border-t border-white/[0.06] p-4 backdrop-blur-sm">
+        <div className="shrink-0 bg-[#101010]/80 border-t border-white/[0.06] p-4 backdrop-blur-sm">
           {/* Sugestões de follow-up */}
           {followUpSuggestions.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
@@ -399,7 +399,7 @@ export default function ChatPage() {
                       handleSubmit(onSubmit)();
                     }
                   }}
-                  className="w-full resize-none px-4 py-3 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-xl
+                  className="w-full resize-none px-4 py-3 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-xl
                              placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
                              disabled:opacity-60 transition-colors"
                 />

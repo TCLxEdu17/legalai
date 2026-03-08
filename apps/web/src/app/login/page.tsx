@@ -41,7 +41,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#08080f] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -55,7 +55,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-[#111118] border border-white/10 rounded-2xl p-8">
+        <div className="bg-[#141414] border border-white/10 rounded-2xl p-8">
           <h1 className="text-slate-100 font-semibold text-lg mb-6">Acesse sua conta</h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -69,7 +69,7 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 placeholder="seu@email.com.br"
-                className="w-full px-4 py-3 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm
+                className="w-full px-4 py-3 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm
                            placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
                            transition-colors"
               />
@@ -89,7 +89,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className="w-full px-4 py-3 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm
+                  className="w-full px-4 py-3 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm
                              placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
                              transition-colors pr-11"
                 />

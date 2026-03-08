@@ -169,7 +169,7 @@ export default function FontesPage() {
 
       {/* Formulário */}
       {showForm && (
-        <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-6">
+        <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-6">
           <h2 className="text-base font-semibold text-slate-100 mb-5">
             {editingId ? 'Editar Fonte' : 'Nova Fonte de Ingestão'}
           </h2>
@@ -179,7 +179,7 @@ export default function FontesPage() {
                 <label className="block text-xs font-medium text-slate-400 mb-1">Nome da fonte *</label>
                 <input
                   {...register('name')}
-                  className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
+                  className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                   placeholder="STJ — Jurisprudências"
                 />
                 {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
@@ -189,7 +189,7 @@ export default function FontesPage() {
                 <label className="block text-xs font-medium text-slate-400 mb-1">Tipo de coletor *</label>
                 <select
                   {...register('sourceType')}
-                  className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 >
                   {Object.entries(SOURCE_TYPE_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
@@ -201,7 +201,7 @@ export default function FontesPage() {
                 <label className="block text-xs font-medium text-slate-400 mb-1">URL base *</label>
                 <input
                   {...register('baseUrl')}
-                  className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
+                  className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                   placeholder="https://www.stj.jus.br/..."
                 />
                 {errors.baseUrl && <p className="text-red-400 text-xs mt-1">{errors.baseUrl.message}</p>}
@@ -211,7 +211,7 @@ export default function FontesPage() {
                 <label className="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
                 <input
                   {...register('description')}
-                  className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
+                  className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                   placeholder="Jurisprudências do Superior Tribunal de Justiça"
                 />
               </div>
@@ -220,7 +220,7 @@ export default function FontesPage() {
                 <label className="block text-xs font-medium text-slate-400 mb-1">Agendamento (cron)</label>
                 <select
                   onChange={(e) => setValue('scheduleCron', e.target.value)}
-                  className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 >
                   {CRON_PRESETS.map((p) => (
                     <option key={p.value} value={p.value}>{p.label} ({p.value})</option>
@@ -234,7 +234,7 @@ export default function FontesPage() {
                     <label className="block text-xs font-medium text-slate-400 mb-1">Seletor de links (CSS)</label>
                     <input
                       {...register('listSelector')}
-                      className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
+                      className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                       placeholder="a.resultado-ementa"
                     />
                   </div>
@@ -242,7 +242,7 @@ export default function FontesPage() {
                     <label className="block text-xs font-medium text-slate-400 mb-1">Seletor de conteúdo (CSS)</label>
                     <input
                       {...register('contentSelector')}
-                      className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
+                      className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                       placeholder=".texto-ementa"
                     />
                   </div>
@@ -253,7 +253,7 @@ export default function FontesPage() {
                       {...register('maxPages')}
                       min={1}
                       max={20}
-                      className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     />
                   </div>
                 </>
@@ -293,7 +293,7 @@ export default function FontesPage() {
           Carregando fontes...
         </div>
       ) : sources.length === 0 ? (
-        <div className="text-center py-16 bg-[#111118] border border-white/[0.07] rounded-xl">
+        <div className="text-center py-16 bg-[#141414] border border-white/[0.07] rounded-xl">
           <Globe className="w-12 h-12 text-slate-600 mx-auto mb-4" />
           <p className="text-slate-400 font-medium">Nenhuma fonte configurada</p>
           <p className="text-slate-500 text-sm mt-1">
@@ -303,7 +303,7 @@ export default function FontesPage() {
       ) : (
         <div className="space-y-3">
           {sources.map((source: any) => (
-            <div key={source.id} className="bg-[#111118] border border-white/[0.07] rounded-xl overflow-hidden">
+            <div key={source.id} className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
               <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className={cn(
@@ -385,7 +385,7 @@ export default function FontesPage() {
               </div>
 
               {expandedSource === source.id && (
-                <div className="border-t border-white/[0.05] p-4 bg-[#0d0d15] grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="border-t border-white/[0.05] p-4 bg-[#0f0f0f] grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Agendamento</p>
                     <p className="text-sm text-slate-300 font-mono">{source.scheduleCron}</p>

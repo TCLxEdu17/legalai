@@ -76,7 +76,7 @@ function Section({
 }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="bg-[#111118] rounded-xl border border-white/[0.07] overflow-hidden">
+    <div className="bg-[#141414] rounded-xl border border-white/[0.07] overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.04] transition-colors"
@@ -332,7 +332,7 @@ export default function AnalisePage() {
 
       {/* Upload Zone */}
       {!result && (
-        <div className="bg-[#111118] rounded-xl border border-white/[0.07] p-6 space-y-4">
+        <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-6 space-y-4">
           <div
             {...getRootProps()}
             className={cn(
@@ -402,7 +402,7 @@ export default function AnalisePage() {
       {result && (
         <div className="space-y-4">
           {/* Header */}
-          <div className="bg-[#111118] rounded-xl border border-white/[0.07] p-5 flex items-start justify-between gap-4">
+          <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 flex items-start justify-between gap-4">
             <div>
               <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Tipo de documento</p>
               <h2 className="text-xl font-bold text-slate-100">{result.tipoDocumento || 'Documento jurídico'}</h2>
@@ -438,7 +438,7 @@ export default function AnalisePage() {
 
           {/* Resumo */}
           {result.resumo && (
-            <div className="bg-[#111118] rounded-xl border border-white/[0.07] p-5">
+            <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-lg bg-brand-600/15 flex items-center justify-center">
                   <FileText className="w-3.5 h-3.5 text-brand-400" />
@@ -471,7 +471,7 @@ export default function AnalisePage() {
             <Section icon={Calendar} title="Datas e Prazos" count={result.datas.length}>
               <div className="mt-3 space-y-2">
                 {result.datas.map((item, i) => (
-                  <div key={i} className="flex gap-3 p-3 bg-[#0d0d15] rounded-lg border border-white/[0.05]">
+                  <div key={i} className="flex gap-3 p-3 bg-[#0f0f0f] rounded-lg border border-white/[0.05]">
                     <span className="text-sm font-bold text-brand-400 whitespace-nowrap shrink-0">{item.data}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-slate-200 text-sm">{item.descricao}</p>
@@ -514,7 +514,7 @@ export default function AnalisePage() {
             <Section icon={HelpCircle} title="Perguntas Estratégicas" count={result.perguntas.length}>
               <ul className="mt-3 space-y-2">
                 {result.perguntas.map((q, i) => (
-                  <li key={i} className="flex gap-3 p-3 bg-[#0d0d15] rounded-lg border border-white/[0.05]">
+                  <li key={i} className="flex gap-3 p-3 bg-[#0f0f0f] rounded-lg border border-white/[0.05]">
                     <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                     <p className="text-slate-200 text-sm">{q}</p>
                   </li>

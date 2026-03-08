@@ -86,7 +86,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-60 bg-[#0a0a12] border-r border-white/[0.06] flex flex-col shrink-0 relative">
+    <aside className="w-60 bg-[#0a0a0a] border-r border-white/[0.06] flex flex-col shrink-0 relative">
       {/* Subtle glow at top */}
       <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-brand-600/5 to-transparent pointer-events-none" />
 

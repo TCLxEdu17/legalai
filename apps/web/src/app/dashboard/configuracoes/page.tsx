@@ -119,7 +119,7 @@ export default function ConfiguracoesPage() {
             onClick={() => setActiveTab(id as any)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === id
-                ? 'bg-[#111118] text-slate-100 shadow-sm'
+                ? 'bg-[#141414] text-slate-100 shadow-sm'
                 : 'text-slate-500 hover:text-slate-300'
             }`}
           >
@@ -133,7 +133,7 @@ export default function ConfiguracoesPage() {
       {activeTab === 'system' && (
         <div className="space-y-4">
           {/* Meu Perfil */}
-          <div className="bg-[#111118] rounded-xl border border-white/[0.07] p-5 space-y-4">
+          <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 space-y-4">
             <h2 className="font-semibold text-slate-100">Meu Perfil</h2>
             <div className="grid grid-cols-2 gap-4">
               {/* Name - editable */}
@@ -143,7 +143,7 @@ export default function ConfiguracoesPage() {
                   <input
                     {...registerName('name')}
                     defaultValue={currentUser?.name}
-                    className="flex-1 px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="flex-1 px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   />
                   <button
                     type="submit"
@@ -167,7 +167,7 @@ export default function ConfiguracoesPage() {
           </div>
 
           {/* Info do sistema */}
-          <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-6">
+          <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-6">
             <h3 className="font-semibold text-slate-100 mb-4">Sobre o sistema</h3>
             <div className="space-y-3">
               {[
@@ -194,7 +194,7 @@ export default function ConfiguracoesPage() {
           </div>
 
           {/* Exclusão de conta (LGPD) */}
-          <div className="bg-[#111118] border border-red-500/20 rounded-xl p-6">
+          <div className="bg-[#141414] border border-red-500/20 rounded-xl p-6">
             <h3 className="font-semibold text-red-400 mb-1 flex items-center gap-2">
               <Trash2 className="w-4 h-4" /> Excluir minha conta
             </h3>
@@ -248,7 +248,7 @@ export default function ConfiguracoesPage() {
 
           {/* Form novo usuário */}
           {showNewUser && (
-            <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-5">
+            <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
               <h3 className="font-semibold text-slate-100 mb-4">Criar usuário</h3>
               <form
                 onSubmit={handleSubmit((data) => createUserMutation.mutate(data))}
@@ -260,7 +260,7 @@ export default function ConfiguracoesPage() {
                     <input
                       {...register('name')}
                       placeholder="Nome completo"
-                      className="w-full px-3 py-2 bg-[#0d0d15] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-[#0f0f0f] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     />
                     {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
                   </div>
@@ -270,7 +270,7 @@ export default function ConfiguracoesPage() {
                       {...register('email')}
                       type="email"
                       placeholder="email@exemplo.com"
-                      className="w-full px-3 py-2 bg-[#0d0d15] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-[#0f0f0f] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     />
                     {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
                   </div>
@@ -280,7 +280,7 @@ export default function ConfiguracoesPage() {
                       {...register('password')}
                       type="password"
                       placeholder="Mínimo 8 caracteres"
-                      className="w-full px-3 py-2 bg-[#0d0d15] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-[#0f0f0f] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     />
                     {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
                   </div>
@@ -288,7 +288,7 @@ export default function ConfiguracoesPage() {
                     <label className="block text-xs font-medium text-slate-500 mb-1.5">Perfil</label>
                     <select
                       {...register('role')}
-                      className="w-full px-3 py-2 bg-[#0d0d15] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-[#0f0f0f] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     >
                       <option value="USER">Usuário</option>
                       <option value="ADMIN">Administrador</option>
@@ -317,7 +317,7 @@ export default function ConfiguracoesPage() {
           )}
 
           {/* Lista de usuários */}
-          <div className="bg-[#111118] border border-white/[0.07] rounded-xl overflow-hidden">
+          <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
             {loadingUsers ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />

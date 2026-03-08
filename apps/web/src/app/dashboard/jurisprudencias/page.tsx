@@ -86,13 +86,13 @@ export default function JurisprudenciasPage() {
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder="Buscar por título, tribunal, tema ou processo..."
-          className="w-full pl-10 pr-4 py-2.5 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-lg
+          className="w-full pl-10 pr-4 py-2.5 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg
                      placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
         />
       </div>
 
       {/* Tabela */}
-      <div className="bg-[#111118] border border-white/[0.07] rounded-xl overflow-hidden">
+      <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <RefreshCw className="w-5 h-5 text-slate-500 animate-spin" />
@@ -243,7 +243,7 @@ function DocumentModal({
 }) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111118] border border-white/10 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
+      <div className="bg-[#141414] border border-white/10 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-white/[0.07]">
           <h3 className="font-semibold text-slate-100">Detalhes do documento</h3>
           <button

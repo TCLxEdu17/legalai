@@ -112,7 +112,7 @@ export default function ApiPage() {
               <p className="text-xs text-amber-400 mb-3">
                 Esta chave será exibida apenas uma vez. Copie e armazene com segurança.
               </p>
-              <div className="flex items-center gap-2 bg-[#0d0d15] border border-amber-500/20 rounded-lg p-3">
+              <div className="flex items-center gap-2 bg-[#0f0f0f] border border-amber-500/20 rounded-lg p-3">
                 <code className="flex-1 text-xs font-mono text-slate-300 break-all">{newKey}</code>
                 <button
                   onClick={copyKey}
@@ -134,13 +134,13 @@ export default function ApiPage() {
 
       {/* Formulário nova chave */}
       {showForm && (
-        <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-5">
+        <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
           <h2 className="text-base font-semibold text-slate-100 mb-4">Nova API Key</h2>
           <form onSubmit={handleSubmit((d) => createMutation.mutate(d))} className="flex gap-3">
             <div className="flex-1">
               <input
                 {...register('name')}
-                className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
+                className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                 placeholder="Nome da chave (ex: App de Produção)"
               />
               {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
@@ -165,7 +165,7 @@ export default function ApiPage() {
       )}
 
       {/* Lista de chaves */}
-      <div className="bg-[#111118] border border-white/[0.07] rounded-xl overflow-hidden">
+      <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-white/[0.05] bg-white/[0.02]">
           <h2 className="text-sm font-semibold text-slate-400">Chaves ativas</h2>
         </div>
@@ -210,7 +210,7 @@ export default function ApiPage() {
       </div>
 
       {/* Documentação básica da API */}
-      <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-6 space-y-5">
+      <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-6 space-y-5">
         <div className="flex items-center gap-2 mb-2">
           <Code className="w-5 h-5 text-brand-400" />
           <h2 className="text-base font-semibold text-slate-100">Como usar a API</h2>

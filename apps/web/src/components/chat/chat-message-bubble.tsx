@@ -42,7 +42,7 @@ export function ChatMessageBubble({ message }: MessageProps) {
 
       <div className="flex-1 min-w-0">
         {message.isLoading ? (
-          <div className="bg-[#14141e] border border-white/[0.07] rounded-2xl rounded-tl-sm px-4 py-4">
+          <div className="bg-[#1a1a1a] border border-white/[0.07] rounded-2xl rounded-tl-sm px-4 py-4">
             <div className="typing-indicator flex items-center gap-1">
               <span />
               <span />
@@ -51,7 +51,7 @@ export function ChatMessageBubble({ message }: MessageProps) {
             <p className="text-slate-500 text-xs mt-2">Analisando sua questão...</p>
           </div>
         ) : (
-          <div className="bg-[#14141e] border border-white/[0.07] rounded-2xl rounded-tl-sm overflow-hidden">
+          <div className="bg-[#1a1a1a] border border-white/[0.07] rounded-2xl rounded-tl-sm overflow-hidden">
             {/* Resposta principal */}
             <div className="px-5 py-4">
               <div className="prose-legal">
@@ -143,7 +143,7 @@ function SourceCard({ source, index }: { source: SourceReference; index: number 
       {expanded && (
         <div className="border-t border-white/[0.05] px-3 pb-3 space-y-2">
           {source.excerpts.slice(0, 2).map((excerpt, i) => (
-            <div key={i} className="bg-[#0d0d15] rounded-lg p-3 border border-white/[0.04]">
+            <div key={i} className="bg-[#0f0f0f] rounded-lg p-3 border border-white/[0.04]">
               <p className="text-xs text-slate-400 leading-relaxed line-clamp-4">
                 {excerpt.content}
               </p>

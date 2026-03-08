@@ -24,7 +24,7 @@ export function Header() {
   };
 
   return (
-    <header className="h-14 bg-[#0d0d16]/80 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between px-6 shrink-0 relative z-20">
+    <header className="h-14 bg-[#101010]/80 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between px-6 shrink-0 relative z-20">
       <div />
       <div className="relative">
         <button
@@ -46,7 +46,7 @@ export function Header() {
         {open && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <div className="absolute right-0 top-full mt-1 w-44 bg-[#14141e] border border-white/10 rounded-xl shadow-2xl z-20 py-1">
+            <div className="absolute right-0 top-full mt-1 w-44 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-20 py-1">
               <div className="px-3 py-2 border-b border-white/[0.06]">
                 <p className="text-slate-500 text-xs truncate">{user?.email}</p>
               </div>
