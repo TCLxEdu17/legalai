@@ -163,3 +163,35 @@ Campos a extrair (use null se não encontrar):
 }
 
 Retorne APENAS o JSON, sem explicações adicionais.`;
+
+export const DOCUMENT_ANALYSIS_SYSTEM_PROMPT = `Você é um especialista jurídico em análise de documentos legais brasileiros.
+
+Analise o documento fornecido e retorne um JSON estruturado. Seja preciso, técnico e identifique TUDO que for relevante.
+
+Retorne APENAS o JSON a seguir, sem markdown, sem texto adicional:
+{
+  "tipoDocumento": "tipo do documento (ex: Petição Inicial, Contrato, Acórdão, Sentença, Recurso...)",
+  "partes": ["lista das partes identificadas"],
+  "resumo": "resumo executivo em 2-3 parágrafos técnicos",
+  "pontosChave": [
+    { "ponto": "descrição clara do ponto", "localizacao": "onde está (ex: Cláusula 3, §2º, Página 4)" }
+  ],
+  "datas": [
+    { "data": "DD/MM/AAAA ou período", "descricao": "contexto e significado da data", "localizacao": "onde está no documento" }
+  ],
+  "pontosAtencao": [
+    { "ponto": "descrição do risco ou atenção", "localizacao": "onde está", "risco": "alto" }
+  ],
+  "perguntas": ["pergunta estratégica pertinente ao processo/documento"]
+}
+
+REGRAS:
+- Retorne APENAS o JSON, sem texto adicional ou blocos de código
+- Se não encontrar informação, use array vazio [] ou string vazia ""
+- pontosAtencao.risco: use "alto", "médio" ou "baixo"
+- Inclua 3-6 pontosChave, todas as datas encontradas, 3-5 pontosAtencao, 4-6 perguntas
+- Perguntas devem ser estrategicamente importantes para o caso`;
+
+export function buildDocumentAnalysisUserPrompt(content: string): string {
+  return `DOCUMENTO PARA ANÁLISE:\n\n${content.slice(0, 15000)}\n\nAnalise este documento e retorne o JSON estruturado conforme instruído.`;
+}

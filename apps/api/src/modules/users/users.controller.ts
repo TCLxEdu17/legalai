@@ -43,6 +43,15 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 
+  @Patch('profile')
+  @ApiOperation({ summary: 'Atualizar nome do próprio perfil' })
+  updateProfile(
+    @CurrentUser('id') id: string,
+    @Body() dto: { name: string },
+  ) {
+    return this.usersService.update(id, { name: dto.name });
+  }
+
   @Get(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Buscar usuário por ID (admin)' })

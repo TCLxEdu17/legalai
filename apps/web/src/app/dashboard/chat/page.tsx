@@ -12,6 +12,7 @@ import { ChatMessageBubble } from '@/components/chat/chat-message-bubble';
 import { extractApiErrorMessage, formatRelativeTime } from '@/lib/utils';
 import type { ChatMessage, ChatSession } from '@/types';
 import { cn } from '@/lib/utils';
+import { getStoredUser } from '@/lib/auth';
 
 const EXAMPLE_QUESTIONS = [
   // Processo Civil
@@ -49,6 +50,16 @@ const EXAMPLE_QUESTIONS = [
   'Como funciona a proteção de dados pessoais (LGPD) e responsabilidade civil por vazamento?',
   'Quais os direitos do devedor na execução fiscal e como opor exceção de pré-executividade?',
 ];
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  const timeGreet = hour >= 5 && hour < 12 ? 'Bom dia' : hour >= 12 && hour < 18 ? 'Boa tarde' : 'Boa noite';
+  const user = getStoredUser();
+  if (!user) return `${timeGreet}! Como posso ajudar hoje?`;
+  const firstName = user.name.split(' ')[0];
+  const prefix = user.role === 'ADMIN' ? '' : 'Dr. ';
+  return `${timeGreet}, ${prefix}${firstName}!`;
+}
 
 function getRandomExamples(n: number) {
   const shuffled = [...EXAMPLE_QUESTIONS].sort(() => Math.random() - 0.5);
@@ -320,7 +331,12 @@ export default function ChatPage() {
               <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center mb-4">
                 <MessageSquare className="w-7 h-7 text-brand-600" />
               </div>
-              <h3 className="text-slate-800 font-semibold mb-2">Como posso ajudar?</h3>
+              {messages.length === 0 && !activeSessionId && (
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-slate-800">{getGreeting()}</h2>
+                  <p className="text-slate-500 text-sm mt-1">Como posso ajudar você hoje?</p>
+                </div>
+              )}
               <p className="text-slate-500 text-sm max-w-sm leading-relaxed">
                 Seu assistente jurídico. Pergunte sobre legislação, jurisprudência, prazos, estratégias processuais ou qualquer questão de direito brasileiro.
               </p>

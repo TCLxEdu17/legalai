@@ -13,6 +13,7 @@ import {
   Globe,
   Activity,
   Key,
+  ScanSearch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
@@ -29,6 +30,11 @@ const navItems = [
     href: '/dashboard/chat',
     icon: MessageSquare,
     label: 'Assistente Jurídico',
+  },
+  {
+    href: '/dashboard/analise',
+    icon: ScanSearch,
+    label: 'Análise de Documento',
   },
   {
     href: '/dashboard/jurisprudencias',

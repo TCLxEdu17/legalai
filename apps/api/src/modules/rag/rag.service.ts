@@ -8,6 +8,8 @@ import {
   buildFallbackUserPrompt,
   SUMMARIZATION_PROMPT,
   METADATA_EXTRACTION_PROMPT,
+  DOCUMENT_ANALYSIS_SYSTEM_PROMPT,
+  buildDocumentAnalysisUserPrompt,
 } from './prompts/legal.prompts';
 
 export interface RagQueryResult {
@@ -222,6 +224,44 @@ Use linguagem técnica e seja completo. Mínimo de 400 palavras.`,
     if (avgSimilarity >= 0.88 && chunks.length >= 3) return 'high';
     if (avgSimilarity >= 0.78 && chunks.length >= 2) return 'medium';
     return 'low';
+  }
+
+  async analyzeDocument(text: string): Promise<{
+    tipoDocumento: string;
+    partes: string[];
+    resumo: string;
+    pontosChave: Array<{ ponto: string; localizacao: string }>;
+    datas: Array<{ data: string; descricao: string; localizacao: string }>;
+    pontosAtencao: Array<{ ponto: string; localizacao: string; risco: string }>;
+    perguntas: string[];
+  }> {
+    const completion = await this.aiProvider.generateChatCompletion(
+      [
+        { role: 'system', content: DOCUMENT_ANALYSIS_SYSTEM_PROMPT },
+        { role: 'user', content: buildDocumentAnalysisUserPrompt(text) },
+      ],
+      { temperature: 0.1, maxTokens: 3000 },
+    );
+
+    const cleaned = completion.content
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim();
+
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      this.logger.warn('Falha ao parsear análise de documento, retornando estrutura vazia');
+      return {
+        tipoDocumento: '',
+        partes: [],
+        resumo: cleaned.slice(0, 500),
+        pontosChave: [],
+        datas: [],
+        pontosAtencao: [],
+        perguntas: [],
+      };
+    }
   }
 
   private aggregateSources(chunks: RetrievedChunk[]): SourceReference[] {

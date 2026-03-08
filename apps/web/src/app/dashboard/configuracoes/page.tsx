@@ -21,6 +21,12 @@ const newUserSchema = z.object({
 
 type NewUserForm = z.infer<typeof newUserSchema>;
 
+const profileNameSchema = z.object({
+  name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
+});
+
+type ProfileNameForm = z.infer<typeof profileNameSchema>;
+
 export default function ConfiguracoesPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   useEffect(() => { setCurrentUser(getStoredUser()); }, []);
@@ -55,6 +61,32 @@ export default function ConfiguracoesPage() {
     resolver: zodResolver(newUserSchema),
     defaultValues: { role: 'USER' },
   });
+
+  const {
+    register: registerName,
+    handleSubmit: handleNameSubmit,
+  } = useForm<ProfileNameForm>({
+    resolver: zodResolver(profileNameSchema),
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: ProfileNameForm) => apiClient.updateProfile(data.name),
+    onSuccess: (data) => {
+      toast.success('Nome atualizado com sucesso');
+      const stored = getStoredUser();
+      if (stored) {
+        localStorage.setItem('user', JSON.stringify({ ...stored, name: data.name }));
+        setCurrentUser({ ...stored, name: data.name });
+      }
+    },
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
+
+  const onUpdateName = (data: ProfileNameForm) => {
+    updateProfileMutation.mutate(data);
+  };
+
+  const updatingName = updateProfileMutation.isPending;
 
   const createUserMutation = useMutation({
     mutationFn: (data: NewUserForm) => apiClient.createUser(data),
@@ -100,23 +132,37 @@ export default function ConfiguracoesPage() {
       {/* System Tab */}
       {activeTab === 'system' && (
         <div className="space-y-4">
-          {/* Perfil do usuário */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6">
-            <h3 className="font-semibold text-slate-900 mb-4">Meu perfil</h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Nome', value: currentUser?.name },
-                { label: 'E-mail', value: currentUser?.email },
-                {
-                  label: 'Perfil',
-                  value: currentUser?.role === 'ADMIN' ? 'Administrador' : 'Usuário',
-                },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                  <span className="text-sm text-slate-500">{label}</span>
-                  <span className="text-sm font-medium text-slate-800">{value}</span>
-                </div>
-              ))}
+          {/* Meu Perfil */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+            <h2 className="font-semibold text-slate-900">Meu Perfil</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Name - editable */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Nome</label>
+                <form onSubmit={handleNameSubmit(onUpdateName)} className="flex gap-2">
+                  <input
+                    {...registerName('name')}
+                    defaultValue={currentUser?.name}
+                    className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={updatingName}
+                    className="px-3 py-2 bg-brand-600 text-white rounded-lg text-sm hover:bg-brand-700 disabled:opacity-50"
+                  >
+                    {updatingName ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Salvar'}
+                  </button>
+                </form>
+              </div>
+              {/* Email - read only */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">E-mail</label>
+                <p className="text-slate-900 text-sm py-2">{currentUser?.email}</p>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Perfil</label>
+              <p className="text-slate-900 text-sm mt-1">{currentUser?.role === 'ADMIN' ? 'Administrador' : 'Usuário'}</p>
             </div>
           </div>
 

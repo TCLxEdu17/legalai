@@ -246,4 +246,24 @@ export class UploadsService {
     return this.textProcessor;
   }
 
+  async analyzeDocument(file: Express.Multer.File): Promise<any> {
+    this.logger.log(`Analisando documento: ${file.originalname} (${file.size} bytes)`);
+
+    const fileType = this.getFileType(file.mimetype, file.originalname);
+    if (!fileType) {
+      throw new BadRequestException('Tipo de arquivo não suportado. Use PDF ou DOCX.');
+    }
+
+    const processor = this.getProcessor(file.mimetype, file.originalname);
+    const extracted = await processor.process(file.buffer);
+    const text = extracted.text?.trim() || '';
+
+    if (text.length < 50) {
+      throw new BadRequestException('Não foi possível extrair texto suficiente do documento.');
+    }
+
+    this.logger.log(`Texto extraído: ${text.length} caracteres. Enviando para análise IA.`);
+    return this.ragService.analyzeDocument(text);
+  }
+
 }

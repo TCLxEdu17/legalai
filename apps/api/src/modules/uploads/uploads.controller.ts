@@ -134,4 +134,31 @@ export class UploadsController {
     await this.uploadsService.reindex(id);
     return { message: 'Reindexação iniciada' };
   }
+
+  @Post('analyze')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Analisar documento com IA (todos os usuários autenticados)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Análise do documento' })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 50 * 1024 * 1024 },
+    }),
+  )
+  async analyze(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.uploadsService.analyzeDocument(file);
+  }
 }

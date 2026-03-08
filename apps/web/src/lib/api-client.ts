@@ -156,6 +156,21 @@ class ApiClient {
     await this.client.delete('/users/me');
   }
 
+  async updateProfile(name: string) {
+    const { data } = await this.client.patch('/users/profile', { name });
+    return data;
+  }
+
+  async analyzeDocument(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await this.client.post('/uploads/analyze', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
+    });
+    return data;
+  }
+
   // ==================== SOURCES ====================
   async getSources() {
     const { data } = await this.client.get('/sources');
