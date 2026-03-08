@@ -247,7 +247,7 @@ model ExternalSource {
 
 model IngestionJob {
   id             String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  sourceType     DocumentSourceType @map("source_type")
+  sourceType     IngestionTrigger   @map("source_type")
   sourceId       String?            @map("source_id") @db.Uuid
   triggerType    IngestionTrigger   @map("trigger_type")
   status         IngestionJobStatus @default(PENDING)
