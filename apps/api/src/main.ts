@@ -24,8 +24,11 @@ async function bootstrap() {
   }));
 
   // CORS
+  const allowedOrigins = corsOrigins.split(',').map((o) => o.trim()).filter(Boolean);
+  console.log(`CORS origens permitidas: ${JSON.stringify(allowedOrigins)}`);
+
   app.enableCors({
-    origin: corsOrigins.split(',').map((o) => o.trim()),
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
