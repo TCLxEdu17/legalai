@@ -53,7 +53,7 @@ function useCountUp(target: number, duration = 1200): number {
 
 function LiveBadge() {
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-medium text-emerald-700">
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-xs font-medium text-emerald-400">
       <span className="relative flex w-2 h-2">
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
         <span className="relative inline-flex rounded-full w-2 h-2 bg-emerald-500" />
@@ -80,17 +80,17 @@ function StatCard({
 }) {
   const animated = useCountUp(value);
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 hover:shadow-sm transition-shadow">
+    <div className="dark-card rounded-xl p-4 hover:border-white/[0.12] transition-colors">
       <div className="flex items-center justify-between mb-3">
         <p className="text-slate-500 text-xs font-medium">{label}</p>
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${bgColor}`}>
           <Icon className={`w-4 h-4 ${iconColor}`} />
         </div>
       </div>
-      <p className="text-2xl font-bold text-slate-900 tabular-nums">
+      <p className="text-2xl font-bold text-slate-100 tabular-nums">
         {animated.toLocaleString('pt-BR')}
       </p>
-      {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
+      {sub && <p className="text-xs text-slate-500 mt-1">{sub}</p>}
     </div>
   );
 }
@@ -114,12 +114,12 @@ function ThemeBar({ theme, count, max }: { theme: string; count: number; max: nu
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-700 font-medium truncate pr-2 max-w-[200px]" title={theme}>
+        <span className="text-xs text-slate-300 font-medium truncate pr-2 max-w-[200px]" title={theme}>
           {theme}
         </span>
-        <span className="text-xs text-slate-400 tabular-nums shrink-0">{count}</span>
+        <span className="text-xs text-slate-500 tabular-nums shrink-0">{count}</span>
       </div>
-      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-700 ease-out ${COLORS[idx]}`}
           style={{ width: `${width}%` }}
@@ -187,7 +187,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">
+          <h1 className="text-2xl font-bold text-slate-100 mb-1">
             Olá, {user?.name?.split(' ')[0] || 'Usuário'}
           </h1>
           <p className="text-slate-500 text-sm">
@@ -203,59 +203,59 @@ export default function DashboardPage() {
           label="Documentos"
           value={totalDocs}
           icon={FileText}
-          bgColor="bg-brand-50"
-          iconColor="text-brand-600"
+          bgColor="bg-brand-600/15"
+          iconColor="text-brand-400"
           sub="total na base"
         />
         <StatCard
           label="Chunks vetorizados"
           value={totalChunks}
           icon={Database}
-          bgColor="bg-violet-50"
-          iconColor="text-violet-600"
+          bgColor="bg-violet-500/15"
+          iconColor="text-violet-400"
           sub="fragmentos semânticos"
         />
         <StatCard
           label="Indexados"
           value={indexed}
           icon={Zap}
-          bgColor="bg-emerald-50"
-          iconColor="text-emerald-600"
+          bgColor="bg-emerald-500/15"
+          iconColor="text-emerald-400"
           sub="prontos para busca"
         />
         <StatCard
           label="Esta semana"
           value={lastWeek}
           icon={TrendingUp}
-          bgColor="bg-amber-50"
-          iconColor="text-amber-600"
+          bgColor="bg-amber-500/15"
+          iconColor="text-amber-400"
           sub="novos documentos"
         />
       </div>
 
       {/* Banner de crescimento */}
-      <div className="bg-gradient-to-r from-brand-50 via-slate-50 to-violet-50 border border-brand-100 rounded-xl p-5">
+      <div className="bg-gradient-to-r from-brand-600/10 via-[#111118] to-violet-600/10 border border-brand-500/20 rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Scale className="w-4 h-4 text-brand-600" />
-          <h2 className="text-sm font-semibold text-brand-800">
+          <Scale className="w-4 h-4 text-brand-400" />
+          <h2 className="text-sm font-semibold text-brand-300">
             Maior base de jurisprudências com IA da América Latina
           </h2>
         </div>
         <div className="grid grid-cols-3 gap-6 mb-3">
           <div>
-            <p className="text-3xl font-bold text-brand-700 tabular-nums">
+            <p className="text-3xl font-bold text-brand-400 tabular-nums">
               {totalDocs.toLocaleString('pt-BR')}
             </p>
             <p className="text-xs text-brand-500 mt-0.5">jurisprudências indexadas</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-emerald-700 tabular-nums">
+            <p className="text-3xl font-bold text-emerald-400 tabular-nums">
               +{stats?.growth?.lastWeek ?? 0}
             </p>
-            <p className="text-xs text-emerald-600 mt-0.5">adicionados esta semana</p>
+            <p className="text-xs text-emerald-500 mt-0.5">adicionados esta semana</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-violet-700 tabular-nums">
+            <p className="text-3xl font-bold text-violet-400 tabular-nums">
               +{stats?.growth?.lastMonth ?? 0}
             </p>
             <p className="text-xs text-violet-500 mt-0.5">adicionados este mês</p>
@@ -271,14 +271,14 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <BookOpen className="w-4 h-4 text-slate-500" />
-            <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">
               Vertentes jurídicas na base
             </h2>
-            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+            <span className="text-xs text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
               {topThemes.length} temas
             </span>
           </div>
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-5">
             <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
               {topThemes.map(({ theme, count }) => (
                 <ThemeBar key={theme} theme={theme} count={count} max={maxThemeCount} />
@@ -290,7 +290,7 @@ export default function DashboardPage() {
 
       {/* Ações rápidas */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-4">
+        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
           Ações rápidas
         </h2>
         <div className="grid md:grid-cols-2 gap-4">
@@ -298,19 +298,19 @@ export default function DashboardPage() {
             <Link
               key={href}
               href={href}
-              className="group bg-white border border-slate-200 rounded-xl p-5 hover:border-brand-200 hover:shadow-sm transition-all"
+              className="group bg-[#111118] border border-white/[0.07] rounded-xl p-5 hover:border-brand-500/30 hover:bg-white/[0.04] transition-all"
             >
               <div className="flex items-start gap-4">
                 <div className={`w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center shrink-0`}>
                   <Icon className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 mb-1 group-hover:text-brand-600 transition-colors">
+                  <p className="font-medium text-slate-200 mb-1 group-hover:text-brand-400 transition-colors">
                     {title}
                   </p>
                   <p className="text-slate-500 text-sm leading-relaxed">{description}</p>
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-brand-500 shrink-0 mt-0.5 transition-colors" />
+                <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-brand-400 shrink-0 mt-0.5 transition-colors" />
               </div>
             </Link>
           ))}
@@ -320,14 +320,14 @@ export default function DashboardPage() {
       {/* Tribunais */}
       {stats?.topTribunais && stats.topTribunais.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-4">
+          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
             Tribunais na base
           </h2>
-          <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100">
+          <div className="bg-[#111118] border border-white/[0.07] rounded-xl divide-y divide-white/[0.05]">
             {stats.topTribunais.slice(0, 5).map(({ tribunal, count }) => (
               <div key={tribunal} className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-slate-700 font-medium">{tribunal}</span>
-                <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                <span className="text-sm text-slate-300 font-medium">{tribunal}</span>
+                <span className="text-xs text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
                   {count} doc{count !== 1 ? 's' : ''}
                 </span>
               </div>

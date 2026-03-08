@@ -135,7 +135,7 @@ export default function FontesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Fontes Automáticas</h1>
+          <h1 className="text-2xl font-bold text-slate-100">Fontes Automáticas</h1>
           <p className="text-slate-500 text-sm mt-1">
             Configure fontes externas para atualização automática da base de jurisprudências.
           </p>
@@ -151,27 +151,27 @@ export default function FontesPage() {
 
       {/* Formulário */}
       {showForm && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-          <h2 className="text-base font-semibold text-slate-900 mb-5">
+        <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-6">
+          <h2 className="text-base font-semibold text-slate-100 mb-5">
             {editingId ? 'Editar Fonte' : 'Nova Fonte de Ingestão'}
           </h2>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Nome da fonte *</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Nome da fonte *</label>
                 <input
                   {...register('name')}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                   placeholder="STJ — Jurisprudências"
                 />
-                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+                {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Tipo de coletor *</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Tipo de coletor *</label>
                 <select
                   {...register('sourceType')}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 >
                   {Object.entries(SOURCE_TYPE_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
@@ -180,29 +180,29 @@ export default function FontesPage() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-slate-700 mb-1">URL base *</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">URL base *</label>
                 <input
                   {...register('baseUrl')}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                   placeholder="https://www.stj.jus.br/..."
                 />
-                {errors.baseUrl && <p className="text-red-500 text-xs mt-1">{errors.baseUrl.message}</p>}
+                {errors.baseUrl && <p className="text-red-400 text-xs mt-1">{errors.baseUrl.message}</p>}
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-slate-700 mb-1">Descrição</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Descrição</label>
                 <input
                   {...register('description')}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                   placeholder="Jurisprudências do Superior Tribunal de Justiça"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Agendamento (cron)</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Agendamento (cron)</label>
                 <select
                   onChange={(e) => setValue('scheduleCron', e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 >
                   {CRON_PRESETS.map((p) => (
                     <option key={p.value} value={p.value}>{p.label} ({p.value})</option>
@@ -213,29 +213,29 @@ export default function FontesPage() {
               {sourceType === 'html-list' && (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Seletor de links (CSS)</label>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Seletor de links (CSS)</label>
                     <input
                       {...register('listSelector')}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                       placeholder="a.resultado-ementa"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Seletor de conteúdo (CSS)</label>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Seletor de conteúdo (CSS)</label>
                     <input
                       {...register('contentSelector')}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                       placeholder=".texto-ementa"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Máximo de páginas</label>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Máximo de páginas</label>
                     <input
                       type="number"
                       {...register('maxPages')}
                       min={1}
                       max={20}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                     />
                   </div>
                 </>
@@ -243,7 +243,7 @@ export default function FontesPage() {
 
               <div className="md:col-span-2 flex items-center gap-2">
                 <input type="checkbox" {...register('isActive')} id="isActive" className="w-4 h-4" />
-                <label htmlFor="isActive" className="text-sm text-slate-700">Fonte ativa (coleta automática habilitada)</label>
+                <label htmlFor="isActive" className="text-sm text-slate-400">Fonte ativa (coleta automática habilitada)</label>
               </div>
             </div>
 
@@ -251,7 +251,7 @@ export default function FontesPage() {
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-slate-200 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-white/5 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
               >
                 {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                 Salvar Fonte
@@ -259,7 +259,7 @@ export default function FontesPage() {
               <button
                 type="button"
                 onClick={() => { setShowForm(false); reset(); }}
-                className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-medium"
+                className="px-4 py-2 border border-white/10 text-slate-400 hover:bg-white/[0.04] rounded-lg text-sm font-medium"
               >
                 Cancelar
               </button>
@@ -275,41 +275,41 @@ export default function FontesPage() {
           Carregando fontes...
         </div>
       ) : sources.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-slate-200 rounded-xl">
-          <Globe className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500 font-medium">Nenhuma fonte configurada</p>
-          <p className="text-slate-400 text-sm mt-1">
+        <div className="text-center py-16 bg-[#111118] border border-white/[0.07] rounded-xl">
+          <Globe className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-400 font-medium">Nenhuma fonte configurada</p>
+          <p className="text-slate-500 text-sm mt-1">
             Adicione uma fonte externa para iniciar a coleta automática.
           </p>
         </div>
       ) : (
         <div className="space-y-3">
           {sources.map((source: any) => (
-            <div key={source.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div key={source.id} className="bg-[#111118] border border-white/[0.07] rounded-xl overflow-hidden">
               <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className={cn(
                     'w-2.5 h-2.5 rounded-full shrink-0',
-                    source.isActive ? 'bg-emerald-400' : 'bg-slate-300',
+                    source.isActive ? 'bg-emerald-400' : 'bg-slate-600',
                   )} />
                   <div className="min-w-0">
-                    <p className="font-medium text-slate-900 truncate">{source.name}</p>
+                    <p className="font-medium text-slate-200 truncate">{source.name}</p>
                     <p className="text-xs text-slate-500 truncate">{source.baseUrl}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 ml-4">
-                  <span className="hidden sm:inline-flex items-center px-2.5 py-1 bg-slate-100 text-slate-600 text-xs rounded-full font-medium">
+                  <span className="hidden sm:inline-flex items-center px-2.5 py-1 bg-white/5 text-slate-400 text-xs rounded-full font-medium">
                     {SOURCE_TYPE_LABELS[source.sourceType] || source.sourceType}
                   </span>
 
                   {source.lastJob && (
                     <span className={cn(
                       'hidden sm:inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full font-medium',
-                      source.lastJob.status === 'COMPLETED' && 'bg-emerald-50 text-emerald-700',
-                      source.lastJob.status === 'PARTIAL' && 'bg-amber-50 text-amber-700',
-                      source.lastJob.status === 'FAILED' && 'bg-red-50 text-red-700',
-                      source.lastJob.status === 'RUNNING' && 'bg-blue-50 text-blue-700',
+                      source.lastJob.status === 'COMPLETED' && 'bg-emerald-500/15 text-emerald-400',
+                      source.lastJob.status === 'PARTIAL' && 'bg-amber-500/15 text-amber-400',
+                      source.lastJob.status === 'FAILED' && 'bg-red-500/15 text-red-400',
+                      source.lastJob.status === 'RUNNING' && 'bg-brand-600/15 text-brand-400',
                     )}>
                       {source.lastJob.status === 'COMPLETED' && <CheckCircle className="w-3 h-3" />}
                       {source.lastJob.status === 'FAILED' && <XCircle className="w-3 h-3" />}
@@ -323,7 +323,7 @@ export default function FontesPage() {
                     onClick={() => runMutation.mutate(source.id)}
                     disabled={runMutation.isPending}
                     title="Executar agora"
-                    className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                    className="p-2 text-slate-500 hover:text-brand-400 hover:bg-brand-600/10 rounded-lg transition-colors"
                   >
                     {runMutation.isPending && runMutation.variables === source.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -338,8 +338,8 @@ export default function FontesPage() {
                     className={cn(
                       'p-2 rounded-lg transition-colors',
                       source.isActive
-                        ? 'text-emerald-500 hover:bg-emerald-50'
-                        : 'text-slate-400 hover:bg-slate-50',
+                        ? 'text-emerald-400 hover:bg-emerald-500/10'
+                        : 'text-slate-500 hover:bg-white/[0.04]',
                     )}
                   >
                     {source.isActive ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
@@ -348,14 +348,14 @@ export default function FontesPage() {
                   <button
                     onClick={() => deleteMutation.mutate(source.id)}
                     title="Remover fonte"
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
 
                   <button
                     onClick={() => setExpandedSource(expandedSource === source.id ? null : source.id)}
-                    className="p-2 text-slate-400 hover:text-slate-600 rounded-lg transition-colors"
+                    className="p-2 text-slate-500 hover:text-slate-300 rounded-lg transition-colors"
                   >
                     {expandedSource === source.id ? (
                       <ChevronUp className="w-4 h-4" />
@@ -367,37 +367,37 @@ export default function FontesPage() {
               </div>
 
               {expandedSource === source.id && (
-                <div className="border-t border-slate-100 p-4 bg-slate-50 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="border-t border-white/[0.05] p-4 bg-[#0d0d15] grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Agendamento</p>
-                    <p className="text-sm text-slate-700 font-mono">{source.scheduleCron}</p>
+                    <p className="text-sm text-slate-300 font-mono">{source.scheduleCron}</p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Última execução</p>
-                    <p className="text-sm text-slate-700">
+                    <p className="text-sm text-slate-300">
                       {source.lastRunAt ? formatRelativeTime(source.lastRunAt) : 'Nunca executado'}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Último sucesso</p>
-                    <p className="text-sm text-slate-700">
+                    <p className="text-sm text-slate-300">
                       {source.lastSuccessAt ? formatRelativeTime(source.lastSuccessAt) : '—'}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Total de jobs</p>
-                    <p className="text-sm text-slate-700">{source.totalJobs || 0}</p>
+                    <p className="text-sm text-slate-300">{source.totalJobs || 0}</p>
                   </div>
                   {source.description && (
                     <div className="col-span-2 md:col-span-4">
                       <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Descrição</p>
-                      <p className="text-sm text-slate-700">{source.description}</p>
+                      <p className="text-sm text-slate-300">{source.description}</p>
                     </div>
                   )}
                   {source.lastJob?.errorMessage && (
                     <div className="col-span-2 md:col-span-4">
-                      <p className="text-xs text-red-500 font-medium uppercase tracking-wide mb-1">Último erro</p>
-                      <p className="text-sm text-red-600 font-mono text-xs">{source.lastJob.errorMessage}</p>
+                      <p className="text-xs text-red-400 font-medium uppercase tracking-wide mb-1">Último erro</p>
+                      <p className="text-sm text-red-500 font-mono text-xs">{source.lastJob.errorMessage}</p>
                     </div>
                   )}
                 </div>

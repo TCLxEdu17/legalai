@@ -93,19 +93,19 @@ export default function UploadPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Upload de jurisprudência</h1>
+        <h1 className="text-2xl font-bold text-slate-100">Upload de jurisprudência</h1>
         <p className="text-slate-500 text-sm mt-1">
           Faça upload de documentos em PDF, DOCX ou TXT para indexação na base.
         </p>
       </div>
 
       {uploadResult && (
-        <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-          <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+          <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
           <div>
-            <p className="text-emerald-800 font-medium text-sm">Upload realizado com sucesso</p>
-            <p className="text-emerald-700 text-xs mt-1">{uploadResult.message}</p>
-            <p className="text-emerald-600 text-xs mt-0.5">ID: {uploadResult.id}</p>
+            <p className="text-emerald-300 font-medium text-sm">Upload realizado com sucesso</p>
+            <p className="text-emerald-400 text-xs mt-1">{uploadResult.message}</p>
+            <p className="text-emerald-500 text-xs mt-0.5">ID: {uploadResult.id}</p>
           </div>
         </div>
       )}
@@ -113,16 +113,16 @@ export default function UploadPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Dropzone */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Arquivo <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium text-slate-400 mb-2">
+            Arquivo <span className="text-red-400">*</span>
           </label>
           {file ? (
-            <div className="flex items-center gap-3 p-4 bg-brand-50 border border-brand-200 rounded-xl">
-              <div className="w-10 h-10 bg-brand-100 rounded-lg flex items-center justify-center shrink-0">
-                <FileText className="w-5 h-5 text-brand-600" />
+            <div className="flex items-center gap-3 p-4 bg-brand-600/10 border border-brand-500/30 rounded-xl">
+              <div className="w-10 h-10 bg-brand-600/15 rounded-lg flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5 text-brand-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-slate-800 font-medium text-sm truncate">{file.name}</p>
+                <p className="text-slate-200 font-medium text-sm truncate">{file.name}</p>
                 <p className="text-slate-500 text-xs">
                   {fileExt} • {formatFileSize(file.size)}
                 </p>
@@ -130,7 +130,7 @@ export default function UploadPage() {
               <button
                 type="button"
                 onClick={() => setFile(null)}
-                className="text-slate-400 hover:text-red-500 transition-colors"
+                className="text-slate-500 hover:text-red-400 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -141,33 +141,33 @@ export default function UploadPage() {
               className={cn(
                 'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors',
                 isDragActive
-                  ? 'border-brand-400 bg-brand-50'
-                  : 'border-slate-300 bg-slate-50 hover:border-brand-300 hover:bg-slate-100',
+                  ? 'border-brand-400 bg-brand-600/10'
+                  : 'border-white/10 bg-[#0d0d15] hover:border-brand-500/40 hover:bg-white/[0.03]',
               )}
             >
               <input {...getInputProps()} />
-              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-600 font-medium text-sm">
+              <Upload className="w-8 h-8 text-slate-500 mx-auto mb-3" />
+              <p className="text-slate-400 font-medium text-sm">
                 {isDragActive ? 'Solte o arquivo aqui' : 'Arraste ou clique para selecionar'}
               </p>
-              <p className="text-slate-400 text-xs mt-1">PDF, DOCX ou TXT • Máximo 50 MB</p>
+              <p className="text-slate-600 text-xs mt-1">PDF, DOCX ou TXT • Máximo 50 MB</p>
             </div>
           )}
         </div>
 
         {/* Título */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Título <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium text-slate-400 mb-2">
+            Título <span className="text-red-400">*</span>
           </label>
           <input
             {...register('title')}
             placeholder="Ex: REsp 1234567/SP — Responsabilidade Civil"
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-900 text-sm rounded-lg
-                       placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full px-4 py-2.5 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-lg
+                       placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
           {errors.title && (
-            <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>
+            <p className="text-red-400 text-xs mt-1">{errors.title.message}</p>
           )}
         </div>
 
@@ -180,42 +180,42 @@ export default function UploadPage() {
             { name: 'judgmentDate', label: 'Data do julgamento', type: 'date' },
           ].map(({ name, label, placeholder, type }) => (
             <div key={name}>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">{label}</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">{label}</label>
               <input
                 {...register(name as any)}
                 type={type || 'text'}
                 placeholder={placeholder}
-                className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 text-sm rounded-lg
-                           placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-lg
+                           placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
           ))}
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1.5">Tema</label>
+          <label className="block text-xs font-medium text-slate-500 mb-1.5">Tema</label>
           <input
             {...register('theme')}
             placeholder="Ex: Responsabilidade civil, contratos, tributário..."
-            className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 text-sm rounded-lg
-                       placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-lg
+                       placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1.5">
-            Palavras-chave <span className="text-slate-400 font-normal">(separadas por vírgula)</span>
+          <label className="block text-xs font-medium text-slate-500 mb-1.5">
+            Palavras-chave <span className="text-slate-600 font-normal">(separadas por vírgula)</span>
           </label>
           <input
             {...register('keywords')}
             placeholder="dano moral, CDC, relação de consumo"
-            className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 text-sm rounded-lg
-                       placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-lg
+                       placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
         </div>
 
         {/* Auto-extração */}
-        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+        <div className="flex items-start gap-3 p-4 bg-brand-600/10 border border-brand-500/20 rounded-xl">
           <input
             {...register('autoExtractMetadata')}
             type="checkbox"
@@ -223,7 +223,7 @@ export default function UploadPage() {
             className="mt-0.5 w-4 h-4 text-brand-600 rounded"
           />
           <div>
-            <label htmlFor="autoExtract" className="text-sm font-medium text-slate-800 cursor-pointer">
+            <label htmlFor="autoExtract" className="text-sm font-medium text-slate-200 cursor-pointer">
               Extrair metadados automaticamente com IA
             </label>
             <p className="text-slate-500 text-xs mt-0.5">
@@ -236,8 +236,8 @@ export default function UploadPage() {
         <button
           type="submit"
           disabled={uploadMutation.isPending || !file}
-          className="w-full py-3 bg-brand-600 hover:bg-brand-700 disabled:bg-slate-200 disabled:cursor-not-allowed
-                     text-white disabled:text-slate-400 rounded-lg font-medium text-sm transition-colors
+          className="w-full py-3 bg-brand-600 hover:bg-brand-700 disabled:bg-white/5 disabled:cursor-not-allowed
+                     text-white disabled:text-slate-500 rounded-lg font-medium text-sm transition-colors
                      flex items-center justify-center gap-2"
         >
           {uploadMutation.isPending ? (

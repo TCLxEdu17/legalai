@@ -32,9 +32,9 @@ interface AnalysisResult {
 }
 
 const riskColor = {
-  alto: 'text-red-600 bg-red-50 border-red-200',
-  médio: 'text-amber-600 bg-amber-50 border-amber-200',
-  baixo: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+  alto: 'text-red-400 bg-red-500/10 border-red-500/30',
+  médio: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
+  baixo: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
 };
 
 const riskLabel = { alto: 'Alto', médio: 'Médio', baixo: 'Baixo' };
@@ -52,25 +52,25 @@ function Section({
 }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div className="bg-[#111118] rounded-xl border border-white/[0.07] overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.04] transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
-            <Icon className="w-4 h-4 text-brand-600" />
+          <div className="w-8 h-8 rounded-lg bg-brand-600/15 flex items-center justify-center">
+            <Icon className="w-4 h-4 text-brand-400" />
           </div>
-          <h3 className="font-semibold text-slate-900">{title}</h3>
+          <h3 className="font-semibold text-slate-100">{title}</h3>
           {count !== undefined && (
-            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-white/5 text-slate-400 px-2 py-0.5 rounded-full font-medium">
               {count}
             </span>
           )}
         </div>
-        {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        {open ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
       </button>
-      {open && <div className="px-5 pb-5 border-t border-slate-100">{children}</div>}
+      {open && <div className="px-5 pb-5 border-t border-white/[0.05]">{children}</div>}
     </div>
   );
 }
@@ -124,7 +124,7 @@ export default function AnalisePage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Análise de Documento</h1>
+        <h1 className="text-2xl font-bold text-slate-100">Análise de Documento</h1>
         <p className="text-slate-500 text-sm mt-1">
           Envie um PDF ou DOCX e a IA extrai os pontos principais, datas, riscos e sugere perguntas estratégicas.
         </p>
@@ -132,32 +132,32 @@ export default function AnalisePage() {
 
       {/* Upload Zone */}
       {!result && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+        <div className="bg-[#111118] rounded-xl border border-white/[0.07] p-6 space-y-4">
           <div
             {...getRootProps()}
             className={cn(
               'border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors',
               isDragActive
-                ? 'border-brand-400 bg-brand-50'
+                ? 'border-brand-400 bg-brand-600/10'
                 : file
-                ? 'border-emerald-400 bg-emerald-50'
-                : 'border-slate-200 hover:border-brand-300 hover:bg-slate-50',
+                ? 'border-emerald-400/50 bg-emerald-500/5'
+                : 'border-white/10 hover:border-brand-500/40 hover:bg-white/[0.03]',
             )}
           >
             <input {...getInputProps()} />
             {file ? (
               <div className="space-y-2">
-                <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto" />
-                <p className="font-semibold text-slate-800">{file.name}</p>
+                <CheckCircle className="w-10 h-10 text-emerald-400 mx-auto" />
+                <p className="font-semibold text-slate-200">{file.name}</p>
                 <p className="text-sm text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
               </div>
             ) : (
               <div className="space-y-2">
-                <Upload className="w-10 h-10 text-slate-400 mx-auto" />
-                <p className="font-medium text-slate-700">
+                <Upload className="w-10 h-10 text-slate-500 mx-auto" />
+                <p className="font-medium text-slate-400">
                   {isDragActive ? 'Solte o arquivo aqui' : 'Arraste o arquivo ou clique para selecionar'}
                 </p>
-                <p className="text-sm text-slate-400">PDF ou DOCX • Máximo 50MB</p>
+                <p className="text-sm text-slate-600">PDF ou DOCX • Máximo 50MB</p>
               </div>
             )}
           </div>
@@ -183,7 +183,7 @@ export default function AnalisePage() {
             {file && (
               <button
                 onClick={reset}
-                className="px-4 py-3 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                className="px-4 py-3 rounded-lg border border-white/10 text-slate-400 hover:bg-white/[0.04] transition-colors"
               >
                 <XCircle className="w-4 h-4" />
               </button>
@@ -191,7 +191,7 @@ export default function AnalisePage() {
           </div>
 
           {loading && (
-            <div className="bg-brand-50 border border-brand-100 rounded-lg px-4 py-3 text-sm text-brand-700 text-center">
+            <div className="bg-brand-600/10 border border-brand-500/20 rounded-lg px-4 py-3 text-sm text-brand-400 text-center">
               A IA está lendo e analisando o documento. Isso pode levar até 30 segundos...
             </div>
           )}
@@ -202,15 +202,15 @@ export default function AnalisePage() {
       {result && (
         <div className="space-y-4">
           {/* Header */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-start justify-between gap-4">
+          <div className="bg-[#111118] rounded-xl border border-white/[0.07] p-5 flex items-start justify-between gap-4">
             <div>
               <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Tipo de documento</p>
-              <h2 className="text-xl font-bold text-slate-900">{result.tipoDocumento || 'Documento jurídico'}</h2>
+              <h2 className="text-xl font-bold text-slate-100">{result.tipoDocumento || 'Documento jurídico'}</h2>
               {result.partes.length > 0 && (
                 <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                  <Users className="w-3.5 h-3.5 text-slate-400" />
+                  <Users className="w-3.5 h-3.5 text-slate-500" />
                   {result.partes.map((p, i) => (
-                    <span key={i} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                    <span key={i} className="text-xs bg-white/5 text-slate-400 px-2 py-0.5 rounded-full">
                       {p}
                     </span>
                   ))}
@@ -219,7 +219,7 @@ export default function AnalisePage() {
             </div>
             <button
               onClick={reset}
-              className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors shrink-0"
+              className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 border border-white/10 px-3 py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors shrink-0"
             >
               <Upload className="w-3.5 h-3.5" />
               Novo
@@ -228,14 +228,14 @@ export default function AnalisePage() {
 
           {/* Resumo */}
           {result.resumo && (
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <div className="bg-[#111118] rounded-xl border border-white/[0.07] p-5">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center">
-                  <FileText className="w-3.5 h-3.5 text-brand-600" />
+                <div className="w-7 h-7 rounded-lg bg-brand-600/15 flex items-center justify-center">
+                  <FileText className="w-3.5 h-3.5 text-brand-400" />
                 </div>
-                <h3 className="font-semibold text-slate-900">Resumo Executivo</h3>
+                <h3 className="font-semibold text-slate-100">Resumo Executivo</h3>
               </div>
-              <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">{result.resumo}</p>
+              <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{result.resumo}</p>
             </div>
           )}
 
@@ -245,13 +245,13 @@ export default function AnalisePage() {
               <ul className="mt-3 space-y-3">
                 {result.pontosChave.map((item, i) => (
                   <li key={i} className="flex gap-3">
-                    <span className="w-5 h-5 rounded-full bg-brand-100 text-brand-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="w-5 h-5 rounded-full bg-brand-600/15 text-brand-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                       {i + 1}
                     </span>
                     <div>
-                      <p className="text-slate-800 text-sm">{item.ponto}</p>
+                      <p className="text-slate-200 text-sm">{item.ponto}</p>
                       {item.localizacao && (
-                        <p className="text-xs text-slate-400 mt-0.5">{item.localizacao}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{item.localizacao}</p>
                       )}
                     </div>
                   </li>
@@ -265,14 +265,14 @@ export default function AnalisePage() {
             <Section icon={Calendar} title="Datas e Prazos" count={result.datas.length}>
               <div className="mt-3 space-y-2">
                 {result.datas.map((item, i) => (
-                  <div key={i} className="flex gap-3 p-3 bg-slate-50 rounded-lg">
+                  <div key={i} className="flex gap-3 p-3 bg-[#0d0d15] rounded-lg border border-white/[0.05]">
                     <div className="text-center shrink-0">
-                      <span className="text-sm font-bold text-brand-600 whitespace-nowrap">{item.data}</span>
+                      <span className="text-sm font-bold text-brand-400 whitespace-nowrap">{item.data}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-slate-800 text-sm">{item.descricao}</p>
+                      <p className="text-slate-200 text-sm">{item.descricao}</p>
                       {item.localizacao && (
-                        <p className="text-xs text-slate-400 mt-0.5">{item.localizacao}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{item.localizacao}</p>
                       )}
                     </div>
                   </div>
@@ -316,9 +316,9 @@ export default function AnalisePage() {
             <Section icon={HelpCircle} title="Perguntas Estratégicas" count={result.perguntas.length}>
               <ul className="mt-3 space-y-2">
                 {result.perguntas.map((q, i) => (
-                  <li key={i} className="flex gap-3 p-3 bg-slate-50 rounded-lg">
-                    <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                    <p className="text-slate-800 text-sm">{q}</p>
+                  <li key={i} className="flex gap-3 p-3 bg-[#0d0d15] rounded-lg border border-white/[0.05]">
+                    <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <p className="text-slate-200 text-sm">{q}</p>
                   </li>
                 ))}
               </ul>

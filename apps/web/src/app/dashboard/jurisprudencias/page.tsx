@@ -16,11 +16,11 @@ import { isAdmin } from '@/lib/auth';
 import type { JurisprudenceDocument, PaginatedResponse, ProcessingStatus } from '@/types';
 
 const STATUS_COLORS: Record<ProcessingStatus, string> = {
-  NOT_STARTED: 'bg-slate-100 text-slate-600',
-  CHUNKING: 'bg-blue-100 text-blue-700',
-  EMBEDDING: 'bg-violet-100 text-violet-700',
-  INDEXED: 'bg-emerald-100 text-emerald-700',
-  FAILED: 'bg-red-100 text-red-700',
+  NOT_STARTED: 'bg-white/5 text-slate-400',
+  CHUNKING: 'bg-brand-600/15 text-brand-400',
+  EMBEDDING: 'bg-violet-500/15 text-violet-400',
+  INDEXED: 'bg-emerald-500/15 text-emerald-400',
+  FAILED: 'bg-red-500/15 text-red-400',
 };
 
 export default function JurisprudenciasPage() {
@@ -64,14 +64,14 @@ export default function JurisprudenciasPage() {
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Jurisprudências</h1>
+          <h1 className="text-2xl font-bold text-slate-100">Jurisprudências</h1>
           <p className="text-slate-500 text-sm mt-1">
             {pagination?.total || 0} documento{(pagination?.total || 0) !== 1 ? 's' : ''} na base
           </p>
         </div>
         <button
           onClick={() => refetch()}
-          className="flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-sm transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-slate-200 hover:bg-white/[0.07] rounded-lg text-sm transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Atualizar
@@ -80,35 +80,35 @@ export default function JurisprudenciasPage() {
 
       {/* Busca */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
         <input
           type="text"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder="Buscar por título, tribunal, tema ou processo..."
-          className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 text-slate-900 text-sm rounded-lg
-                     placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          className="w-full pl-10 pr-4 py-2.5 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-lg
+                     placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
         />
       </div>
 
       {/* Tabela */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-[#111118] border border-white/[0.07] rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <RefreshCw className="w-5 h-5 text-slate-400 animate-spin" />
+            <RefreshCw className="w-5 h-5 text-slate-500 animate-spin" />
           </div>
         ) : documents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <FileText className="w-10 h-10 text-slate-300 mb-3" />
-            <p className="text-slate-500 font-medium">Nenhuma jurisprudência encontrada</p>
-            <p className="text-slate-400 text-sm mt-1">
+            <FileText className="w-10 h-10 text-slate-600 mb-3" />
+            <p className="text-slate-400 font-medium">Nenhuma jurisprudência encontrada</p>
+            <p className="text-slate-500 text-sm mt-1">
               {search ? 'Tente outros termos de busca' : 'Faça o upload do primeiro documento'}
             </p>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50">
+              <tr className="border-b border-white/[0.05] bg-white/[0.02]">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                   Documento
                 </th>
@@ -126,27 +126,27 @@ export default function JurisprudenciasPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-white/[0.05]">
               {documents.map((doc) => (
-                <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
+                <tr key={doc.id} className="hover:bg-white/[0.04] transition-colors">
                   <td className="px-4 py-3.5">
                     <div>
-                      <p className="font-medium text-slate-800 leading-tight line-clamp-1">
+                      <p className="font-medium text-slate-200 leading-tight line-clamp-1">
                         {doc.title}
                       </p>
-                      <p className="text-slate-400 text-xs mt-0.5">
+                      <p className="text-slate-500 text-xs mt-0.5">
                         {doc.fileName} • {formatFileSize(doc.fileSize)}
                         {doc.chunkCount > 0 && ` • ${doc.chunkCount} chunks`}
                       </p>
                     </div>
                   </td>
                   <td className="px-4 py-3.5 hidden md:table-cell">
-                    <span className="text-slate-600 text-xs">
+                    <span className="text-slate-400 text-xs">
                       {doc.tribunal || '—'}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 hidden lg:table-cell">
-                    <span className="text-slate-600 text-xs">
+                    <span className="text-slate-400 text-xs">
                       {formatDate(doc.judgmentDate)}
                     </span>
                   </td>
@@ -164,7 +164,7 @@ export default function JurisprudenciasPage() {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => setSelected(doc)}
-                        className="text-slate-400 hover:text-brand-600 transition-colors p-1 rounded"
+                        className="text-slate-500 hover:text-brand-400 transition-colors p-1 rounded"
                         title="Ver detalhes"
                       >
                         <Eye className="w-4 h-4" />
@@ -174,7 +174,7 @@ export default function JurisprudenciasPage() {
                           <button
                             onClick={() => reindexMutation.mutate(doc.id)}
                             disabled={reindexMutation.isPending}
-                            className="text-slate-400 hover:text-amber-600 transition-colors p-1 rounded"
+                            className="text-slate-500 hover:text-amber-400 transition-colors p-1 rounded"
                             title="Reindexar"
                           >
                             <RefreshCw className="w-4 h-4" />
@@ -185,7 +185,7 @@ export default function JurisprudenciasPage() {
                                 deleteMutation.mutate(doc.id);
                               }
                             }}
-                            className="text-slate-400 hover:text-red-600 transition-colors p-1 rounded"
+                            className="text-slate-500 hover:text-red-400 transition-colors p-1 rounded"
                             title="Excluir"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -202,7 +202,7 @@ export default function JurisprudenciasPage() {
 
         {/* Paginação */}
         {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.05]">
             <p className="text-slate-500 text-xs">
               Página {pagination.page} de {pagination.totalPages} ({pagination.total} total)
             </p>
@@ -210,14 +210,14 @@ export default function JurisprudenciasPage() {
               <button
                 onClick={() => setPage((p) => p - 1)}
                 disabled={!pagination.hasPrev}
-                className="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/[0.07] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-slate-400"
               >
                 Anterior
               </button>
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={!pagination.hasNext}
-                className="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/[0.07] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-slate-400"
               >
                 Próxima
               </button>
@@ -242,13 +242,13 @@ function DocumentModal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h3 className="font-semibold text-slate-900">Detalhes do documento</h3>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-[#111118] border border-white/10 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-white/[0.07]">
+          <h3 className="font-semibold text-slate-100">Detalhes do documento</h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 text-xl leading-none"
+            className="text-slate-500 hover:text-slate-300 text-xl leading-none"
           >
             ×
           </button>
@@ -256,7 +256,7 @@ function DocumentModal({
         <div className="p-6 space-y-4">
           <div>
             <p className="text-xs text-slate-500 mb-1">Título</p>
-            <p className="text-slate-800 font-medium">{doc.title}</p>
+            <p className="text-slate-200 font-medium">{doc.title}</p>
           </div>
           {[
             { label: 'Tribunal', value: doc.tribunal },
@@ -269,7 +269,7 @@ function DocumentModal({
           ].map(({ label, value }) => value && value !== '—' ? (
             <div key={label}>
               <p className="text-xs text-slate-500 mb-1">{label}</p>
-              <p className="text-slate-800 text-sm">{value}</p>
+              <p className="text-slate-300 text-sm">{value}</p>
             </div>
           ) : null)}
           {doc.keywords.length > 0 && (
@@ -277,7 +277,7 @@ function DocumentModal({
               <p className="text-xs text-slate-500 mb-2">Palavras-chave</p>
               <div className="flex flex-wrap gap-1.5">
                 {doc.keywords.map((kw) => (
-                  <span key={kw} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                  <span key={kw} className="text-xs bg-white/5 text-slate-400 px-2 py-0.5 rounded-full">
                     {kw}
                   </span>
                 ))}
@@ -285,8 +285,8 @@ function DocumentModal({
             </div>
           )}
           {doc.processingError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-xs text-red-600 font-medium mb-1">Erro no processamento</p>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+              <p className="text-xs text-red-400 font-medium mb-1">Erro no processamento</p>
               <p className="text-xs text-red-500">{doc.processingError}</p>
             </div>
           )}

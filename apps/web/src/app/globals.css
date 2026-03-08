@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --background: 240 20% 4%;
+    --foreground: 213 31% 91%;
+    --card: 240 15% 6%;
+    --card-foreground: 213 31% 91%;
+    --popover: 240 15% 7%;
+    --popover-foreground: 213 31% 91%;
     --primary: 228 96% 60%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    --secondary: 240 10% 12%;
+    --secondary-foreground: 213 31% 75%;
+    --muted: 240 10% 10%;
+    --muted-foreground: 215 20% 45%;
+    --accent: 240 10% 14%;
+    --accent-foreground: 213 31% 85%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 240 10% 12%;
+    --input: 240 10% 12%;
     --ring: 228 96% 60%;
     --radius: 0.5rem;
   }
@@ -31,125 +31,148 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-[#08080f] text-slate-100 font-sans antialiased;
   }
 
-  /* Scrollbar customizada */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  /* Reflexo de luz que varre a tela continuamente */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 40%, rgba(59, 85, 245, 0.04) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 50% at 85% 20%, rgba(98, 128, 253, 0.03) 0%, transparent 55%),
+      radial-gradient(ellipse 40% 30% at 50% 80%, rgba(37, 53, 234, 0.02) 0%, transparent 60%);
+    animation: aurora-shift 16s ease-in-out infinite alternate;
   }
 
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-400;
-  }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
 }
 
-@layer utilities {
-  .animation-delay-200 {
-    animation-delay: 200ms;
-  }
-  .animation-delay-400 {
-    animation-delay: 400ms;
-  }
+/* ======= KEYFRAMES ======= */
+
+@keyframes aurora-shift {
+  0%   { background-position: 0% 0%; opacity: 1; }
+  100% { background-position: 100% 100%; opacity: 0.7; }
 }
 
-/* Shimmer skeleton para cards enquanto carrega */
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+/* Reflexo diagonal que varre o card */
+@keyframes light-sweep {
+  0%   { transform: translateX(-120%) skewX(-15deg); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(220%) skewX(-15deg); opacity: 0; }
 }
 
-.shimmer {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 800px 100%;
-  animation: shimmer 1.5s infinite linear;
+/* Brilho suave de borda */
+@keyframes border-glow {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50%       { box-shadow: 0 0 12px 1px rgba(98, 128, 253, 0.08); }
 }
 
-/* Fade-in suave para seções do dashboard */
+/* Fade-in de cards */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Typing blink */
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75%      { opacity: 0; }
+}
+
+/* Shimmer skeleton */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+/* Pulso suave */
+@keyframes softGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(98, 128, 253, 0); }
+  50%       { box-shadow: 0 0 20px 2px rgba(98, 128, 253, 0.07); }
+}
+
+/* ======= UTILITY CLASSES ======= */
+
+/* Card escuro com reflexo de luz varrendo */
+.dark-card {
+  position: relative;
+  overflow: hidden;
+  background: #111118;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.dark-card::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: 0;
+  width: 40%;
+  height: 220%;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255,255,255,0.025) 50%,
+    transparent 70%
+  );
+  animation: light-sweep 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.dark-card:nth-child(2)::after { animation-delay: 2.5s; }
+.dark-card:nth-child(3)::after { animation-delay: 5s; }
+.dark-card:nth-child(4)::after { animation-delay: 1.2s; }
+.dark-card:nth-child(5)::after { animation-delay: 3.7s; }
+
+.glow-pulse {
+  animation: softGlow 4s ease-in-out infinite;
 }
 
 .fade-in-up {
-  animation: fadeInUp 0.4s ease-out forwards;
+  animation: fadeInUp 0.35s ease-out forwards;
 }
 
-/* Glow sutil para cards importantes */
-@keyframes softGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-  50% { box-shadow: 0 0 16px 2px rgba(99, 102, 241, 0.08); }
+.shimmer {
+  background: linear-gradient(90deg, #16161f 25%, #1e1e2a 50%, #16161f 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.8s infinite linear;
 }
 
-.glow-pulse {
-  animation: softGlow 3s ease-in-out infinite;
-}
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-400 { animation-delay: 400ms; }
 
-/* Estilos para markdown no chat */
+/* Chat markdown */
 .prose-legal {
-  @apply text-slate-700 leading-relaxed;
+  @apply text-slate-300 leading-relaxed;
 }
-
 .prose-legal h2 {
-  @apply text-slate-900 font-semibold text-base mt-4 mb-2 pb-1 border-b border-slate-200;
+  @apply text-slate-100 font-semibold text-base mt-4 mb-2 pb-1 border-b border-white/10;
 }
-
 .prose-legal h3 {
-  @apply text-slate-800 font-medium text-sm mt-3 mb-1;
+  @apply text-slate-200 font-medium text-sm mt-3 mb-1;
 }
-
-.prose-legal p {
-  @apply mb-3 text-sm;
-}
-
-.prose-legal ul, .prose-legal ol {
-  @apply mb-3 pl-5 text-sm;
-}
-
-.prose-legal li {
-  @apply mb-1;
-}
-
+.prose-legal p      { @apply mb-3 text-sm; }
+.prose-legal ul,
+.prose-legal ol     { @apply mb-3 pl-5 text-sm; }
+.prose-legal li     { @apply mb-1; }
 .prose-legal blockquote {
-  @apply border-l-4 border-brand-300 pl-4 italic text-slate-600 my-3;
+  @apply border-l-4 border-brand-500 pl-4 italic text-slate-400 my-3;
 }
+.prose-legal strong { @apply font-semibold text-slate-200; }
+.prose-legal em     { @apply text-slate-400; }
+.prose-legal code   { @apply bg-white/5 px-1.5 py-0.5 rounded text-xs font-mono text-slate-300; }
 
-.prose-legal strong {
-  @apply font-semibold text-slate-800;
-}
-
-.prose-legal em {
-  @apply text-slate-600;
-}
-
-.prose-legal code {
-  @apply bg-slate-100 px-1 py-0.5 rounded text-xs font-mono;
-}
-
-/* Animação de digitação */
-@keyframes blink {
-  0%, 50%, 100% { opacity: 1; }
-  25%, 75% { opacity: 0; }
-}
-
+/* Typing indicator */
 .typing-indicator span {
-  @apply inline-block w-1.5 h-1.5 bg-slate-400 rounded-full mx-0.5;
+  @apply inline-block w-1.5 h-1.5 bg-slate-500 rounded-full mx-0.5;
   animation: blink 1.4s ease-in-out infinite;
 }
-
-.typing-indicator span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-indicator span:nth-child(3) {
-  animation-delay: 0.4s;
-}
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }

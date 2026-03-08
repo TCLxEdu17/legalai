@@ -86,7 +86,7 @@ export default function ApiPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">API & Chaves de Acesso</h1>
+          <h1 className="text-2xl font-bold text-slate-100">API & Chaves de Acesso</h1>
           <p className="text-slate-500 text-sm mt-1">
             Gerencie suas API Keys para integrar com outras aplicações.
           </p>
@@ -102,28 +102,28 @@ export default function ApiPage() {
 
       {/* Aviso de chave gerada */}
       {newKey && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-900 mb-1">
+              <p className="text-sm font-semibold text-amber-300 mb-1">
                 Sua nova API Key — salve agora
               </p>
-              <p className="text-xs text-amber-700 mb-3">
+              <p className="text-xs text-amber-400 mb-3">
                 Esta chave será exibida apenas uma vez. Copie e armazene com segurança.
               </p>
-              <div className="flex items-center gap-2 bg-white border border-amber-200 rounded-lg p-3">
-                <code className="flex-1 text-xs font-mono text-slate-800 break-all">{newKey}</code>
+              <div className="flex items-center gap-2 bg-[#0d0d15] border border-amber-500/20 rounded-lg p-3">
+                <code className="flex-1 text-xs font-mono text-slate-300 break-all">{newKey}</code>
                 <button
                   onClick={copyKey}
-                  className="shrink-0 p-1.5 text-amber-600 hover:text-amber-800 transition-colors"
+                  className="shrink-0 p-1.5 text-amber-400 hover:text-amber-300 transition-colors"
                 >
                   {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
               <button
                 onClick={() => setNewKey(null)}
-                className="mt-2 text-xs text-amber-600 hover:text-amber-800 underline"
+                className="mt-2 text-xs text-amber-500 hover:text-amber-400 underline"
               >
                 Já copiei, fechar aviso
               </button>
@@ -134,21 +134,21 @@ export default function ApiPage() {
 
       {/* Formulário nova chave */}
       {showForm && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <h2 className="text-base font-semibold text-slate-900 mb-4">Nova API Key</h2>
+        <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-5">
+          <h2 className="text-base font-semibold text-slate-100 mb-4">Nova API Key</h2>
           <form onSubmit={handleSubmit((d) => createMutation.mutate(d))} className="flex gap-3">
             <div className="flex-1">
               <input
                 {...register('name')}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full px-3 py-2 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
                 placeholder="Nome da chave (ex: App de Produção)"
               />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+              {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
             </div>
             <button
               type="submit"
               disabled={createMutation.isPending}
-              className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-slate-200 text-white rounded-lg text-sm font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-white/5 text-white rounded-lg text-sm font-medium flex items-center gap-2"
             >
               {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               Criar
@@ -156,7 +156,7 @@ export default function ApiPage() {
             <button
               type="button"
               onClick={() => { setShowForm(false); reset(); }}
-              className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg text-sm"
+              className="px-4 py-2 border border-white/10 text-slate-400 hover:bg-white/[0.04] rounded-lg text-sm"
             >
               Cancelar
             </button>
@@ -165,30 +165,30 @@ export default function ApiPage() {
       )}
 
       {/* Lista de chaves */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
-          <h2 className="text-sm font-semibold text-slate-700">Chaves ativas</h2>
+      <div className="bg-[#111118] border border-white/[0.07] rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-white/[0.05] bg-white/[0.02]">
+          <h2 className="text-sm font-semibold text-slate-400">Chaves ativas</h2>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-8 text-slate-400">
+          <div className="text-center py-8 text-slate-500">
             <Loader2 className="w-5 h-5 animate-spin mx-auto" />
           </div>
         ) : apiKeys.length === 0 ? (
           <div className="text-center py-12">
-            <Key className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+            <Key className="w-10 h-10 text-slate-600 mx-auto mb-3" />
             <p className="text-slate-500 text-sm">Nenhuma chave criada ainda</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-white/[0.05]">
             {apiKeys.map((key: any) => (
               <div key={key.id} className="flex items-center justify-between px-4 py-3.5">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center">
                     <Key className="w-4 h-4 text-slate-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-900">{key.name}</p>
+                    <p className="text-sm font-medium text-slate-200">{key.name}</p>
                     <p className="text-xs text-slate-500">
                       <code className="font-mono">{key.keyPrefix}…</code>
                       {' · '}Criada em {formatDate(key.createdAt)}
@@ -199,7 +199,7 @@ export default function ApiPage() {
                 <button
                   onClick={() => deleteMutation.mutate(key.id)}
                   disabled={deleteMutation.isPending}
-                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -210,16 +210,16 @@ export default function ApiPage() {
       </div>
 
       {/* Documentação básica da API */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
+      <div className="bg-[#111118] border border-white/[0.07] rounded-xl p-6 space-y-5">
         <div className="flex items-center gap-2 mb-2">
-          <Code className="w-5 h-5 text-brand-600" />
-          <h2 className="text-base font-semibold text-slate-900">Como usar a API</h2>
+          <Code className="w-5 h-5 text-brand-400" />
+          <h2 className="text-base font-semibold text-slate-100">Como usar a API</h2>
         </div>
 
         <div className="space-y-4">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Autenticação por JWT</p>
-            <pre className="bg-slate-900 text-slate-200 text-xs font-mono rounded-lg p-4 overflow-x-auto">
+            <pre className="bg-[#080810] border border-white/5 text-slate-300 text-xs font-mono rounded-lg p-4 overflow-x-auto">
 {`# Login e obtenção do token
 curl -X POST http://localhost:3001/api/v1/auth/login \\
   -H "Content-Type: application/json" \\
@@ -249,15 +249,15 @@ curl http://localhost:3001/api/v1/ai/query \\
                 { method: 'GET',  path: '/api/v1/health', desc: 'Health check da API' },
                 { method: 'GET',  path: '/api/docs', desc: 'Swagger/OpenAPI interativo' },
               ].map((ep) => (
-                <div key={ep.path} className="flex items-start gap-3 py-2 border-b border-slate-100 last:border-0">
+                <div key={ep.path} className="flex items-start gap-3 py-2 border-b border-white/[0.05] last:border-0">
                   <span className={`shrink-0 text-xs font-bold font-mono px-2 py-0.5 rounded ${
-                    ep.method === 'GET' ? 'bg-emerald-100 text-emerald-700' :
-                    ep.method === 'POST' ? 'bg-blue-100 text-blue-700' :
-                    'bg-amber-100 text-amber-700'
+                    ep.method === 'GET' ? 'bg-emerald-500/15 text-emerald-400' :
+                    ep.method === 'POST' ? 'bg-brand-600/15 text-brand-400' :
+                    'bg-amber-500/15 text-amber-400'
                   }`}>
                     {ep.method}
                   </span>
-                  <code className="text-xs font-mono text-slate-700 shrink-0">{ep.path}</code>
+                  <code className="text-xs font-mono text-slate-300 shrink-0">{ep.path}</code>
                   <span className="text-xs text-slate-500">{ep.desc}</span>
                 </div>
               ))}
@@ -266,7 +266,7 @@ curl http://localhost:3001/api/v1/ai/query \\
 
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Exemplo: consulta jurídica</p>
-            <pre className="bg-slate-900 text-slate-200 text-xs font-mono rounded-lg p-4 overflow-x-auto">
+            <pre className="bg-[#080810] border border-white/5 text-slate-300 text-xs font-mono rounded-lg p-4 overflow-x-auto">
 {`POST /api/v1/chat/message
 {
   "message": "Existe jurisprudência sobre responsabilidade civil em erro médico?",

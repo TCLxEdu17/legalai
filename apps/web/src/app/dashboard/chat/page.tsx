@@ -254,8 +254,8 @@ export default function ChatPage() {
     <div className="flex h-full gap-0 -m-6 overflow-hidden">
       {/* Sidebar de sessões */}
       {showSidebar && (
-        <div className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
-          <div className="p-4 border-b border-slate-100">
+        <div className="w-64 bg-[#0a0a12] border-r border-white/[0.06] flex flex-col shrink-0">
+          <div className="p-4 border-b border-white/[0.05]">
             <button
               onClick={startNewChat}
               className="w-full flex items-center gap-2 px-3 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors"
@@ -267,7 +267,7 @@ export default function ChatPage() {
 
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {sessions.length === 0 && (
-              <p className="text-slate-400 text-xs text-center py-8 px-4">
+              <p className="text-slate-600 text-xs text-center py-8 px-4">
                 Nenhuma consulta ainda. Inicie uma nova.
               </p>
             )}
@@ -277,15 +277,15 @@ export default function ChatPage() {
                 className={cn(
                   'group flex items-start gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors',
                   activeSessionId === session.id
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'hover:bg-slate-50 text-slate-700',
+                    ? 'bg-brand-600/15 text-brand-400'
+                    : 'hover:bg-white/[0.04] text-slate-400',
                 )}
                 onClick={() => setActiveSessionId(session.id)}
               >
-                <MessageSquare className="w-3.5 h-3.5 mt-0.5 shrink-0 text-slate-400" />
+                <MessageSquare className="w-3.5 h-3.5 mt-0.5 shrink-0 text-slate-600" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate leading-tight">{session.title}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-600 mt-0.5">
                     {formatRelativeTime(session.updatedAt)}
                   </p>
                 </div>
@@ -294,7 +294,7 @@ export default function ChatPage() {
                     e.stopPropagation();
                     deleteMutation.mutate(session.id);
                   }}
-                  className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all"
+                  className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition-all"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -305,12 +305,12 @@ export default function ChatPage() {
       )}
 
       {/* Área principal do chat */}
-      <div className="flex-1 flex flex-col min-w-0 bg-slate-50">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#08080f]">
         {/* Toggle sidebar */}
-        <div className="flex items-center gap-2 px-4 py-3 bg-white border-b border-slate-200 shrink-0">
+        <div className="flex items-center gap-2 px-4 py-3 bg-[#0d0d16]/80 border-b border-white/[0.06] shrink-0 backdrop-blur-sm">
           <button
             onClick={() => setShowSidebar((v) => !v)}
-            className="text-slate-500 hover:text-slate-700 transition-colors"
+            className="text-slate-500 hover:text-slate-300 transition-colors"
           >
             <ChevronRight
               className={cn(
@@ -319,7 +319,7 @@ export default function ChatPage() {
               )}
             />
           </button>
-          <h2 className="text-sm font-medium text-slate-700">
+          <h2 className="text-sm font-medium text-slate-400">
             {activeSessionId ? 'Assistente Jurídico' : 'Nova consulta'}
           </h2>
         </div>
@@ -328,12 +328,12 @@ export default function ChatPage() {
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
           {messages.length === 0 && !loadingMessages && (
             <div className="flex flex-col items-center justify-center h-full text-center py-16">
-              <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center mb-4">
-                <MessageSquare className="w-7 h-7 text-brand-600" />
+              <div className="w-14 h-14 bg-brand-600/20 border border-brand-500/20 rounded-2xl flex items-center justify-center mb-4">
+                <MessageSquare className="w-7 h-7 text-brand-400" />
               </div>
               {messages.length === 0 && !activeSessionId && (
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-slate-800">{getGreeting()}</h2>
+                  <h2 className="text-2xl font-bold text-slate-100">{getGreeting()}</h2>
                   <p className="text-slate-500 text-sm mt-1">Como posso ajudar você hoje?</p>
                 </div>
               )}
@@ -348,7 +348,7 @@ export default function ChatPage() {
                       reset({ message: '' });
                       sendMutation.mutate({ message: example, sessionId: activeSessionId });
                     }}
-                    className="block w-full text-left px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 hover:border-brand-200 hover:text-brand-700 transition-colors"
+                    className="block w-full text-left px-4 py-2.5 bg-[#111118] border border-white/[0.07] rounded-lg text-xs text-slate-400 hover:border-brand-500/30 hover:text-brand-400 transition-colors"
                   >
                     "{example}"
                   </button>
@@ -366,7 +366,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input */}
-        <div className="shrink-0 bg-white border-t border-slate-200 p-4">
+        <div className="shrink-0 bg-[#0d0d16]/80 border-t border-white/[0.06] p-4 backdrop-blur-sm">
           {/* Sugestões de follow-up */}
           {followUpSuggestions.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
@@ -378,7 +378,7 @@ export default function ChatPage() {
                     reset({ message: '' });
                     sendMutation.mutate({ message: s, sessionId: activeSessionId });
                   }}
-                  className="text-xs px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-full hover:bg-brand-100 transition-colors text-left"
+                  className="text-xs px-3 py-1.5 bg-brand-600/10 text-brand-400 border border-brand-500/20 rounded-full hover:bg-brand-600/15 transition-colors text-left"
                 >
                   {s}
                 </button>
@@ -399,18 +399,18 @@ export default function ChatPage() {
                       handleSubmit(onSubmit)();
                     }
                   }}
-                  className="w-full resize-none px-4 py-3 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl
-                             placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+                  className="w-full resize-none px-4 py-3 bg-[#0d0d18] border border-white/10 text-slate-100 text-sm rounded-xl
+                             placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
                              disabled:opacity-60 transition-colors"
                 />
                 {errors.message && (
-                  <p className="text-red-500 text-xs mt-1">{errors.message.message}</p>
+                  <p className="text-red-400 text-xs mt-1">{errors.message.message}</p>
                 )}
               </div>
               <button
                 type="submit"
                 disabled={isLoading || !messageValue?.trim()}
-                className="px-4 py-3 bg-brand-600 hover:bg-brand-700 disabled:bg-slate-200 disabled:cursor-not-allowed
+                className="px-4 py-3 bg-brand-600 hover:bg-brand-700 disabled:bg-white/5 disabled:cursor-not-allowed
                            text-white rounded-xl transition-colors flex items-center justify-center shrink-0 self-start mt-0"
               >
                 {isLoading ? (
@@ -420,7 +420,7 @@ export default function ChatPage() {
                 )}
               </button>
             </div>
-            <p className="text-slate-400 text-xs mt-2">
+            <p className="text-slate-600 text-xs mt-2">
               Enter para enviar • Shift+Enter para nova linha
             </p>
           </form>

@@ -41,27 +41,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#08080f] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex flex-col items-center gap-3">
-            <div className="w-12 h-12 bg-brand-600 rounded-xl flex items-center justify-center">
-              <Scale className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-brand-600/20 border border-brand-500/30 rounded-xl flex items-center justify-center">
+              <Scale className="w-6 h-6 text-brand-400" />
             </div>
-            <span className="text-white font-semibold text-xl tracking-tight">LegalAI</span>
+            <span className="text-slate-100 font-semibold text-xl tracking-tight">LegalAI</span>
           </Link>
           <p className="text-slate-500 text-sm mt-2">Assistente Jurídico com IA</p>
         </div>
 
         {/* Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
-          <h1 className="text-white font-semibold text-lg mb-6">Acesse sua conta</h1>
+        <div className="bg-[#111118] border border-white/10 rounded-2xl p-8">
+          <h1 className="text-slate-100 font-semibold text-lg mb-6">Acesse sua conta</h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* E-mail */}
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
+              <label className="block text-slate-400 text-sm font-medium mb-2">
                 E-mail
               </label>
               <input
@@ -69,8 +69,8 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 placeholder="seu@email.com.br"
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg text-sm
-                           placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+                className="w-full px-4 py-3 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm
+                           placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
                            transition-colors"
               />
               {errors.email && (
@@ -80,7 +80,7 @@ export default function LoginPage() {
 
             {/* Senha */}
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
+              <label className="block text-slate-400 text-sm font-medium mb-2">
                 Senha
               </label>
               <div className="relative">
@@ -89,8 +89,8 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg text-sm
-                             placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+                  className="w-full px-4 py-3 bg-[#0d0d18] border border-white/10 text-slate-100 rounded-lg text-sm
+                             placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
                              transition-colors pr-11"
                 />
                 <button
