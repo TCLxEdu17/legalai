@@ -41,8 +41,16 @@ export class ChatService {
     const history = await this.getRecentHistory(session.id);
 
     // Executar RAG
-    this.logger.log(`Chat RAG: sessão=${session.id}, usuário=${userId}`);
+    const ragStart = Date.now();
+    this.logger.log(
+      `[RAG] Início | sessão=${session.id} | user=${userId} | pergunta="${dto.message.slice(0, 80)}..."`,
+    );
     const ragResult = await this.ragService.query(dto.message, history);
+    const ragElapsed = Date.now() - ragStart;
+
+    this.logger.log(
+      `[RAG] Concluído | ${ragElapsed}ms | chunks=${ragResult.retrievedChunks} | confiança=${ragResult.confidence} | modelo=${ragResult.model} | tokens=in:${ragResult.tokensUsed.input} out:${ragResult.tokensUsed.output}`,
+    );
 
     // Salvar resposta do assistente
     const assistantMessage = await this.prisma.chatMessage.create({

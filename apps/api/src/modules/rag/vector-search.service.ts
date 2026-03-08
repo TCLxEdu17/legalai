@@ -50,10 +50,11 @@ export class VectorSearchService {
     const topK = options?.topK ?? this.topK;
     const threshold = options?.threshold ?? this.similarityThreshold;
 
-    this.logger.debug(`Buscando: "${query.slice(0, 80)}..." (top ${topK}, threshold: ${threshold})`);
+    this.logger.debug(`[VectorSearch] query="${query.slice(0, 80)}" | topK=${topK} | threshold=${threshold}`);
 
-    // Gerar embedding da query
+    const embStart = Date.now();
     const { embedding } = await this.aiProvider.generateEmbedding(query);
+    this.logger.debug(`[VectorSearch] Embedding gerado em ${Date.now() - embStart}ms`);
     // Embedding gerado internamente — interpolação direta é segura
     const embeddingLiteral = `'[${embedding.join(',')}]'::vector`;
 
@@ -127,7 +128,12 @@ export class VectorSearchService {
       },
     }));
 
-    this.logger.debug(`Encontrados ${chunks.length} chunks relevantes`);
+    if (chunks.length > 0) {
+      const sims = chunks.map((c) => (c.similarity * 100).toFixed(1) + '%');
+      this.logger.debug(`[VectorSearch] ${chunks.length} chunks | similaridades: [${sims.join(', ')}]`);
+    } else {
+      this.logger.debug('[VectorSearch] Nenhum chunk acima do threshold');
+    }
 
     return chunks;
   }

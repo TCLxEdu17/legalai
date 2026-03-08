@@ -34,31 +34,33 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto): Promise<AuthTokens> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase().trim() },
-    });
+    const email = dto.email.toLowerCase().trim();
+    this.logger.log(`Tentativa de login: ${email}`);
 
-    if (!user || !user.isActive) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      this.logger.warn(`Login falhou — usuário não encontrado: ${email}`);
+      throw new UnauthorizedException('Credenciais inválidas');
+    }
+
+    if (!user.isActive) {
+      this.logger.warn(`Login falhou — usuário inativo: ${email}`);
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
     const passwordValid = await argon2.verify(user.passwordHash, dto.password);
     if (!passwordValid) {
+      this.logger.warn(`Login falhou — senha incorreta: ${email}`);
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
-
-    this.logger.log(`Login realizado: ${user.email} (${user.role})`);
+    this.logger.log(`Login bem-sucedido: ${user.email} | role=${user.role} | id=${user.id}`);
 
     return {
       ...tokens,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role },
     };
   }
 
@@ -68,16 +70,24 @@ export class AuthService {
       include: { user: true },
     });
 
-    if (!stored || stored.expiresAt < new Date()) {
+    if (!stored) {
+      this.logger.warn('Refresh token não encontrado');
+      throw new UnauthorizedException('Refresh token inválido ou expirado');
+    }
+
+    if (stored.expiresAt < new Date()) {
+      this.logger.warn(`Refresh token expirado para usuário: ${stored.user.email}`);
       throw new UnauthorizedException('Refresh token inválido ou expirado');
     }
 
     if (!stored.user.isActive) {
+      this.logger.warn(`Refresh token de usuário inativo: ${stored.user.email}`);
       throw new UnauthorizedException('Usuário inativo');
     }
 
     // Invalidar o token usado (rotação de tokens)
     await this.prisma.refreshToken.delete({ where: { token } });
+    this.logger.debug(`Token rotacionado para: ${stored.user.email}`);
 
     const tokens = await this.generateTokens(
       stored.user.id,

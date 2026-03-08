@@ -59,32 +59,43 @@ export class RagService {
     question: string,
     sessionHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
   ): Promise<RagQueryResult> {
-    this.logger.log(`RAG query: "${question.slice(0, 100)}..."`);
+    const start = Date.now();
+    this.logger.log(`[RAG] Query: "${question.slice(0, 100)}"`);
 
     // 1. Busca semântica
+    const searchStart = Date.now();
     const retrievedChunks = await this.vectorSearchService.search(question);
+    this.logger.debug(`[RAG] Busca vetorial: ${Date.now() - searchStart}ms | ${retrievedChunks.length} chunks`);
 
     // 2. Calcular nível de confiança baseado na similaridade
     const confidence = this.calculateConfidence(retrievedChunks);
     const hasContext = retrievedChunks.length > 0;
 
     if (hasContext) {
-      this.logger.log(`Modo RAG: ${retrievedChunks.length} chunks encontrados`);
+      const avgSim = (retrievedChunks.reduce((s, c) => s + c.similarity, 0) / retrievedChunks.length * 100).toFixed(1);
+      const synthCount = retrievedChunks.filter((c) => c.document.keywords?.includes('__synthesis__')).length;
+      this.logger.log(`[RAG] Modo RAG | chunks=${retrievedChunks.length} | sínteses=${synthCount} | sim_média=${avgSim}% | confiança=${confidence}`);
     } else {
-      this.logger.log('Modo fallback: sem chunks na base, respondendo com conhecimento geral do LLM');
+      this.logger.log('[RAG] Modo fallback — base sem contexto, usando conhecimento completo do LLM');
     }
 
     // 3. Construir mensagens para o LLM
     const messages = this.buildMessages(question, retrievedChunks, sessionHistory);
 
     // 4. Gerar resposta — sem contexto usa temperatura maior para explorar conhecimento amplo
+    const llmStart = Date.now();
     const completion = await this.aiProvider.generateChatCompletion(messages, {
       temperature: hasContext ? 0.15 : 0.3,
       maxTokens: 4500,
     });
+    this.logger.debug(
+      `[RAG] LLM: ${Date.now() - llmStart}ms | modelo=${completion.model} | tokens=in:${completion.inputTokens} out:${completion.outputTokens}`,
+    );
 
     // 5. Agrupar fontes por documento
     const sources = this.aggregateSources(retrievedChunks);
+
+    this.logger.log(`[RAG] Total: ${Date.now() - start}ms | fontes=${sources.length}`);
 
     return {
       answer: completion.content,

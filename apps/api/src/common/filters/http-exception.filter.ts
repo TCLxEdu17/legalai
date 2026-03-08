@@ -8,6 +8,17 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
+const SENSITIVE_FIELDS = ['password', 'passwordHash', 'token', 'refreshToken', 'secret'];
+
+function sanitizeBody(body: any): any {
+  if (!body || typeof body !== 'object') return body;
+  const sanitized = { ...body };
+  for (const field of SENSITIVE_FIELDS) {
+    if (field in sanitized) sanitized[field] = '[REDACTED]';
+  }
+  return sanitized;
+}
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
@@ -38,13 +49,25 @@ export class HttpExceptionFilter implements ExceptionFilter {
           : (message as any).message || message,
     };
 
+    // Contexto enriquecido para diagnóstico
+    const userId = (request as any).user?.id;
+    const userTag = userId ? ` | user=${userId}` : '';
+    const body = request.body && Object.keys(request.body).length
+      ? ` | body=${JSON.stringify(sanitizeBody(request.body)).slice(0, 300)}`
+      : '';
+    const query = request.query && Object.keys(request.query).length
+      ? ` | query=${JSON.stringify(request.query)}`
+      : '';
+
+    const prefix = `${request.method} ${request.url} → ${status}${userTag}${query}${body}`;
+
     if (status >= 500) {
       this.logger.error(
-        `${request.method} ${request.url} - ${status}`,
+        prefix,
         exception instanceof Error ? exception.stack : String(exception),
       );
-    } else {
-      this.logger.warn(`${request.method} ${request.url} - ${status}: ${JSON.stringify(message)}`);
+    } else if (status >= 400) {
+      this.logger.warn(`${prefix} | ${JSON.stringify(message)}`);
     }
 
     response.status(status).json(errorResponse);
