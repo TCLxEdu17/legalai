@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
@@ -14,10 +14,40 @@ import {
   Upload,
   Globe,
   Wrench,
+  Database,
+  TrendingUp,
+  Zap,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+function useCountUp(target: number, duration = 1000): number {
+  const [value, setValue] = useState(0);
+  const startRef = useRef<number | null>(null);
+  const frameRef = useRef<number | null>(null);
+  const prevTarget = useRef(0);
+
+  useEffect(() => {
+    if (target === prevTarget.current) return;
+    prevTarget.current = target;
+    startRef.current = null;
+    const from = value;
+    const range = target - from;
+    const animate = (ts: number) => {
+      if (!startRef.current) startRef.current = ts;
+      const progress = Math.min((ts - startRef.current) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(from + eased * range));
+      if (progress < 1) frameRef.current = requestAnimationFrame(animate);
+    };
+    frameRef.current = requestAnimationFrame(animate);
+    return () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, duration]);
+
+  return value;
+}
 
 function formatDuration(start?: string | null, end?: string | null): string {
   if (!start || !end) return '—';
@@ -44,6 +74,41 @@ const STATUS_CONFIG = {
   RUNNING: { label: 'Executando', icon: Loader2, cls: 'text-brand-400 bg-brand-600/15' },
   PENDING: { label: 'Aguardando', icon: Clock, cls: 'text-slate-400 bg-white/5' },
 };
+
+function StatCard({
+  label, value, icon: Icon, iconBg, iconColor, valueColor, suffix,
+}: {
+  label: string; value: number; icon: React.ElementType;
+  iconBg: string; iconColor: string; valueColor: string; suffix?: string;
+}) {
+  const animated = useCountUp(value);
+  return (
+    <div className="dark-card rounded-xl p-4 hover:border-white/[0.14] transition-colors">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-slate-500 text-xs font-medium">{label}</p>
+        <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', iconBg)}>
+          <Icon className={cn('w-4 h-4', iconColor)} />
+        </div>
+      </div>
+      <p className={cn('text-2xl font-bold tabular-nums', valueColor)}>
+        {animated.toLocaleString('pt-BR')}{suffix}
+      </p>
+    </div>
+  );
+}
+
+function StatsRow({ total, completed, failed, indexed }: {
+  total: number; completed: number; failed: number; indexed: number;
+}) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <StatCard label="Total de Jobs"   value={total}     icon={Activity}    iconBg="bg-slate-500/15"   iconColor="text-slate-400"   valueColor="text-slate-100" />
+      <StatCard label="Concluídos"      value={completed} icon={CheckCircle} iconBg="bg-emerald-500/15" iconColor="text-emerald-400" valueColor="text-emerald-400" />
+      <StatCard label="Com erros"       value={failed}    icon={XCircle}     iconBg="bg-red-500/15"     iconColor="text-red-400"     valueColor="text-red-400" />
+      <StatCard label="Itens indexados" value={indexed}   icon={Database}    iconBg="bg-brand-600/15"   iconColor="text-brand-400"   valueColor="text-brand-400" />
+    </div>
+  );
+}
 
 export default function IngestoesPage() {
   const [page, setPage] = useState(1);
@@ -98,31 +163,12 @@ export default function IngestoesPage() {
 
       {/* Stats rápidas */}
       {pagination && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: 'Total de Jobs', value: pagination.total, cls: 'text-slate-100' },
-            {
-              label: 'Concluídos',
-              value: (stats?.byStatus?.COMPLETED ?? 0) + (stats?.byStatus?.PARTIAL ?? 0),
-              cls: 'text-emerald-400',
-            },
-            {
-              label: 'Com erros',
-              value: stats?.byStatus?.FAILED ?? 0,
-              cls: 'text-red-400',
-            },
-            {
-              label: 'Itens indexados',
-              value: stats?.totalIndexed ?? 0,
-              cls: 'text-brand-400',
-            },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-[#141414] border border-white/[0.07] rounded-xl p-4">
-              <p className="text-xs text-slate-500 font-medium mb-1">{stat.label}</p>
-              <p className={cn('text-2xl font-bold', stat.cls)}>{stat.value}</p>
-            </div>
-          ))}
-        </div>
+        <StatsRow
+          total={pagination.total}
+          completed={(stats?.byStatus?.COMPLETED ?? 0) + (stats?.byStatus?.PARTIAL ?? 0)}
+          failed={stats?.byStatus?.FAILED ?? 0}
+          indexed={stats?.totalIndexed ?? 0}
+        />
       )}
 
       {/* Tabela */}
