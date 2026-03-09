@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import {
   formatDate,
+  formatDateTime,
   formatFileSize,
   getProcessingStatusLabel,
   extractApiErrorMessage,
@@ -263,6 +264,7 @@ function DocumentModal({
             { label: 'Número do processo', value: doc.processNumber },
             { label: 'Relator', value: doc.relator },
             { label: 'Data do julgamento', value: formatDate(doc.judgmentDate) },
+            { label: 'Indexado em', value: formatDateTime(doc.createdAt) },
             { label: 'Tema', value: doc.theme },
             { label: 'Arquivo', value: `${doc.fileName} (${formatFileSize(doc.fileSize)})` },
             { label: 'Chunks indexados', value: doc.chunkCount > 0 ? `${doc.chunkCount} chunks` : '—' },
