@@ -295,6 +295,31 @@ export class IngestionService {
     };
   }
 
+  async cleanupOrphanedJobs(): Promise<number> {
+    const orphans = await this.prisma.ingestionJob.findMany({
+      where: { status: 'RUNNING' },
+      select: { id: true, itemsIndexed: true },
+    });
+
+    if (orphans.length === 0) return 0;
+
+    await Promise.all(
+      orphans.map((job) =>
+        this.prisma.ingestionJob.update({
+          where: { id: job.id },
+          data: {
+            status: (job.itemsIndexed ?? 0) > 0 ? 'PARTIAL' : 'FAILED',
+            finishedAt: new Date(),
+            errorMessage: 'Job interrompido por reinício do servidor',
+          },
+        }),
+      ),
+    );
+
+    this.logger.log(`cleanupOrphanedJobs: ${orphans.length} jobs resolvidos`);
+    return orphans.length;
+  }
+
   async runAllActiveSources(): Promise<number> {
     const sources = await this.prisma.externalSource.findMany({
       where: { isActive: true },

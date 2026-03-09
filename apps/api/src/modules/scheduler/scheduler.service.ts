@@ -19,9 +19,18 @@ export class SchedulerService implements OnModuleInit {
    */
   async onModuleInit() {
     this.logger.log('Inicializando scheduler de fontes automáticas...');
+    await this.cleanupOrphanedJobs();
     await this.syncCronJobs();
     this.registerPurgeJob();
     this.registerKnowledgeConsolidationJob();
+  }
+
+  /** Ao reiniciar, resolve jobs órfãos em RUNNING (processo morreu mid-run). */
+  private async cleanupOrphanedJobs() {
+    const count = await this.ingestionService.cleanupOrphanedJobs();
+    if (count > 0) {
+      this.logger.warn(`[Startup] ${count} jobs órfãos em RUNNING resolvidos`);
+    }
   }
 
   /**

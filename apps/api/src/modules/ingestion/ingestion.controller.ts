@@ -34,6 +34,13 @@ export class IngestionController {
     return { message: `Ingestão iniciada para ${count} fonte(s) ativa(s).`, count };
   }
 
+  @Post('jobs/cleanup-orphans')
+  @ApiOperation({ summary: 'Resolver jobs órfãos presos em RUNNING' })
+  async cleanupOrphans() {
+    const count = await this.ingestionService.cleanupOrphanedJobs();
+    return { message: `${count} jobs órfãos resolvidos`, count };
+  }
+
   @Post('sources/:sourceId/run')
   @ApiOperation({ summary: 'Executar ingestão manual de uma fonte' })
   @ApiParam({ name: 'sourceId', type: String })

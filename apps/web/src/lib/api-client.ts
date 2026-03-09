@@ -238,6 +238,11 @@ class ApiClient {
     return data;
   }
 
+  async cleanupOrphanedJobs() {
+    const { data } = await this.client.post('/ingestion/jobs/cleanup-orphans');
+    return data;
+  }
+
   // ==================== API KEYS ====================
   async getApiKeys() {
     const { data } = await this.client.get('/api-keys');

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
   CheckCircle,
@@ -13,9 +13,11 @@ import {
   ChevronUp,
   Upload,
   Globe,
+  Wrench,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 function formatDuration(start?: string | null, end?: string | null): string {
   if (!start || !end) return '—';
@@ -47,11 +49,21 @@ export default function IngestoesPage() {
   const [page, setPage] = useState(1);
   const [expandedJob, setExpandedJob] = useState<string | null>(null);
   const limit = 20;
+  const queryClient = useQueryClient();
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['ingestion-jobs', page],
     queryFn: () => apiClient.getIngestionJobs({ page, limit }),
     placeholderData: (prev) => prev,
+  });
+
+  const cleanupMutation = useMutation({
+    mutationFn: () => apiClient.cleanupOrphanedJobs(),
+    onSuccess: (res) => {
+      toast.success(`${res.count} jobs órfãos resolvidos`);
+      queryClient.invalidateQueries({ queryKey: ['ingestion-jobs'] });
+    },
+    onError: () => toast.error('Erro ao resolver jobs órfãos'),
   });
 
   const jobs: any[] = data?.data || [];
@@ -61,11 +73,27 @@ export default function IngestoesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100">Histórico de Ingestões</h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Registro de todas as execuções de ingestão, manuais e automáticas.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Histórico de Ingestões</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Registro de todas as execuções de ingestão, manuais e automáticas.
+          </p>
+        </div>
+        {(stats?.byStatus?.RUNNING ?? 0) > 0 && (
+          <button
+            onClick={() => cleanupMutation.mutate()}
+            disabled={cleanupMutation.isPending}
+            className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-sm hover:bg-amber-500/20 transition-colors disabled:opacity-60"
+          >
+            {cleanupMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Wrench className="w-4 h-4" />
+            )}
+            Resolver {stats?.byStatus?.RUNNING ?? 0} jobs presos
+          </button>
+        )}
       </div>
 
       {/* Stats rápidas */}
