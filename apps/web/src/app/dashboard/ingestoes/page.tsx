@@ -56,6 +56,7 @@ export default function IngestoesPage() {
 
   const jobs: any[] = data?.data || [];
   const pagination = data?.pagination;
+  const stats = data?.stats as { byStatus: Record<string, number>; totalIndexed: number } | undefined;
 
   return (
     <div className="space-y-6">
@@ -74,17 +75,17 @@ export default function IngestoesPage() {
             { label: 'Total de Jobs', value: pagination.total, cls: 'text-slate-100' },
             {
               label: 'Concluídos',
-              value: jobs.filter((j) => j.status === 'COMPLETED').length,
+              value: (stats?.byStatus?.COMPLETED ?? 0) + (stats?.byStatus?.PARTIAL ?? 0),
               cls: 'text-emerald-400',
             },
             {
               label: 'Com erros',
-              value: jobs.filter((j) => j.status === 'FAILED' || j.status === 'PARTIAL').length,
+              value: stats?.byStatus?.FAILED ?? 0,
               cls: 'text-red-400',
             },
             {
               label: 'Itens indexados',
-              value: jobs.reduce((sum: number, j: any) => sum + j.itemsIndexed, 0),
+              value: stats?.totalIndexed ?? 0,
               cls: 'text-brand-400',
             },
           ].map((stat) => (

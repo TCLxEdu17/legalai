@@ -260,3 +260,23 @@ html.light .prose-legal code { background-color: rgba(0,0,0,0.05); color: #37415
 /* Scrollbar in light mode */
 html.light ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
 html.light ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+
+/* Light-colored brand/color text — needs darkening on white backgrounds */
+html.light .text-brand-300 { color: #1e27d2 !important; }
+html.light .text-brand-400 { color: #2535ea !important; }
+html.light .text-brand-500 { color: #1e24aa !important; }
+html.light .text-violet-400 { color: #7c3aed !important; }
+html.light .text-violet-500 { color: #6d28d9 !important; }
+html.light .text-emerald-400 { color: #059669 !important; }
+html.light .text-emerald-500 { color: #047857 !important; }
+html.light .text-amber-400  { color: #d97706 !important; }
+
+/* Subtle white backgrounds used for progress bars, badges, tags */
+html.light [class*="bg-white\/5"]  { background-color: rgba(0,0,0,0.06) !important; }
+html.light [class*="bg-white\/\[0.04\]"]  { background-color: rgba(0,0,0,0.04) !important; }
+html.light [class*="bg-white\/\[0.05\]"]  { background-color: rgba(0,0,0,0.05) !important; }
+
+/* Gradient banner via-[#141414] becomes white → keep subtle tinted bg */
+html.light [class*="from-brand-600\/10"] {
+  background-image: linear-gradient(to right, rgba(37,53,234,0.08), rgba(243,244,246,1), rgba(109,40,217,0.08)) !important;
+}

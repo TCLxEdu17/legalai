@@ -317,7 +317,7 @@ export class IngestionService {
     if (sourceId) where.sourceId = sourceId;
 
     const skip = (page - 1) * limit;
-    const [jobs, total] = await Promise.all([
+    const [jobs, total, byStatus, totalIndexedAgg] = await Promise.all([
       this.prisma.ingestionJob.findMany({
         where,
         orderBy: { createdAt: 'desc' },
@@ -329,11 +329,32 @@ export class IngestionService {
         },
       }),
       this.prisma.ingestionJob.count({ where }),
+      this.prisma.ingestionJob.groupBy({
+        by: ['status'],
+        _count: { status: true },
+        where,
+      }),
+      this.prisma.ingestionJob.aggregate({
+        _sum: { itemsIndexed: true },
+        where,
+      }),
     ]);
+
+    const statusCounts = byStatus.reduce(
+      (acc: Record<string, number>, row) => {
+        acc[row.status] = row._count.status;
+        return acc;
+      },
+      {},
+    );
 
     return {
       data: jobs,
       pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      stats: {
+        byStatus: statusCounts,
+        totalIndexed: totalIndexedAgg._sum.itemsIndexed ?? 0,
+      },
     };
   }
 
