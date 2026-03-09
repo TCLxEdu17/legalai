@@ -109,15 +109,38 @@ async function downloadPdf(result: AnalysisResult, filename: string) {
   let y = margin;
 
   const brand = [59, 85, 245] as [number, number, number];
-  const dark = [20, 20, 30] as [number, number, number];
+  const dark = [14, 14, 20] as [number, number, number];
   const gray = [100, 100, 120] as [number, number, number];
   const light = [220, 225, 235] as [number, number, number];
+  const pageH = 297;
+  const headerH = 16; // altura do mini-header nas páginas 2+
 
-  // Função para adicionar nova página se necessário
+  const paintPageBackground = () => {
+    doc.setFillColor(...dark);
+    doc.rect(0, 0, pageW, pageH, 'F');
+  };
+
+  const paintContinuationHeader = () => {
+    // Faixa fina com cor brand
+    doc.setFillColor(...brand);
+    doc.rect(0, 0, pageW, headerH, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ANÁLISE DE DOCUMENTO  •  LEGALAI', margin, 10);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(180, 190, 255);
+    doc.text(result.tipoDocumento || 'Documento Jurídico', pageW - margin - doc.getStringUnitWidth(result.tipoDocumento || 'Documento Jurídico') * 8 * 0.35, 10);
+  };
+
+  // Função para adicionar nova página mantendo o visual idêntico
   const checkPage = (needed = 10) => {
-    if (y + needed > 280) {
+    if (y + needed > 284) {
       doc.addPage();
-      y = margin;
+      paintPageBackground();
+      paintContinuationHeader();
+      y = headerH + 6;
     }
   };
 
@@ -151,12 +174,10 @@ async function downloadPdf(result: AnalysisResult, filename: string) {
     y += 10;
   };
 
-  // Header
-  doc.setFillColor(...dark);
-  doc.rect(0, 0, 210, 297, 'F');
-
+  // Header — página 1
+  paintPageBackground();
   doc.setFillColor(...brand);
-  doc.rect(0, 0, 210, 40, 'F');
+  doc.rect(0, 0, pageW, 40, 'F');
 
   doc.setFontSize(18);
   doc.setTextColor(255, 255, 255);
@@ -242,11 +263,14 @@ async function downloadPdf(result: AnalysisResult, filename: string) {
   const totalPages = (doc as any).internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
+    // Rodapé com faixa escura
+    doc.setFillColor(10, 10, 15);
+    doc.rect(0, 288, pageW, 9, 'F');
     doc.setFontSize(7);
     doc.setTextColor(...gray);
     doc.setFont('helvetica', 'normal');
-    doc.text(`LegalAI — Análise gerada em ${new Date().toLocaleString('pt-BR')}`, margin, 292);
-    doc.text(`Página ${i} de ${totalPages}`, pageW - margin - 20, 292);
+    doc.text(`LegalAI — Análise gerada em ${new Date().toLocaleString('pt-BR')}`, margin, 293);
+    doc.text(`Página ${i} de ${totalPages}`, pageW - margin - 18, 293);
   }
 
   const safeName = filename.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
