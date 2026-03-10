@@ -10,6 +10,8 @@ import {
   Loader2,
   Key,
   AlertTriangle,
+  Zap,
+  Activity,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { isAdmin } from '@/lib/auth';
@@ -54,6 +56,22 @@ interface UsageKey {
 
 interface UsageSummaryResponse {
   apiKeys: UsageKey[];
+}
+
+interface EndpointStat {
+  endpoint: string;
+  count: number;
+  tokens: number;
+}
+
+interface TokenUsageResponse {
+  totalTokensToday: number;
+  totalTokensThisMonth: number;
+  totalTokensAllTime: number;
+  totalRequestsToday: number;
+  totalRequestsThisMonth: number;
+  requestsByEndpoint: EndpointStat[];
+  dailyUsage: { date: string; tokens: number; requests: number }[];
 }
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -145,6 +163,16 @@ export default function MetricasPage() {
     queryKey: ['usage-summary'],
     queryFn: () => apiClient.getUsageSummary(),
     enabled: admin,
+  });
+
+  const {
+    data: tokenData,
+    isLoading: tokenLoading,
+    isError: tokenError,
+  } = useQuery<TokenUsageResponse>({
+    queryKey: ['token-usage'],
+    queryFn: () => apiClient.getTokenUsage(),
+    enabled: adminChecked,
   });
 
   if (!adminChecked) return null;
@@ -308,6 +336,125 @@ export default function MetricasPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Token Usage section */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-base font-semibold text-slate-200">Uso de Tokens</h2>
+          <p className="text-slate-500 text-xs mt-0.5">Baseado nos logs de requisições (UsageLog)</p>
+        </div>
+
+        {tokenLoading ? (
+          <div className="flex items-center gap-2 text-slate-500 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Carregando uso de tokens...
+          </div>
+        ) : tokenError ? (
+          <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+            Erro ao carregar dados de tokens.
+          </div>
+        ) : (
+          <>
+            {/* 4 stat cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <StatCard
+                label="Tokens hoje"
+                value={(tokenData?.totalTokensToday ?? 0).toLocaleString('pt-BR')}
+                icon={Zap}
+                iconBg="bg-amber-500/15"
+                iconColor="text-amber-400"
+                valueColor="text-amber-400"
+              />
+              <StatCard
+                label="Tokens este mês"
+                value={(tokenData?.totalTokensThisMonth ?? 0).toLocaleString('pt-BR')}
+                icon={Zap}
+                iconBg="bg-brand-600/15"
+                iconColor="text-brand-400"
+                valueColor="text-brand-400"
+              />
+              <StatCard
+                label="Requests hoje"
+                value={(tokenData?.totalRequestsToday ?? 0).toLocaleString('pt-BR')}
+                icon={Activity}
+                iconBg="bg-sky-500/15"
+                iconColor="text-sky-400"
+                valueColor="text-sky-400"
+              />
+              <StatCard
+                label="Requests este mês"
+                value={(tokenData?.totalRequestsThisMonth ?? 0).toLocaleString('pt-BR')}
+                icon={Activity}
+                iconBg="bg-slate-500/15"
+                iconColor="text-slate-400"
+                valueColor="text-slate-100"
+              />
+            </div>
+
+            {/* Endpoint breakdown table */}
+            <div>
+              <h3 className="text-sm font-semibold text-slate-300 mb-2">Uso por endpoint</h3>
+              <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
+                {!tokenData?.requestsByEndpoint?.length ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <Activity className="w-8 h-8 text-slate-600 mb-2" />
+                    <p className="text-slate-500 text-sm">Nenhum dado de endpoint registrado</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-white/[0.05] bg-white/[0.02]">
+                          {['Endpoint', 'Requests', 'Tokens'].map((col) => (
+                            <th
+                              key={col}
+                              className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap"
+                            >
+                              {col}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/[0.05]">
+                        {tokenData.requestsByEndpoint.map((ep) => (
+                          <tr key={ep.endpoint} className="hover:bg-white/[0.03] transition-colors">
+                            <td className="px-4 py-3">
+                              <span className="text-slate-300 font-mono text-xs">{ep.endpoint}</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-slate-300 tabular-nums">
+                                {ep.count.toLocaleString('pt-BR')}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-slate-300 tabular-nums">
+                                {ep.tokens.toLocaleString('pt-BR')}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* OpenAI credits note */}
+            <p className="text-xs text-slate-600">
+              Créditos restantes: verifique em{' '}
+              <a
+                href="https://platform.openai.com/usage"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand-400 hover:text-brand-300 underline underline-offset-2"
+              >
+                platform.openai.com/usage
+              </a>
+            </p>
+          </>
+        )}
       </div>
 
       {/* Usage section */}
