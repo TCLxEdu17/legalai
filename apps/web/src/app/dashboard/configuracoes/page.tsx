@@ -27,6 +27,12 @@ const profileNameSchema = z.object({
 
 type ProfileNameForm = z.infer<typeof profileNameSchema>;
 
+const profileOabSchema = z.object({
+  oabNumber: z.string().min(1, 'Informe o número da OAB'),
+});
+
+type ProfileOabForm = z.infer<typeof profileOabSchema>;
+
 export default function ConfiguracoesPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   useEffect(() => { setCurrentUser(getStoredUser()); }, []);
@@ -69,8 +75,17 @@ export default function ConfiguracoesPage() {
     resolver: zodResolver(profileNameSchema),
   });
 
+  const {
+    register: registerOab,
+    handleSubmit: handleOabSubmit,
+    formState: { errors: oabErrors },
+  } = useForm<ProfileOabForm>({
+    resolver: zodResolver(profileOabSchema),
+    defaultValues: { oabNumber: currentUser?.oabNumber ?? '' },
+  });
+
   const updateProfileMutation = useMutation({
-    mutationFn: (data: ProfileNameForm) => apiClient.updateProfile(data.name),
+    mutationFn: (data: ProfileNameForm) => apiClient.updateProfile({ name: data.name }),
     onSuccess: (data) => {
       toast.success('Nome atualizado com sucesso');
       const stored = getStoredUser();
@@ -82,8 +97,25 @@ export default function ConfiguracoesPage() {
     onError: (e) => toast.error(extractApiErrorMessage(e)),
   });
 
+  const updateOabMutation = useMutation({
+    mutationFn: (data: ProfileOabForm) => apiClient.updateProfile({ oabNumber: data.oabNumber }),
+    onSuccess: (data) => {
+      toast.success('OAB atualizada com sucesso');
+      const stored = getStoredUser();
+      if (stored) {
+        localStorage.setItem('user', JSON.stringify({ ...stored, oabNumber: data.oabNumber }));
+        setCurrentUser((prev: any) => ({ ...prev, oabNumber: data.oabNumber }));
+      }
+    },
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
+
   const onUpdateName = (data: ProfileNameForm) => {
     updateProfileMutation.mutate(data);
+  };
+
+  const onUpdateOab = (data: ProfileOabForm) => {
+    updateOabMutation.mutate(data);
   };
 
   const updatingName = updateProfileMutation.isPending;
@@ -163,6 +195,34 @@ export default function ConfiguracoesPage() {
             <div>
               <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Perfil</label>
               <p className="text-slate-300 text-sm mt-1">{currentUser?.role === 'ADMIN' ? 'Administrador' : 'Usuário'}</p>
+            </div>
+          </div>
+
+          {/* OAB */}
+          <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 space-y-4">
+            <div>
+              <h2 className="font-semibold text-slate-100">OAB</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Número de inscrição na Ordem dos Advogados do Brasil.</p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Número de OAB</label>
+              <form onSubmit={handleOabSubmit(onUpdateOab)} className="flex gap-2">
+                <input
+                  {...registerOab('oabNumber')}
+                  placeholder="Ex: SP 123456"
+                  className="flex-1 px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent placeholder:text-slate-600"
+                />
+                <button
+                  type="submit"
+                  disabled={updateOabMutation.isPending}
+                  className="px-3 py-2 bg-brand-600 text-white rounded-lg text-sm hover:bg-brand-700 disabled:opacity-50"
+                >
+                  {updateOabMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Salvar'}
+                </button>
+              </form>
+              {oabErrors.oabNumber && (
+                <p className="text-red-400 text-xs mt-1">{oabErrors.oabNumber.message}</p>
+              )}
             </div>
           </div>
 

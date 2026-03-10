@@ -18,6 +18,7 @@ export interface CreateUserDto {
 export interface UpdateUserDto {
   name?: string;
   isActive?: boolean;
+  oabNumber?: string;
 }
 
 @Injectable()
@@ -52,6 +53,7 @@ export class UsersService {
         email: true,
         role: true,
         isActive: true,
+        oabNumber: true,
         createdAt: true,
         updatedAt: true,
         _count: {
@@ -111,6 +113,7 @@ export class UsersService {
         email: true,
         role: true,
         isActive: true,
+        oabNumber: true,
         updatedAt: true,
       },
     });

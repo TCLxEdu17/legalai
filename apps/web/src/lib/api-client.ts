@@ -156,8 +156,8 @@ class ApiClient {
     await this.client.delete('/users/me');
   }
 
-  async updateProfile(name: string) {
-    const { data } = await this.client.patch('/users/profile', { name });
+  async updateProfile(payload: { name?: string; oabNumber?: string }) {
+    const { data } = await this.client.patch('/users/profile', payload);
     return data;
   }
 
