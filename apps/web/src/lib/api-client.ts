@@ -292,6 +292,11 @@ class ApiClient {
     const { data } = await this.client.get('/metrics/usage');
     return data;
   }
+
+  async getTokenUsage() {
+    const { data } = await this.client.get('/metrics/tokens');
+    return data;
+  }
 }
 
 export const apiClient = new ApiClient();
