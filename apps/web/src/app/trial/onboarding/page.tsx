@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -14,6 +14,7 @@ import {
   ChevronRight,
   ExternalLink,
 } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
 
 const TRIAL_KEY = 'legalai_trial';
 const ONBOARDING_STEP_KEY = 'legalai_onboarding_step';
@@ -308,12 +309,25 @@ export default function OnboardingPage() {
   const [trial, setTrial] = useState<TrialData | null>(null);
   const [step, setStep] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const [trialId, setTrialId] = useState<string | null>(null);
+
+  const track = useCallback(
+    (event: string, page?: string, element?: string) => {
+      if (!trialId) return;
+      apiClient.trackTrialMetric(trialId, { event, page, element }).catch(() => {});
+    },
+    [trialId],
+  );
+
+  const STEP_NAMES = ['welcome', 'chat', 'search', 'upload', 'api', 'done'];
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(TRIAL_KEY);
       if (raw) {
-        setTrial(JSON.parse(raw));
+        const parsed: TrialData = JSON.parse(raw);
+        setTrial(parsed);
+        setTrialId(parsed.id);
       }
       const savedStep = localStorage.getItem(ONBOARDING_STEP_KEY);
       if (savedStep) {
@@ -324,16 +338,23 @@ export default function OnboardingPage() {
     setLoaded(true);
   }, []);
 
-  const goTo = (s: number) => {
+  // Track page view on step change
+  useEffect(() => {
+    if (!loaded || !trialId) return;
+    track('page_view', `/trial/onboarding/${STEP_NAMES[step] ?? step}`);
+  }, [step, loaded, trialId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const goTo = (s: number, element?: string) => {
     const clamped = Math.max(0, Math.min(TOTAL_STEPS - 1, s));
+    if (element) track('click', `/trial/onboarding/${STEP_NAMES[step] ?? step}`, element);
     setStep(clamped);
     try {
       localStorage.setItem(ONBOARDING_STEP_KEY, String(clamped));
     } catch {}
   };
 
-  const next = () => goTo(step + 1);
-  const prev = () => goTo(step - 1);
+  const next = () => goTo(step + 1, 'btn_next');
+  const prev = () => goTo(step - 1, 'btn_prev');
 
   if (!loaded) {
     return (
