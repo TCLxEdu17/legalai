@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -19,13 +20,16 @@ import { CreateTrialDto } from './dto/create-trial.dto';
 import { FeedbackTrialDto } from './dto/feedback-trial.dto';
 
 @ApiTags('Trial')
-@Controller('api/v1/trial')
+@Controller('trial')
 export class TrialController {
+  private readonly logger = new Logger(TrialController.name);
+
   constructor(private readonly trialService: TrialService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a trial user (public)' })
   create(@Body() dto: CreateTrialDto) {
+    this.logger.log(`POST /trial — prefix=${dto.prefix} name=${dto.name}`);
     return this.trialService.create(dto);
   }
 
@@ -36,12 +40,14 @@ export class TrialController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN' as any)
   getAdminMetrics() {
+    this.logger.log('GET /trial/admin/metrics');
     return this.trialService.getAdminMetrics();
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get trial user status (public)' })
   findById(@Param('id', ParseUUIDPipe) id: string) {
+    this.logger.log(`GET /trial/${id}`);
     return this.trialService.findById(id);
   }
 
@@ -52,6 +58,7 @@ export class TrialController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: FeedbackTrialDto,
   ) {
+    this.logger.log(`POST /trial/${id}/feedback — feedback=${dto.feedback}`);
     return this.trialService.submitFeedback(id, dto);
   }
 
@@ -75,6 +82,7 @@ export class TrialController {
       undefined;
     const userAgent = req.headers['user-agent'] || undefined;
 
+    this.logger.log(`POST /trial/${id}/track — event=${body.event} page=${body.page}`);
     return this.trialService.trackMetric(id, body.event, {
       page: body.page,
       element: body.element,
