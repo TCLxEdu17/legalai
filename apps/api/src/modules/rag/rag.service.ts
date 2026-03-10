@@ -56,8 +56,26 @@ export class RagService {
 
   /**
    * Pipeline RAG completo: busca semântica → montagem de contexto → geração de resposta.
+   * Timeout global de 60s para evitar travamentos indefinidos.
    */
   async query(
+    question: string,
+    sessionHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+  ): Promise<RagQueryResult> {
+    const RAG_TIMEOUT_MS = 60_000;
+
+    return Promise.race([
+      this._queryInternal(question, sessionHistory),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`[RAG] Timeout após ${RAG_TIMEOUT_MS / 1000}s`)),
+          RAG_TIMEOUT_MS,
+        ),
+      ),
+    ]);
+  }
+
+  private async _queryInternal(
     question: string,
     sessionHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
   ): Promise<RagQueryResult> {
