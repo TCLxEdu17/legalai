@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import * as fs from 'fs/promises';
+import { StorageService } from '../storage/storage.service';
 
 export interface ListDocumentsQuery {
   page?: number;
@@ -20,7 +20,10 @@ export interface ListDocumentsQuery {
 export class DocumentsService {
   private readonly logger = new Logger(DocumentsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
   async findAll(query: ListDocumentsQuery) {
     const page = Math.max(1, query.page || 1);
@@ -124,11 +127,9 @@ export class DocumentsService {
       throw new ForbiddenException('Sem permissão para deletar este documento');
     }
 
-    // Deletar arquivo físico
-    try {
-      await fs.unlink(document.filePath);
-    } catch (err) {
-      this.logger.warn(`Arquivo físico não encontrado: ${document.filePath}`);
+    // Deletar arquivo do storage (R2 ou disco local)
+    if (document.filePath) {
+      await this.storageService.deleteFile(document.filePath);
     }
 
     // Deletar registro (chunks são deletados em cascade pelo Prisma)
