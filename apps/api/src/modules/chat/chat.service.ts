@@ -3,11 +3,17 @@ import {
   Logger,
   NotFoundException,
   ForbiddenException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RagService } from '../rag/rag.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { MessageRole } from '@prisma/client';
+
+// Mensagem exibida ao usuário quando o pipeline RAG falha
+const RAG_ERROR_MESSAGE =
+  'Ocorreu um erro ao processar sua consulta. Por favor, tente novamente em instantes. ' +
+  'Se o problema persistir, verifique se há documentos indexados na base.';
 
 @Injectable()
 export class ChatService {
@@ -40,19 +46,40 @@ export class ChatService {
     // Buscar histórico recente para contexto
     const history = await this.getRecentHistory(session.id);
 
-    // Executar RAG
+    // Executar RAG — isolado em try-catch para nunca crashar o endpoint
     const ragStart = Date.now();
     this.logger.log(
       `[RAG] Início | sessão=${session.id} | user=${userId} | pergunta="${dto.message.slice(0, 80)}..."`,
     );
-    const ragResult = await this.ragService.query(dto.message, history);
-    const ragElapsed = Date.now() - ragStart;
 
-    this.logger.log(
-      `[RAG] Concluído | ${ragElapsed}ms | chunks=${ragResult.retrievedChunks} | confiança=${ragResult.confidence} | modelo=${ragResult.model} | tokens=in:${ragResult.tokensUsed.input} out:${ragResult.tokensUsed.output}`,
-    );
+    let ragResult: Awaited<ReturnType<RagService['query']>>;
+    let ragFailed = false;
 
-    // Salvar resposta do assistente
+    try {
+      ragResult = await this.ragService.query(dto.message, history);
+      const ragElapsed = Date.now() - ragStart;
+      this.logger.log(
+        `[RAG] Concluído | ${ragElapsed}ms | chunks=${ragResult.retrievedChunks} | confiança=${ragResult.confidence} | modelo=${ragResult.model} | tokens=in:${ragResult.tokensUsed.input} out:${ragResult.tokensUsed.output}`,
+      );
+    } catch (err: any) {
+      ragFailed = true;
+      const ragElapsed = Date.now() - ragStart;
+      this.logger.error(
+        `[RAG] FALHA | ${ragElapsed}ms | sessão=${session.id} | user=${userId} | erro=${err?.message ?? err}`,
+        err?.stack,
+      );
+      // Fallback: resposta de erro amigável
+      ragResult = {
+        answer: RAG_ERROR_MESSAGE,
+        sources: [],
+        retrievedChunks: 0,
+        confidence: 'none',
+        tokensUsed: { input: 0, output: 0 },
+        model: 'error',
+      };
+    }
+
+    // Salvar resposta do assistente (mesmo em caso de falha — mantém consistência do histórico)
     const assistantMessage = await this.prisma.chatMessage.create({
       data: {
         sessionId: session.id,
@@ -64,13 +91,16 @@ export class ChatService {
           retrievedChunks: ragResult.retrievedChunks,
           tokensUsed: ragResult.tokensUsed,
           model: ragResult.model,
+          error: ragFailed,
         } as any,
       },
     });
 
-    // Atualizar título da sessão na primeira mensagem
+    // Atualizar título da sessão na primeira mensagem (não crítico — falha silenciosamente)
     if (!dto.sessionId) {
-      await this.updateSessionTitle(session.id, dto.message);
+      this.updateSessionTitle(session.id, dto.message).catch((e) =>
+        this.logger.warn(`[Chat] Falha ao atualizar título da sessão: ${e?.message}`),
+      );
     }
 
     return {
@@ -82,6 +112,7 @@ export class ChatService {
         confidence: ragResult.confidence,
         retrievedChunks: ragResult.retrievedChunks,
         createdAt: assistantMessage.createdAt,
+        error: ragFailed,
       },
     };
   }
@@ -127,7 +158,7 @@ export class ChatService {
     });
   }
 
-  private async createSession(userId: string, firstMessage: string) {
+  private async createSession(userId: string, _firstMessage: string) {
     return this.prisma.chatSession.create({
       data: {
         userId,
@@ -167,7 +198,6 @@ export class ChatService {
   }
 
   private async updateSessionTitle(sessionId: string, firstMessage: string) {
-    // Gerar título baseado na primeira pergunta (simplificado)
     const title =
       firstMessage.length > 60
         ? firstMessage.slice(0, 57) + '...'
