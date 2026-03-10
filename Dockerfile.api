@@ -23,7 +23,6 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/prisma ./prisma
-COPY --from=builder /app/apps/api/node_modules/.prisma ./node_modules/.prisma 2>/dev/null || true
 
 RUN mkdir -p uploads logs
 
