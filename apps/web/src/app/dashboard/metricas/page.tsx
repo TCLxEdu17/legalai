@@ -8,7 +8,6 @@ import {
   UserX,
   ThumbsUp,
   Loader2,
-  BarChart2,
   Key,
   AlertTriangle,
 } from 'lucide-react';
@@ -19,14 +18,15 @@ import { formatDateTime } from '@/lib/utils';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface TrialMetric {
+interface TrialUserRow {
   id: string;
   prefix: string;
   name: string;
   createdAt: string;
   expiresAt: string;
-  isActive: boolean;
+  isExpired: boolean;
   feedback: 'YES' | 'NO' | null;
+  feedbackGiven: boolean;
   city: string | null;
   accessCount: number;
   clickCount: number;
@@ -38,13 +38,13 @@ interface TrialMetricsResponse {
   expired: number;
   feedbackYes: number;
   feedbackNo: number;
-  trials: TrialMetric[];
+  users: TrialUserRow[];
 }
 
 interface UsageKey {
   id: string;
   name: string;
-  userName: string;
+  user: { id: string; name: string; email: string };
   totalRequests: number;
   requestsThisMonth: number;
   tokensThisMonth: number;
@@ -53,7 +53,7 @@ interface UsageKey {
 }
 
 interface UsageSummaryResponse {
-  keys: UsageKey[];
+  apiKeys: UsageKey[];
 }
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -158,8 +158,8 @@ export default function MetricasPage() {
     );
   }
 
-  const trials = trialData?.trials ?? [];
-  const keys = usageData?.keys ?? [];
+  const trials = trialData?.users ?? [];
+  const keys = usageData?.apiKeys ?? [];
 
   const feedbackPositivePct =
     trialData && trialData.feedbackYes + trialData.feedbackNo > 0
@@ -263,7 +263,7 @@ export default function MetricasPage() {
                 </thead>
                 <tbody className="divide-y divide-white/[0.05]">
                   {trials.map((t) => {
-                    const expired = !t.isActive || new Date(t.expiresAt) < new Date();
+                    const expired = t.isExpired;
                     return (
                       <tr key={t.id} className="hover:bg-white/[0.03] transition-colors">
                         <td className="px-4 py-3">
@@ -358,7 +358,7 @@ export default function MetricasPage() {
                         <span className="text-slate-200 font-medium">{k.name}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-slate-400 text-xs">{k.userName}</span>
+                        <span className="text-slate-400 text-xs">{k.user?.name ?? '—'}</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-slate-300 tabular-nums">

@@ -325,12 +325,20 @@ export default function TrialPage() {
               </p>
             </div>
 
-            <Link
-              href="/login"
-              className="block w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-colors text-base text-center"
-            >
-              Entrar no sistema →
-            </Link>
+            <div className="flex flex-col gap-3">
+              <Link
+                href="/trial/onboarding"
+                className="block w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-colors text-base text-center"
+              >
+                Ver tour guiado →
+              </Link>
+              <Link
+                href="/login"
+                className="block w-full py-3 bg-white/5 hover:bg-white/8 border border-white/10 text-slate-300 font-medium rounded-xl transition-colors text-sm text-center"
+              >
+                Ir direto para o login
+              </Link>
+            </div>
           </div>
         )}
 
