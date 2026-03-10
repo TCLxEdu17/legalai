@@ -44,12 +44,12 @@ export class UsersController {
   }
 
   @Patch('profile')
-  @ApiOperation({ summary: 'Atualizar nome do próprio perfil' })
+  @ApiOperation({ summary: 'Atualizar perfil do próprio usuário' })
   updateProfile(
     @CurrentUser('id') id: string,
-    @Body() dto: { name: string },
+    @Body() dto: { name?: string; oabNumber?: string },
   ) {
-    return this.usersService.update(id, { name: dto.name });
+    return this.usersService.update(id, { name: dto.name, oabNumber: dto.oabNumber });
   }
 
   @Get(':id')
