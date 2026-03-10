@@ -1,3 +1,4 @@
+import './instrument';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -17,6 +18,15 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<number>('app.port', 3001);
   const corsOrigins = configService.get<string>('app.corsOrigins', 'http://localhost:3000');
+
+  // JWT secret length validation — warn loudly on startup if weak
+  const logger = app.get('WinstonLogger', { strict: false }) ?? console;
+  const jwtSecret = configService.get<string>('app.jwt.secret') ?? process.env.JWT_SECRET ?? '';
+  if (jwtSecret.length < 32) {
+    (logger.error ?? console.error)(
+      '⚠️  JWT_SECRET is too short (< 32 chars) — tokens can be forged! Change it immediately.',
+    );
+  }
 
   // Segurança HTTP
   app.use(helmet({
