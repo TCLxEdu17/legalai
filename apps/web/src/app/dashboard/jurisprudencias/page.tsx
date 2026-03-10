@@ -263,6 +263,7 @@ function DocumentModal({
             { label: 'Tribunal', value: doc.tribunal },
             { label: 'Número do processo', value: doc.processNumber },
             { label: 'Relator', value: doc.relator },
+            { label: 'Nº OAB', value: doc.oabNumber },
             { label: 'Data do julgamento', value: formatDate(doc.judgmentDate) },
             { label: 'Indexado em', value: formatDateTime(doc.createdAt) },
             { label: 'Tema', value: doc.theme },

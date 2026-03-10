@@ -14,6 +14,7 @@ import {
   Activity,
   Key,
   ScanSearch,
+  BarChart2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
@@ -35,6 +36,7 @@ const navItems = [
     href: '/dashboard/analise',
     icon: ScanSearch,
     label: 'Análise de Documento',
+    badge: 'New!',
   },
   {
     href: '/dashboard/jurisprudencias',
@@ -60,9 +62,16 @@ const navItems = [
     adminOnly: true,
   },
   {
+    href: '/dashboard/metricas',
+    icon: BarChart2,
+    label: 'Métricas',
+    adminOnly: true,
+  },
+  {
     href: '/dashboard/api',
     icon: Key,
     label: 'API & Chaves',
+    badge: 'New!',
   },
   {
     href: '/dashboard/configuracoes',
@@ -127,6 +136,11 @@ export function Sidebar() {
                   )}
                 />
                 <span className="flex-1 truncate">{item.label}</span>
+                {item.badge && !active && (
+                  <span className="ml-auto text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full font-semibold">
+                    {item.badge}
+                  </span>
+                )}
                 {active && <ChevronRight className="w-3 h-3 text-brand-500/60" />}
               </Link>
             );

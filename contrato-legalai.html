@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contrato de Prestação de Serviços — LegalAI</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IM+Fell+English:ital@0;1&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f0ede8;
+      color: #1a1a1a;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      max-width: 820px;
+      margin: 0 auto;
+      background: #fdfcfa;
+    }
+
+    /* CABEÇALHO */
+    .header {
+      background: #0f0c29;
+      padding: 48px 60px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .header-brand { display: flex; align-items: center; gap: 12px; }
+    .header-logo {
+      width: 40px; height: 40px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .header-logo svg { width: 20px; height: 20px; }
+    .brand-name { color: #fff; font-size: 18px; font-weight: 700; }
+    .brand-sub { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 1px; }
+    .header-doc { text-align: right; }
+    .doc-type {
+      color: #6280fd;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+    }
+    .doc-title { color: #fff; font-size: 15px; font-weight: 600; }
+    .doc-num { color: rgba(255,255,255,0.35); font-size: 11px; margin-top: 3px; }
+
+    /* FAIXA DE PARTES */
+    .parties-bar {
+      background: linear-gradient(135deg, #1a1a6e, #2535ea);
+      padding: 28px 60px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+    .party { }
+    .party-role {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 6px;
+    }
+    .party-name { color: #fff; font-size: 15px; font-weight: 600; }
+    .party-detail { color: rgba(255,255,255,0.55); font-size: 12px; margin-top: 3px; line-height: 1.5; }
+    .party-vs {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.6);
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .party.right { text-align: right; }
+
+    /* CORPO */
+    .body { padding: 52px 60px; }
+
+    /* CLÁUSULAS */
+    .clause { margin-bottom: 36px; }
+    .clause-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e8e4dd;
+    }
+    .clause-num {
+      background: #0f0c29;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+    .clause-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f0c29;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .clause-body { font-size: 13.5px; color: #2d2d2d; line-height: 1.85; }
+    .clause-body p { margin-bottom: 10px; }
+    .clause-body p:last-child { margin-bottom: 0; }
+
+    .sub { margin-left: 20px; margin-bottom: 8px; font-size: 13px; color: #3d3d3d; line-height: 1.75; }
+    .sub strong { color: #0f0c29; }
+
+    /* TABELA DE ESCOPO */
+    .scope-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 13px;
+    }
+    .scope-table thead tr {
+      background: #0f0c29;
+    }
+    .scope-table thead th {
+      padding: 10px 14px;
+      text-align: left;
+      color: rgba(255,255,255,0.8);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .scope-table tbody tr:nth-child(even) { background: #f7f5f2; }
+    .scope-table tbody td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #ece8e2;
+      color: #2d2d2d;
+      vertical-align: top;
+    }
+    .scope-table tbody td:first-child { font-weight: 500; color: #0f0c29; width: 55%; }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .tag-inc { background: #dcfce7; color: #166534; }
+    .tag-exc { background: #fee2e2; color: #991b1b; }
+    .tag-opt { background: #fef9c3; color: #854d0e; }
+
+    /* VALORES */
+    .price-box {
+      background: linear-gradient(135deg, #f0f4ff, #e8eeff);
+      border: 1.5px solid #c2d0ff;
+      border-radius: 14px;
+      padding: 24px 28px;
+      margin: 14px 0;
+    }
+    .price-box-title { font-size: 12px; font-weight: 700; color: #1a1a6e; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; }
+    .price-row-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(37,53,234,0.1);
+      font-size: 13px;
+    }
+    .price-row-item:last-child { border-bottom: none; font-weight: 700; font-size: 14px; }
+    .price-row-item span { color: #49454f; }
+    .price-row-item strong { color: #1a1a6e; }
+    .price-row-item:last-child strong { color: #2535ea; font-size: 16px; }
+
+    /* ALERTA */
+    .alert {
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 13px;
+      line-height: 1.6;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .alert-icon { font-size: 18px; flex-shrink: 0; }
+    .alert.info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    .alert.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .alert.lgpd { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .alert strong { display: block; margin-bottom: 3px; }
+
+    /* ASSINATURAS */
+    .signatures {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 2px solid #e8e4dd;
+    }
+    .sig-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 28px; text-align: center; }
+    .sig-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+    }
+    .sig-block { }
+    .sig-line {
+      border-bottom: 1.5px solid #1a1a1a;
+      height: 48px;
+      margin-bottom: 10px;
+    }
+    .sig-name { font-size: 13px; font-weight: 600; color: #0f0c29; }
+    .sig-role { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .sig-doc { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+    .sig-footer {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.8;
+    }
+
+    /* TESTEMUNHAS */
+    .witnesses {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px dashed #d1cfc9;
+    }
+    .wit-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; margin-bottom: 20px; text-align: center; }
+    .wit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+    .wit-line { border-bottom: 1px solid #c4c0ba; height: 36px; margin-bottom: 6px; }
+    .wit-label { font-size: 11px; color: #94a3b8; }
+
+    /* RODAPÉ */
+    .footer {
+      background: #0f0c29;
+      padding: 20px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-left { color: rgba(255,255,255,0.3); font-size: 11px; }
+    .footer-left strong { color: rgba(255,255,255,0.6); }
+    .footer-right { color: rgba(255,255,255,0.2); font-size: 11px; text-align: right; }
+
+    .highlight { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 2px 8px; border-radius: 0 4px 4px 0; }
+
+    @media print {
+      body { background: #fff; }
+      .page { max-width: 100%; }
+      @page { margin: 0; size: A4; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- CABEÇALHO -->
+  <div class="header">
+    <div class="header-brand">
+      <div class="header-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
+          <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
+          <path d="M7 21h10"/><path d="M12 3v18"/>
+          <path d="M3 7h2c2 0 4-1 4-4"/>
+          <path d="M21 7h-2c-2 0-4-1-4-4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">LegalAI</div>
+        <div class="brand-sub">Assistente Jurídico Inteligente</div>
+      </div>
+    </div>
+    <div class="header-doc">
+      <div class="doc-type">Instrumento Particular</div>
+      <div class="doc-title">Contrato de Prestação de Serviços<br/>de Tecnologia e Licença de Uso</div>
+      <div class="doc-num">Nº [000]/2026 — Versão 1.0</div>
+    </div>
+  </div>
+
+  <!-- PARTES -->
+  <div class="parties-bar">
+    <div class="party">
+      <div class="party-role">Contratada (Prestadora)</div>
+      <div class="party-name">[Seu Nome / Empresa]</div>
+      <div class="party-detail">CNPJ/CPF: [000.000.000-00]<br/>[Cidade/UF]</div>
+    </div>
+    <div class="party-vs">e</div>
+    <div class="party right">
+      <div class="party-role">Contratante (Cliente)</div>
+      <div class="party-name">[Nome do Escritório]</div>
+      <div class="party-detail">CNPJ: [00.000.000/0001-00]<br/>[Cidade/UF]</div>
+    </div>
+  </div>
+
+  <!-- CORPO -->
+  <div class="body">
+
+    <p style="font-size:13px;color:#64748b;line-height:1.7;margin-bottom:36px;">
+      As partes acima identificadas celebram o presente <strong style="color:#0f0c29;">Contrato de Prestação de Serviços de Tecnologia e Licença de Uso de Software</strong>, que se regerá pelas cláusulas e condições a seguir, às quais as partes aderem livremente, tendo por base os princípios da boa-fé, da função social do contrato e da equivalência material das prestações.
+    </p>
+
+    <!-- CL. 1 — OBJETO -->
+    <div class="clause">
+      <div class="clause-header">
+        <span class="clause-num">Cláusula 1</span>
+        <span class="clause-title">Objeto do Contrato</span>
+      </div>
+      <div class="clause-body">
+        <p>O presente contrato tem por objeto a <strong>prestação de serviços de desenvolvimento, implantação e licença de uso</strong> de sistema de assistente jurídico com inteligência artificial denominado <strong>LegalAI</strong>, que compreende:</p>
+        <p class="sub"><strong>1.1</strong> Desenvolvimento e implantação de interface web personalizada com a identidade visual do Contratante (logotipo, paleta de cores e domínio próprio);</p>
+        <p class="sub"><strong>1.2</strong> Configuração da infraestrutura de processamento de linguagem natural baseada em tecnologia RAG (<em>Retrieval-Augmented Generation</em>), que permite ao sistema buscar informações em documentos reais antes de formular respostas com inteligência artificial;</p>
+        <p class="sub"><strong>1.3</strong> Configuração de até <strong>[3 (três)]</strong> fontes automáticas de coleta de jurisprudência (tribunais, Diários de Justiça Eletrônico e outros portais jurídicos definidos em briefing);</p>
+        <p class="sub"><strong>1.4</strong> Ingestão e indexação inicial de até <strong>[200 (duzentos) documentos ou 500 MB]</strong> fornecidos pelo Contratante;</p>
+        <p class="sub"><strong>1.5</strong> Sessão de treinamento com a equipe do Contratante de até <strong>2 (duas) horas</strong>, realizada por videoconferência;</p>
+        <p class="sub"><strong>1.6</strong> [<em>Modelo Recorrente</em>] Licença de uso mensal da plataforma LegalAI, incluindo hospedagem, manutenção e acesso a atualizações.</p>
+      </div>
+    </div>
+
+    <!-- CL. 2 — ESCOPO -->
+    <div class="clause">
+      <div class="clause-header">
+        <span class="clause-num">Cláusula 2</span>
+        <span class="clause-title">Escopo, Inclusões e Exclusões</span>
+      </div>
+      <div class="clause-body">
+        <p><strong>2.1</strong> O escopo detalhado da entrega é o seguinte:</p>
+
+        <table class="scope-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Status</th>
+              <th>Observação</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Interface personalizada (logo, cores, domínio)</td>
+              <td><span class="tag tag-inc">✓ Incluso</span></td>
+              <td>Domínio registrado pelo Contratante</td>
+            </tr>
+            <tr>
+              <td>Chat com IA jurídica e citação de fontes</td>
+              <td><span class="tag tag-inc">✓ Incluso</span></td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>Upload de documentos (PDF, DOCX, TXT)</td>
+              <td><span class="tag tag-inc">✓ Incluso</span></td>
+              <td>Limite conforme plano</td>
+            </tr>
+            <tr>
+              <td>Coleta automática de jurisprudência</td>
+              <td><span class="tag tag-inc">✓ Incluso</span></td>
+              <td>Até 3 fontes</td>
+            </tr>
+            <tr>
+              <td>Busca semântica na base de documentos</td>
+              <td><span class="tag tag-inc">✓ Incluso</span></td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>Painel de gestão (documentos, status, chaves)</td>
+              <td><span class="tag tag-inc">✓ Incluso</span></td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>Hospedagem e infraestrutura</td>
+              <td><span class="tag tag-inc">✓ Incluso</span></td>
+              <td>Apenas Modelo Recorrente</td>
+            </tr>
+            <tr>
+              <td>Integração com PJe, Esaj ou sistemas legados</td>
+              <td><span class="tag tag-exc">✗ Não incluso</span></td>
+              <td>Sob orçamento separado</td>
+            </tr>
+            <tr>
+              <td>Desenvolvimento de funcionalidades sob demanda</td>
+              <td><span class="tag tag-exc">✗ Não incluso</span></td>
+              <td>Sob orçamento separado</td>
+            </tr>
+            <tr>
+              <td>Fontes automáticas adicionais (além de 3)</td>
+              <td><span class="tag tag-opt">$ Opcional</span></td>
+              <td>R$ 500 por fonte adicional</td>
+            </tr>
+            <tr>
+              <td>Usuários adicionais (além de 5)</td>
+              <td><span class="tag tag-opt">$ Opcional</span></td>
+              <td>R$ 120/mês por usuário extra</td>
+            </tr>
+            <tr>
+              <td>Suporte prioritário / SLA premium</td>
+              <td><span class="tag tag-opt">$ Opcional</span></td>
+              <td>R$ 300/mês adicional</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><strong>2.2</strong> Quaisquer funcionalidades, integrações ou serviços não listados no item 2.1 como "Incluso" deverão ser objeto de proposta e aditivo contratual específico, com nova negociação de valores e prazos.</p>
+
+        <div class="alert warn">
+          <span class="alert-icon">⚠️</span>
+          <div><strong>Propriedade Intelectual</strong> O motor de inteligência artificial (API LegalAI), incluindo seus algoritmos, modelos de linguagem, lógica de RAG e infraestrutura técnica, é de propriedade exclusiva da Contratada e não é transferido ao Contratante em nenhuma hipótese. O Contratante recebe apenas <strong>licença de uso</strong> da interface personalizada e acesso ao serviço.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CL. 3 — VALORES -->
+    <div class="clause">
+      <div class="clause-header">
+        <span class="clause-num">Cláusula 3</span>
+        <span class="clause-title">Valores e Condições de Pagamento</span>
+      </div>
+      <div class="clause-body">
+
+        <p><strong>3.1 — Modelo Recorrente</strong> (Setup + Mensalidade):</p>
+        <div class="price-box">
+          <div class="price-box-title">Composição do investimento</div>
+          <div class="price-row-item">
+            <span>Setup e implantação (pagamento único)</span>
+            <strong>R$ 4.800,00</strong>
+          </div>
+          <div class="price-row-item">
+            <span>Licença de uso mensal (a partir do 2º mês)</span>
+            <strong>R$ 790,00/mês</strong>
+          </div>
+          <div class="price-row-item">
+            <span>Total no primeiro mês</span>
+            <strong>R$ 5.590,00</strong>
+          </div>
+        </div>
+
+        <p class="sub"><strong>3.1.1</strong> O valor do setup será pago em <strong>2 (duas) parcelas</strong>: 50% (R$ 2.400,00) na assinatura do contrato e 50% (R$ 2.400,00) na entrega e aprovação do sistema.</p>
+        <p class="sub"><strong>3.1.2</strong> A mensalidade será cobrada no mesmo dia de cada mês, via [PIX / boleto / cartão de crédito], com vencimento [D+5] após a emissão.</p>
+        <p class="sub"><strong>3.1.3</strong> O valor da mensalidade será reajustado anualmente pelo <strong>IGPM</strong> acumulado dos 12 meses anteriores, com notificação prévia de 30 dias.</p>
+
+        <p style="margin-top:16px;"><strong>3.2 — Modelo One-Shot</strong> (Pagamento único):</p>
+        <div class="price-box">
+          <div class="price-box-title">Composição do investimento</div>
+          <div class="price-row-item">
+            <span>Desenvolvimento, implantação e 30 dias de suporte</span>
+            <strong>R$ 8.500,00</strong>
+          </div>
+          <div class="price-row-item">
+            <span>Suporte mensal após 30 dias (opcional)</span>
+            <strong>R$ 350,00/mês</strong>
+          </div>
+          <div class="price-row-item">
+            <span>Forma de pagamento</span>
+            <strong>50% + 50% na entrega</strong>
+          </div>
+        </div>
+
+        <p class="sub"><strong>3.2.1</strong> No modelo One-Shot, os custos de hospedagem e infraestrutura são de responsabilidade do Contratante a partir do 31º dia após a entrega.</p>
+
+        <p style="margin-top:16px;"><strong>3.3</strong> Em caso de atraso no pagamento, incidirão multa de <strong>2%</strong> sobre o valor em aberto e juros de <strong>1% ao mês</strong>, calculados pro rata die, além de correção monetária pelo IPCA.</p>
+
+        <p><strong>3.4</strong> O não pagamento por mais de <strong>15 (quinze) dias</strong> corridos autoriza a Contratada a suspender o acesso ao sistema até a regularização, sem prejuízo das demais penalidades contratuais.</p>
+      </div>
+    </div>
+
+    <!-- CL. 4 — PRAZO -->
+    <div class="clause">
+      <div class="clause-header">
+        <span class="clause-num">Cláusula 4</span>
+        <span class="clause-title">Prazo de Entrega e Vigência</span>
+      </div>
+      <div class="clause-body">
+        <p><strong>4.1</strong> A implantação do sistema será concluída em até <strong>10 (dez) dias úteis</strong> contados da data de assinatura do contrato e recebimento do primeiro pagamento.</p>
+        <p><strong>4.2</strong> O prazo estará condicionado ao fornecimento, pelo Contratante, de todos os materiais necessários (logotipo em alta resolução, guia de identidade visual, lista de fontes a integrar e documentos para indexação inicial) em até <strong>3 (três) dias úteis</strong> após a assinatura. Atrasos no fornecimento prorrogarão proporcionalmente o prazo de entrega.</p>
+        <p><strong>4.3 — Modelo Recorrente:</strong> vigência mínima de <strong>3 (três) meses</strong>, renovando-se automaticamente por períodos iguais e sucessivos, salvo notificação de rescisão com <strong>30 (trinta) dias</strong> de antecedência.</p>
+        <p><strong>4.4 — Modelo One-Shot:</strong> o contrato de setup encerra-se com a entrega e aprovação do sistema. O suporte pós-entrega, se contratado, segue vigência mensal renovável.</p>
+      </div>
+    </div>
+
+    <!-- CL. 5 — OBRIGAÇÕES -->
+    <div class="clause">
+      <div class="clause-header">
+        <span class="clause-num">Cláusula 5</span>
+        <span class="clause-title">Obrigações das Partes</span>
+      </div>
+      <div class="clause-body">
+        <p><strong>5.1 — Obrigações da Contratada:</strong></p>
+        <p class="sub"><strong>a)</strong> Entregar o sistema conforme escopo definido na Cláusula 2, no prazo da Cláusula 4;</p>
+        <p class="sub"><strong>b)</strong> Manter a disponibilidade da plataforma em pelo menos <strong>99% (noventa e nove por cento)</strong> do tempo mensal, excluídos períodos de manutenção programada comunicados com antecedência mínima de 24h (Modelo Recorrente);</p>
+        <p class="sub"><strong>c)</strong> Prestar suporte técnico via WhatsApp ou e-mail em dias úteis, das 09h às 18h, com tempo de resposta de até <strong>4 (quatro) horas úteis</strong> (Modelo Recorrente);</p>
+        <p class="sub"><strong>d)</strong> Guardar sigilo sobre os documentos e informações do Contratante;</p>
+        <p class="sub"><strong>e)</strong> Notificar o Contratante sobre atualizações relevantes do sistema com antecedência mínima de 7 dias.</p>
+
+        <p style="margin-top:14px;"><strong>5.2 — Obrigações do Contratante:</strong></p>
+        <p class="sub"><strong>a)</strong> Fornecer todos os materiais necessários à implantação dentro do prazo da Cláusula 4.2;</p>
+        <p class="sub"><strong>b)</strong> Efetuar os pagamentos nas datas acordadas;</p>
+        <p class="sub"><strong>c)</strong> Utilizar o sistema exclusivamente para fins lícitos e dentro dos limites estabelecidos neste contrato;</p>
+        <p class="sub"><strong>d)</strong> Não sublicenciar, revender, ceder ou transferir o acesso ao sistema a terceiros sem autorização expressa da Contratada;</p>
+        <p class="sub"><strong>e)</strong> Manter atualizados seus dados de contato e de cobrança.</p>
+      </div>
+    </div>
+
+    <!-- CL. 6 — LGPD -->
+    <div class="clause">
+      <div class="clause-header">
+        <span class="clause-num">Cláusula 6</span>
+        <span class="clause-title">Proteção de Dados — LGPD</span>
+      </div>
+      <div class="clause-body">
+        <div class="alert lgpd">
+          <span class="alert-icon">🔒</span>
+          <div><strong>Conformidade com a Lei Geral de Proteção de Dados (Lei 13.709/2018)</strong> Todos os dados tratados no âmbito deste contrato estão sujeitos às disposições da LGPD e às cláusulas abaixo.</div>
+        </div>
+        <p><strong>6.1</strong> A Contratada atuará como <strong>Operadora</strong> dos dados pessoais eventualmente inseridos pelo Contratante na plataforma, sendo o Contratante o <strong>Controlador</strong> para fins da LGPD.</p>
+        <p><strong>6.2</strong> Os documentos, informações e dados inseridos pelo Contratante são <strong>isolados em ambiente exclusivo</strong>, não sendo compartilhados com outros clientes da Contratada, nem utilizados para treinamento de modelos de inteligência artificial de terceiros.</p>
+        <p><strong>6.3</strong> A Contratada adota medidas técnicas e organizacionais adequadas para proteger os dados contra acesso não autorizado, perda ou destruição, incluindo criptografia em trânsito (TLS) e em repouso.</p>
+        <p><strong>6.4</strong> Em caso de incidente de segurança que possa afetar dados pessoais, a Contratada notificará o Contratante no prazo de até <strong>72 (setenta e duas) horas</strong> após a ciência do ocorrido.</p>
+        <p><strong>6.5</strong> Após o encerramento do contrato, os dados do Contratante serão mantidos por <strong>30 (trinta) dias</strong> para eventual exportação. Findo esse prazo, serão permanentemente excluídos, salvo obrigação legal em contrário.</p>
+        <p><strong>6.6</strong> O Contratante declara ciência de que os documentos inseridos na plataforma podem conter dados pessoais de terceiros, sendo de sua exclusiva responsabilidade obter as bases legais adequadas para tal tratamento.</p>
+      </div>
+    </div>
+
+    <!-- CL. 7 — CONFIDENCIALIDADE -->
+    <div class="clause">
+      <div class="clause-header">
+        <span class="clause-num">Cláusula 7</span>
+        <span class="clause-title">Confidencialidade e Sigilo</span>
+      </div>
+      <div class="clause-body">
+        <p><strong>7.1</strong> As partes comprometem-se a manter em sigilo todas as informações confidenciais obtidas em razão deste contrato, incluindo dados de clientes, estratégias de negócio, documentos jurídicos e informações técnicas.</p>
+        <p><strong>7.2</strong> A obrigação de sigilo permanece vigente por <strong>2 (dois) anos</strong> após o encerramento deste contrato.</p>
+        <p><strong>7.3</strong> A Contratada poderá mencionar o nome do Contratante em seu portfólio e materiais comerciais como cliente, salvo manifestação expressa em contrário.</p>
+      </div>
+    </div>
+
+    <!-- CL. 8 — RESCISÃO -->
+    <div class="clause">
+      <div class="clause-header">
+        <span class="clause-num">Cláusula 8</span>
+        <span class="clause-title">Rescisão e Penalidades</span>
+      </div>
+      <div class="clause-body">
+        <p><strong>8.1</strong> O Contratante poderá rescindir o contrato a qualquer momento após o período mínimo de 3 (três) meses, mediante notificação escrita com 30 (trinta) dias de antecedência, sem pagamento de multa.</p>
+        <p><strong>8.2</strong> A rescisão antecipada pelo Contratante dentro do período mínimo de 3 meses implicará no pagamento das mensalidades restantes até o fim do período mínimo, a título de cláusula penal.</p>
+        <p><strong>8.3</strong> A Contratada poderá rescindir imediatamente o contrato, sem ônus, nas seguintes hipóteses:</p>
+        <p class="sub"><strong>a)</strong> Inadimplência superior a 15 (quinze) dias;</p>
+        <p class="sub"><strong>b)</strong> Uso do sistema para fins ilícitos ou que violem direitos de terceiros;</p>
+        <p class="sub"><strong>c)</strong> Descumprimento de qualquer obrigação prevista neste contrato, após notificação e prazo de 5 dias úteis para regularização.</p>
+        <p><strong>8.4</strong> Em caso de rescisão, o valor pago a título de setup não é reembolsável, por tratar-se de serviço já prestado.</p>
+      </div>
+    </div>
+
+    <!-- CL. 9 — LIMITAÇÃO -->
+    <div class="clause">
+      <div class="clause-header">
+        <span class="clause-num">Cláusula 9</span>
+        <span class="clause-title">Limitação de Responsabilidade</span>
+      </div>
+      <div class="clause-body">
+        <p><strong>9.1</strong> O sistema LegalAI é uma <strong>ferramenta de apoio à pesquisa jurídica</strong> e não substitui o juízo técnico do advogado. As respostas geradas pela inteligência artificial são baseadas nos documentos inseridos na plataforma e não constituem parecer jurídico.</p>
+        <p><strong>9.2</strong> A Contratada não se responsabiliza por decisões tomadas pelo Contratante ou por seus clientes com base nas informações fornecidas pelo sistema.</p>
+        <p><strong>9.3</strong> A responsabilidade total da Contratada, em qualquer hipótese, fica limitada ao valor pago pelo Contratante nos últimos <strong>3 (três) meses</strong> de vigência do contrato.</p>
+        <p><strong>9.4</strong> A Contratada não se responsabiliza por indisponibilidades causadas por falhas em serviços de terceiros (provedores de nuvem, APIs de inteligência artificial, operadoras de internet), desde que notifique o Contratante no menor prazo possível.</p>
+      </div>
+    </div>
+
+    <!-- CL. 10 — FORO -->
+    <div class="clause">
+      <div class="clause-header">
+        <span class="clause-num">Cláusula 10</span>
+        <span class="clause-title">Disposições Gerais e Foro</span>
+      </div>
+      <div class="clause-body">
+        <p><strong>10.1</strong> Este contrato representa a integralidade do acordo entre as partes para o objeto nele descrito, substituindo quaisquer entendimentos anteriores, verbais ou escritos.</p>
+        <p><strong>10.2</strong> Eventuais alterações ao contrato deverão ser formalizadas por meio de aditivo assinado por ambas as partes.</p>
+        <p><strong>10.3</strong> A tolerância de qualquer das partes em relação ao descumprimento de obrigações pela outra não implica novação, renúncia ou alteração do contrato.</p>
+        <p><strong>10.4</strong> As partes elegem o foro da Comarca de <strong>[Cidade/UF]</strong> para dirimir quaisquer controvérsias oriundas deste contrato, com renúncia a qualquer outro, por mais privilegiado que seja.</p>
+        <p><strong>10.5</strong> Este instrumento é celebrado em caráter eletrônico, tendo plena validade jurídica nos termos da Medida Provisória 2.200-2/2001 e da Lei 14.063/2020.</p>
+      </div>
+    </div>
+
+    <!-- LOCAL E DATA -->
+    <p style="font-size:13px;color:#64748b;margin-bottom:40px;text-align:center;">
+      [Cidade], [__] de [__________] de 2026.
+    </p>
+
+    <!-- ASSINATURAS -->
+    <div class="signatures">
+      <div class="sig-title">Assinaturas</div>
+      <div class="sig-grid">
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div class="sig-name">[Seu Nome Completo]</div>
+          <div class="sig-role">Contratada — LegalAI</div>
+          <div class="sig-doc">CPF/CNPJ: [000.000.000-00]</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div class="sig-name">[Nome do Responsável]</div>
+          <div class="sig-role">Contratante — [Nome do Escritório]</div>
+          <div class="sig-doc">CPF/CNPJ: [000.000.000-00]</div>
+        </div>
+      </div>
+
+      <div class="witnesses">
+        <div class="wit-title">Testemunhas (opcional)</div>
+        <div class="wit-grid">
+          <div>
+            <div class="wit-line"></div>
+            <div class="wit-label">Nome: _________________________ CPF: _________________</div>
+          </div>
+          <div>
+            <div class="wit-line"></div>
+            <div class="wit-label">Nome: _________________________ CPF: _________________</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sig-footer">
+        Documento gerado eletronicamente · LegalAI © 2026 · legal.lasolutions.me<br/>
+        Este contrato pode ser assinado digitalmente via ZapSign, DocuSign ou plataforma equivalente,<br/>tendo plena validade jurídica nos termos da legislação brasileira vigente.
+      </div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- RODAPÉ -->
+  <div class="footer">
+    <div class="footer-left">
+      <strong>LegalAI</strong> — Contrato Nº [000]/2026
+    </div>
+    <div class="footer-right">
+      Instrumento Particular de Prestação de Serviços de Tecnologia e Licença de Uso<br/>
+      Página 1 de 1 · Versão 1.0
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
