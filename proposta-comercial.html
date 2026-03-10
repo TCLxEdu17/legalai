@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proposta Comercial — LegalAI</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f5f5;
+      color: #1a1a2e;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #fff;
+    }
+
+    /* ── CAPA ── */
+    .cover {
+      background: linear-gradient(135deg, #0f0c29, #1a1a6e, #2535ea);
+      color: #fff;
+      padding: 80px 60px;
+      min-height: 340px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: -80px; right: -80px;
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+    }
+    .cover::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; left: 40px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.03);
+    }
+    .cover-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon svg { width: 22px; height: 22px; }
+    .logo-text { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo-sub { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+    .cover-body { position: relative; z-index: 1; }
+    .cover-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .cover h1 {
+      font-size: 38px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+    }
+    .cover h1 span { color: #96aeff; }
+    .cover-desc {
+      font-size: 15px;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.6;
+      max-width: 520px;
+    }
+    .cover-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      position: relative; z-index: 1;
+      margin-top: 48px;
+    }
+    .cover-meta { font-size: 12px; color: rgba(255,255,255,0.45); }
+    .cover-meta strong { color: rgba(255,255,255,0.7); display: block; font-size: 13px; margin-bottom: 2px; }
+    .cover-valid {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      text-align: right;
+    }
+    .cover-valid strong { color: #fff; display: block; font-size: 14px; }
+
+    /* ── CONTEÚDO ── */
+    .content { padding: 52px 60px; }
+
+    .section { margin-bottom: 48px; }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #2535ea;
+      margin-bottom: 8px;
+    }
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f0c29;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+    .section-desc {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.65;
+      max-width: 600px;
+    }
+
+    /* ── PROBLEMA ── */
+    .pain-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .pain-card {
+      background: #fafafa;
+      border: 1px solid #e8ecf4;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .pain-icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .pain-card h4 { font-size: 13px; font-weight: 600; color: #1a1a2e; margin-bottom: 6px; }
+    .pain-card p { font-size: 12px; color: #64748b; line-height: 1.5; }
+
+    /* ── SOLUÇÃO ── */
+    .solution-box {
+      background: linear-gradient(135deg, #f0f4ff, #e8eeff);
+      border: 1px solid #c2d0ff;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-top: 20px;
+    }
+    .solution-box h3 { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+    .solution-box p { font-size: 13px; color: #49454f; line-height: 1.65; }
+    .solution-features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .feat {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: #374151;
+    }
+    .feat-dot {
+      width: 20px; height: 20px;
+      background: #2535ea;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .feat-dot svg { width: 10px; height: 10px; }
+
+    /* ── MODELOS ── */
+    .models-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 24px;
+    }
+    .model-card {
+      border-radius: 16px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .model-card.recommended {
+      background: linear-gradient(145deg, #1a1a6e, #2535ea);
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(37,53,234,0.3);
+    }
+    .model-card.standard {
+      background: #fafafa;
+      border: 1.5px solid #e2e8f0;
+      color: #1a1a2e;
+    }
+    .model-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+    }
+    .recommended .model-badge {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+    }
+    .standard .model-badge {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .model-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: -0.2px;
+    }
+    .recommended .model-name { color: #fff; }
+    .standard .model-name { color: #1a1a2e; }
+
+    .model-tagline {
+      font-size: 12px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .recommended .model-tagline { color: rgba(255,255,255,0.65); }
+    .standard .model-tagline { color: #64748b; }
+
+    .model-price-block { margin-bottom: 20px; }
+    .price-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px; }
+    .price-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .recommended .price-label { color: rgba(255,255,255,0.55); }
+    .standard .price-label { color: #94a3b8; }
+
+    .price-value {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .recommended .price-value { color: #fff; }
+    .standard .price-value { color: #1a1a2e; }
+
+    .price-period {
+      font-size: 12px;
+    }
+    .recommended .price-period { color: rgba(255,255,255,0.55); }
+    .standard .price-period { color: #94a3b8; }
+
+    .price-divider {
+      height: 1px;
+      margin: 14px 0;
+    }
+    .recommended .price-divider { background: rgba(255,255,255,0.12); }
+    .standard .price-divider { background: #e2e8f0; }
+
+    .model-items { list-style: none; margin-bottom: 20px; }
+    .model-items li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .recommended .model-items li { color: rgba(255,255,255,0.85); }
+    .standard .model-items li { color: #475569; }
+    .check { flex-shrink: 0; margin-top: 1px; }
+
+    .model-note {
+      font-size: 11px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      line-height: 1.5;
+    }
+    .recommended .model-note {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.65);
+    }
+    .standard .model-note {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #64748b;
+    }
+
+    /* ── COMPARATIVO ── */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 13px;
+    }
+    .compare-table th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .compare-table th:not(:first-child) { text-align: center; }
+    .compare-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #374151;
+    }
+    .compare-table td:not(:first-child) { text-align: center; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table .col-rec { background: #f5f7ff; }
+    .compare-table .col-rec td { color: #2535ea; font-weight: 600; }
+    .tag-yes { color: #059669; font-weight: 600; }
+    .tag-no { color: #94a3b8; }
+    .tag-val { font-weight: 600; color: #1a1a2e; }
+
+    /* ── PROJEÇÃO ── */
+    .proj-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .proj-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .proj-card h4 { font-size: 12px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+    .proj-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .proj-row:last-child { border-bottom: none; }
+    .proj-row span { color: #64748b; }
+    .proj-row strong { color: #1a1a2e; font-weight: 600; }
+    .proj-row.highlight strong { color: #2535ea; font-size: 15px; }
+
+    /* ── LGPD ── */
+    .lgpd-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-top: 20px;
+    }
+    .lgpd-icon { font-size: 28px; flex-shrink: 0; }
+    .lgpd-box h4 { font-size: 14px; font-weight: 600; color: #166534; margin-bottom: 6px; }
+    .lgpd-box p { font-size: 13px; color: #15803d; line-height: 1.6; }
+
+    /* ── PRÓXIMOS PASSOS ── */
+    .steps { margin-top: 20px; }
+    .step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #1a1a6e, #2535ea);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step-body h4 { font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 3px; }
+    .step-body p { font-size: 13px; color: #64748b; line-height: 1.5; }
+
+    /* ── RODAPÉ ── */
+    .footer {
+      background: #0f0c29;
+      padding: 32px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-brand { color: #fff; font-size: 16px; font-weight: 700; }
+    .footer-brand span { color: #6280fd; }
+    .footer-contact { text-align: right; font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.8; }
+    .footer-contact strong { color: rgba(255,255,255,0.8); }
+
+    /* ── PRINT ── */
+    @media print {
+      body { background: #fff; }
+      .page { max-width: 100%; }
+      @page { margin: 0; size: A4; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- CAPA -->
+  <div class="cover">
+    <div class="cover-top">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
+          <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
+          <path d="M7 21h10"/><path d="M12 3v18"/>
+          <path d="M3 7h2c2 0 4-1 4-4"/>
+          <path d="M21 7h-2c-2 0-4-1-4-4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">LegalAI</div>
+        <div class="logo-sub">Assistente Jurídico Inteligente</div>
+      </div>
+    </div>
+
+    <div class="cover-body">
+      <div class="cover-badge">Proposta Comercial</div>
+      <h1>Inteligência Artificial<br/>para o seu <span>escritório jurídico</span></h1>
+      <p class="cover-desc">
+        Um sistema personalizado com a sua identidade, rodando sobre a infraestrutura de IA mais avançada do mercado jurídico brasileiro.
+      </p>
+    </div>
+
+    <div class="cover-footer">
+      <div class="cover-meta">
+        <strong>Preparado para:</strong>
+        [Nome do Escritório]
+      </div>
+      <div class="cover-valid">
+        <strong>Válido até 30 dias</strong>
+        a partir do recebimento
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div class="content">
+
+    <!-- O PROBLEMA -->
+    <div class="section">
+      <div class="section-label">O Problema</div>
+      <div class="section-title">Quanto tempo você perde por semana?</div>
+      <p class="section-desc">
+        Advogados gastam em média 8 a 12 horas semanais apenas pesquisando jurisprudência, lendo ementas e garimpando precedentes — tempo que poderia ser revertido em mais clientes e mais receita.
+      </p>
+      <div class="pain-grid">
+        <div class="pain-card">
+          <div class="pain-icon">⏱️</div>
+          <h4>Tempo desperdiçado</h4>
+          <p>Horas abrindo PDF atrás de PDF em JusBrasil, DJE e portais de tribunais.</p>
+        </div>
+        <div class="pain-card">
+          <div class="pain-icon">🔍</div>
+          <h4>Precedentes perdidos</h4>
+          <p>Jurisprudências relevantes existem na sua base mas são impossíveis de encontrar rapidamente.</p>
+        </div>
+        <div class="pain-card">
+          <div class="pain-icon">💸</div>
+          <h4>Receita não capturada</h4>
+          <p>Se você cobra R$300/h, cada 10h/semana perdida = R$12.000/mês deixados na mesa.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- A SOLUÇÃO -->
+    <div class="section">
+      <div class="section-label">A Solução</div>
+      <div class="section-title">Seu assistente jurídico com IA</div>
+      <p class="section-desc">
+        A LegalAI entrega um sistema completo, com a identidade visual do seu escritório, que responde perguntas jurídicas em segundos — sempre citando a fonte real dos seus documentos.
+      </p>
+      <div class="solution-box">
+        <h3>Como funciona a tecnologia (em termos simples)</h3>
+        <p>
+          Utilizamos uma tecnologia chamada <strong>RAG (Retrieval-Augmented Generation)</strong>. Diferente do ChatGPT comum — que pode inventar respostas — nosso sistema <strong>busca primeiro nos seus documentos reais</strong> (acórdãos, doutrinas, peças) e só depois formula a resposta com IA. É como ter um estagiário que leu tudo e nunca esquece nada, respondendo em 3 segundos e mostrando exatamente onde encontrou a informação.
+        </p>
+        <div class="solution-features">
+          <div class="feat">
+            <div class="feat-dot">
+              <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="2,6 5,9 10,3"/>
+              </svg>
+            </div>
+            Sistema com seu logo e domínio próprio
+          </div>
+          <div class="feat">
+            <div class="feat-dot">
+              <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="2,6 5,9 10,3"/>
+              </svg>
+            </div>
+            Coleta automática de tribunais e DJE
+          </div>
+          <div class="feat">
+            <div class="feat-dot">
+              <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="2,6 5,9 10,3"/>
+              </svg>
+            </div>
+            Chat jurídico com citação de fontes
+          </div>
+          <div class="feat">
+            <div class="feat-dot">
+              <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="2,6 5,9 10,3"/>
+              </svg>
+            </div>
+            Upload de PDF, DOCX e TXT
+          </div>
+          <div class="feat">
+            <div class="feat-dot">
+              <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="2,6 5,9 10,3"/>
+              </svg>
+            </div>
+            Busca semântica (encontra pelo significado)
+          </div>
+          <div class="feat">
+            <div class="feat-dot">
+              <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="2,6 5,9 10,3"/>
+              </svg>
+            </div>
+            100% adequado à LGPD
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODELOS COMERCIAIS -->
+    <div class="section">
+      <div class="section-label">Investimento</div>
+      <div class="section-title">Escolha o modelo ideal</div>
+      <p class="section-desc">Duas opções pensadas para realidades diferentes. Ambas entregam o mesmo sistema completo e personalizado.</p>
+
+      <div class="models-grid">
+
+        <!-- MODELO 1 — RECOMENDADO -->
+        <div class="model-card recommended">
+          <div class="model-badge">⭐ Recomendado</div>
+          <div class="model-name">Setup + Recorrente</div>
+          <div class="model-tagline">Sistema funcionando, atualizado e suportado — todo mês, sem surpresas.</div>
+
+          <div class="model-price-block">
+            <div class="price-label">Implementação</div>
+            <div class="price-row">
+              <div class="price-value">R$ 4.800</div>
+              <div class="price-period">único</div>
+            </div>
+            <div class="price-divider"></div>
+            <div class="price-label">Mensalidade</div>
+            <div class="price-row">
+              <div class="price-value">R$ 790</div>
+              <div class="price-period">/mês</div>
+            </div>
+          </div>
+
+          <ul class="model-items">
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(255,255,255,0.2)"/><polyline points="4,7 6,9 10,5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Sistema personalizado com sua marca e domínio
+            </li>
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(255,255,255,0.2)"/><polyline points="4,7 6,9 10,5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Configuração de fontes automáticas (tribunais, DJE)
+            </li>
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(255,255,255,0.2)"/><polyline points="4,7 6,9 10,5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Treinamento com a equipe (até 2h)
+            </li>
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(255,255,255,0.2)"/><polyline points="4,7 6,9 10,5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Infra, suporte e atualizações incluídos
+            </li>
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(255,255,255,0.2)"/><polyline points="4,7 6,9 10,5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Suporte via WhatsApp em horário comercial
+            </li>
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(255,255,255,0.2)"/><polyline points="4,7 6,9 10,5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Relatório mensal de uso
+            </li>
+          </ul>
+
+          <div class="model-note">
+            Cancele a qualquer momento após os 3 primeiros meses. Sem multa, sem burocracia.
+          </div>
+        </div>
+
+        <!-- MODELO 2 — ONE SHOT -->
+        <div class="model-card standard">
+          <div class="model-badge">Pagamento único</div>
+          <div class="model-name">One-Shot</div>
+          <div class="model-tagline">Pague uma vez e tenha o sistema implantado sem recorrência obrigatória.</div>
+
+          <div class="model-price-block">
+            <div class="price-label">Tudo incluído</div>
+            <div class="price-row">
+              <div class="price-value">R$ 8.500</div>
+              <div class="price-period">único</div>
+            </div>
+            <div class="price-divider" style="background:#e2e8f0;"></div>
+            <div class="price-label">Suporte opcional após 30 dias</div>
+            <div class="price-row">
+              <div class="price-value" style="font-size:20px;">R$ 350</div>
+              <div class="price-period">/mês</div>
+            </div>
+          </div>
+
+          <ul class="model-items">
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="#e8eeff"/><polyline points="4,7 6,9 10,5" stroke="#2535ea" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Sistema personalizado com sua marca e domínio
+            </li>
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="#e8eeff"/><polyline points="4,7 6,9 10,5" stroke="#2535ea" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Configuração de fontes automáticas (tribunais, DJE)
+            </li>
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="#e8eeff"/><polyline points="4,7 6,9 10,5" stroke="#2535ea" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Treinamento com a equipe (até 2h)
+            </li>
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="#e8eeff"/><polyline points="4,7 6,9 10,5" stroke="#2535ea" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              30 dias de suporte pós-entrega
+            </li>
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="#e8eeff"/><polyline points="4,7 6,9 10,5" stroke="#2535ea" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Documentação técnica completa
+            </li>
+            <li>
+              <span class="check">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="#f1f5f9"/><polyline points="4,7 6,9 10,5" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <span style="color:#94a3b8;">Infra e atualizações: por conta do cliente</span>
+            </li>
+          </ul>
+
+          <div class="model-note">
+            Ideal para escritórios com equipe de TI própria. Upgrade para o Modelo 1 disponível com abatimento de R$ 2.000.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPARATIVO -->
+    <div class="section">
+      <div class="section-label">Comparativo</div>
+      <div class="section-title">Entenda as diferenças</div>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th style="color:#2535ea;">Setup + Recorrente</th>
+            <th>One-Shot</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Investimento inicial</td>
+            <td class="col-rec"><span class="tag-val">R$ 4.800</span></td>
+            <td><span class="tag-val">R$ 8.500</span></td>
+          </tr>
+          <tr>
+            <td>Recorrência</td>
+            <td class="col-rec"><span class="tag-val">R$ 790/mês</span></td>
+            <td><span class="tag-no">Nenhuma</span></td>
+          </tr>
+          <tr>
+            <td>Suporte contínuo</td>
+            <td class="col-rec"><span class="tag-yes">✓ Incluído</span></td>
+            <td><span class="tag-no">Opcional (+R$ 350/mês)</span></td>
+          </tr>
+          <tr>
+            <td>Atualizações do sistema</td>
+            <td class="col-rec"><span class="tag-yes">✓ Automáticas</span></td>
+            <td><span class="tag-no">Não incluído</span></td>
+          </tr>
+          <tr>
+            <td>Infra (hospedagem/API)</td>
+            <td class="col-rec"><span class="tag-yes">✓ Por nossa conta</span></td>
+            <td><span class="tag-no">Por conta do cliente</span></td>
+          </tr>
+          <tr>
+            <td>Total em 12 meses</td>
+            <td class="col-rec"><span class="tag-val">R$ 14.280</span></td>
+            <td><span class="tag-val">R$ 8.500</span></td>
+          </tr>
+          <tr>
+            <td>Ideal para</td>
+            <td class="col-rec">Maioria dos escritórios</td>
+            <td>Escritórios com TI próprio</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PROJEÇÃO -->
+    <div class="section">
+      <div class="section-label">Retorno</div>
+      <div class="section-title">O investimento se paga rápido</div>
+      <p class="section-desc">Considerando apenas a economia de tempo da equipe.</p>
+      <div class="proj-grid">
+        <div class="proj-card">
+          <h4>Exemplo — 2 advogados</h4>
+          <div class="proj-row"><span>Horas economizadas/semana</span><strong>10h</strong></div>
+          <div class="proj-row"><span>Valor hora médio</span><strong>R$ 250</strong></div>
+          <div class="proj-row"><span>Economia mensal</span><strong>R$ 10.000</strong></div>
+          <div class="proj-row"><span>Custo LegalAI (Modelo 1)</span><strong>R$ 790/mês</strong></div>
+          <div class="proj-row highlight"><span>Retorno mensal líquido</span><strong>R$ 9.210</strong></div>
+        </div>
+        <div class="proj-card">
+          <h4>Payback — Setup + Recorrente</h4>
+          <div class="proj-row"><span>Investimento inicial</span><strong>R$ 4.800</strong></div>
+          <div class="proj-row"><span>Economia 1º mês</span><strong>R$ 10.000</strong></div>
+          <div class="proj-row"><span>Payback</span><strong>&lt; 30 dias</strong></div>
+          <div class="proj-row"><span>ROI em 12 meses</span><strong>+1.100%</strong></div>
+          <div class="proj-row highlight"><span>Economia anual líquida</span><strong>R$ 110.700</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LGPD -->
+    <div class="section">
+      <div class="section-label">Segurança & Conformidade</div>
+      <div class="section-title">Seus dados protegidos por lei</div>
+      <div class="lgpd-box">
+        <div class="lgpd-icon">🔒</div>
+        <div>
+          <h4>100% adequado à LGPD (Lei 13.709/2018)</h4>
+          <p>
+            Os documentos do seu escritório ficam <strong>isolados e nunca são compartilhados</strong> com outros clientes ou usados para treinar modelos de IA de terceiros. Toda a infraestrutura segue boas práticas de segurança da informação, com dados armazenados em servidores com criptografia em trânsito e em repouso. Seu cliente pode ficar tranquilo.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRÓXIMOS PASSOS -->
+    <div class="section">
+      <div class="section-label">Como começar</div>
+      <div class="section-title">Próximos passos</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Aceite a proposta</h4>
+            <p>Escolha o modelo e assine o contrato digital. Levam menos de 5 minutos.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Reunião de briefing (30 min)</h4>
+            <p>Definimos as fontes a integrar, a identidade visual e o domínio do seu sistema.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Entrega e treinamento</h4>
+            <p>Em até 7 dias úteis o sistema está no ar. Fazemos o treinamento com a equipe.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Seu escritório operando com IA</h4>
+            <p>A partir daí o sistema trabalha por você 24 horas por dia, 7 dias por semana.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- RODAPÉ -->
+  <div class="footer">
+    <div>
+      <div class="footer-brand">Legal<span>AI</span></div>
+      <div style="color:rgba(255,255,255,0.35);font-size:11px;margin-top:4px;">Inteligência Artificial Jurídica</div>
+    </div>
+    <div class="footer-contact">
+      <strong>[Seu Nome]</strong>
+      [seu@email.com.br]<br/>
+      [+55 11 9 0000-0000]<br/>
+      legal.lasolutions.me
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

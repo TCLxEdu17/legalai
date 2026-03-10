@@ -16,6 +16,8 @@ import { CollectorsModule } from './modules/collectors/collectors.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module';
+import { TrialModule } from './modules/trial/trial.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
 
 @Module({
   imports: [
@@ -62,6 +64,10 @@ import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 
     // API Keys
     ApiKeysModule,
+
+    // Trial & Metrics
+    TrialModule,
+    MetricsModule,
   ],
 })
 export class AppModule {}

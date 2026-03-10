@@ -17,6 +17,7 @@ const uploadSchema = z.object({
   tribunal: z.string().optional(),
   processNumber: z.string().optional(),
   relator: z.string().optional(),
+  oabNumber: z.string().optional(),
   judgmentDate: z.string().optional(),
   theme: z.string().optional(),
   keywords: z.string().optional(),
@@ -80,6 +81,7 @@ export default function UploadPage() {
     if (data.tribunal) formData.append('tribunal', data.tribunal);
     if (data.processNumber) formData.append('processNumber', data.processNumber);
     if (data.relator) formData.append('relator', data.relator);
+    if (data.oabNumber) formData.append('oabNumber', data.oabNumber);
     if (data.judgmentDate) formData.append('judgmentDate', data.judgmentDate);
     if (data.theme) formData.append('theme', data.theme);
     if (data.keywords) formData.append('keywords', data.keywords);
@@ -190,6 +192,18 @@ export default function UploadPage() {
               />
             </div>
           ))}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            Nº OAB <span className="text-slate-600 text-xs font-normal">(opcional)</span>
+          </label>
+          <input
+            type="text"
+            {...register('oabNumber')}
+            placeholder="Ex: SP 123456"
+            className="w-full px-3 py-2.5 bg-[#1a1a1a] border border-white/[0.08] text-slate-100 text-sm rounded-lg placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          />
         </div>
 
         <div>

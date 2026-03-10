@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { isAuthenticated, logout } from '@/lib/auth';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { CookieBanner } from '@/components/ui/cookie-banner';
 
 const ACTIVITY_KEY = 'legalai_last_activity';
 const TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 horas sem atividade
@@ -52,6 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Header />
         <main className="flex-1 overflow-y-auto p-6 relative z-10">{children}</main>
       </div>
+      <CookieBanner />
     </div>
   );
 }

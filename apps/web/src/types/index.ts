@@ -36,6 +36,7 @@ export interface JurisprudenceDocument {
   tribunal: string | null;
   processNumber: string | null;
   relator: string | null;
+  oabNumber?: string;
   judgmentDate: string | null;
   theme: string | null;
   keywords: string[];

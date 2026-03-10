@@ -257,6 +257,41 @@ class ApiClient {
   async deleteApiKey(id: string) {
     await this.client.delete(`/api-keys/${id}`);
   }
+
+  // ==================== TRIAL ====================
+  async createTrial(data: { prefix: string; name: string }) {
+    const { data: res } = await this.client.post('/trial', data);
+    return res;
+  }
+
+  async getTrialStatus(id: string) {
+    const { data } = await this.client.get(`/trial/${id}`);
+    return data;
+  }
+
+  async submitTrialFeedback(id: string, feedback: 'YES' | 'NO') {
+    const { data } = await this.client.post(`/trial/${id}/feedback`, { feedback });
+    return data;
+  }
+
+  async trackTrialMetric(
+    id: string,
+    payload: { event: string; page?: string; element?: string; metadata?: any },
+  ) {
+    const { data } = await this.client.post(`/trial/${id}/track`, payload);
+    return data;
+  }
+
+  // ==================== METRICS ====================
+  async getTrialMetrics() {
+    const { data } = await this.client.get('/trial/admin/metrics');
+    return data;
+  }
+
+  async getUsageSummary() {
+    const { data } = await this.client.get('/metrics/usage');
+    return data;
+  }
 }
 
 export const apiClient = new ApiClient();
