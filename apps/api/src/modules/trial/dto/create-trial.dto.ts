@@ -1,4 +1,12 @@
+import { IsString, IsNotEmpty, IsIn } from 'class-validator';
+
 export class CreateTrialDto {
-  prefix: string; // "Dr." | "Dra."
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['Dr.', 'Dra.'])
+  prefix: string;
+
+  @IsString()
+  @IsNotEmpty()
   name: string;
 }
