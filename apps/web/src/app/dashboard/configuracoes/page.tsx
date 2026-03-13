@@ -463,6 +463,12 @@ export default function ConfiguracoesPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
+                  <div className="flex items-start gap-2 px-3 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <span className="text-blue-400 text-xs mt-0.5">💡</span>
+                    <p className="text-blue-300 text-xs leading-relaxed">
+                      Para testar o acesso sem sair da sua sessão de admin, abra o link em uma <strong>janela anônima</strong> (Ctrl+Shift+N no Chrome).
+                    </p>
+                  </div>
                   <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 space-y-3">
                     <p className="text-xs text-emerald-400 font-medium uppercase tracking-wide flex items-center gap-1.5">
                       <CheckCircle className="w-3.5 h-3.5" /> Credenciais geradas com sucesso
