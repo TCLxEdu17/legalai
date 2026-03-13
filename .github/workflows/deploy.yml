@@ -18,6 +18,7 @@ jobs:
           else
             HOOK_URL="${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}"
           fi
+          HOOK_URL=$(echo "$HOOK_URL" | tr -d '[:space:]')
           if [ -z "$HOOK_URL" ]; then
             echo "No deploy hook configured for ${{ github.ref_name }}, skipping."
             exit 0
