@@ -56,9 +56,10 @@ function getGreeting(): string {
   const timeGreet = hour >= 5 && hour < 12 ? 'Bom dia' : hour >= 12 && hour < 18 ? 'Boa tarde' : 'Boa noite';
   const user = getStoredUser();
   if (!user) return `${timeGreet}! Como posso ajudar hoje?`;
-  const firstName = user.name.split(' ')[0];
-  const prefix = user.role === 'ADMIN' ? '' : 'Dr. ';
-  return `${timeGreet}, ${prefix}${firstName}!`;
+  const nameAlreadyHasPrefix = /^Dr[a]?\./i.test(user.name.trim());
+  const displayName = nameAlreadyHasPrefix ? user.name.split(' ').slice(0, 2).join(' ') : user.name.split(' ')[0];
+  const prefix = user.role === 'ADMIN' || nameAlreadyHasPrefix ? '' : 'Dr. ';
+  return `${timeGreet}, ${prefix}${displayName}!`;
 }
 
 function getRandomExamples(n: number) {
