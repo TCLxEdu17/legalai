@@ -15,78 +15,34 @@ import {
   Key,
   ScanSearch,
   BarChart2,
+  Calculator,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
 import { useState, useEffect } from 'react';
 
 const navItems = [
-  {
-    href: '/dashboard',
-    icon: LayoutDashboard,
-    label: 'Painel',
-    exact: true,
-  },
-  {
-    href: '/dashboard/chat',
-    icon: MessageSquare,
-    label: 'Assistente Jurídico',
-  },
-  {
-    href: '/dashboard/analise',
-    icon: ScanSearch,
-    label: 'Análise de Documento',
-    badge: 'New!',
-  },
-  {
-    href: '/dashboard/jurisprudencias',
-    icon: FileText,
-    label: 'Jurisprudências',
-  },
-  {
-    href: '/dashboard/upload',
-    icon: Upload,
-    label: 'Upload Manual',
-    adminOnly: true,
-  },
-  {
-    href: '/dashboard/fontes',
-    icon: Globe,
-    label: 'Fontes Automáticas',
-    adminOnly: true,
-  },
-  {
-    href: '/dashboard/ingestoes',
-    icon: Activity,
-    label: 'Histórico de Ingestões',
-    adminOnly: true,
-  },
-  {
-    href: '/dashboard/metricas',
-    icon: BarChart2,
-    label: 'Métricas',
-    adminOnly: true,
-  },
-  {
-    href: '/dashboard/api',
-    icon: Key,
-    label: 'API & Chaves',
-    badge: 'New!',
-  },
-  {
-    href: '/dashboard/configuracoes',
-    icon: Settings,
-    label: 'Configurações',
-    adminOnly: true,
-  },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Painel', exact: true },
+  { href: '/dashboard/chat', icon: MessageSquare, label: 'Assistente Jurídico' },
+  { href: '/dashboard/analise', icon: ScanSearch, label: 'Análise de Documento', badge: 'New!' },
+  { href: '/dashboard/jurisprudencias', icon: FileText, label: 'Jurisprudências' },
+  { href: '/dashboard/calculadora', icon: Calculator, label: 'Calc. Honorários', badge: 'New!' },
+  { href: '/dashboard/upload', icon: Upload, label: 'Upload Manual', adminOnly: true },
+  { href: '/dashboard/fontes', icon: Globe, label: 'Fontes Automáticas', adminOnly: true, trialVisible: true },
+  { href: '/dashboard/ingestoes', icon: Activity, label: 'Histórico de Ingestões', adminOnly: true, trialVisible: true },
+  { href: '/dashboard/metricas', icon: BarChart2, label: 'Métricas', adminOnly: true },
+  { href: '/dashboard/api', icon: Key, label: 'API & Chaves', badge: 'New!' },
+  { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações', adminOnly: true },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const [admin, setAdmin] = useState(false);
+  const [isTrial, setIsTrial] = useState(false);
 
   useEffect(() => {
     setAdmin(isAdmin());
+    try { setIsTrial(!!localStorage.getItem('legalai_trial')); } catch {}
   }, []);
 
   const isActive = (item: (typeof navItems)[0]) => {
@@ -115,7 +71,7 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto relative z-10">
         {navItems
-          .filter((item) => !item.adminOnly || admin)
+          .filter((item) => !item.adminOnly || admin || (item.trialVisible && isTrial))
           .map((item) => {
             const active = isActive(item);
             return (
