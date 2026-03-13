@@ -1,0 +1,22 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  deploy-api:
+    name: Deploy API (Render)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            HOOK_URL="${{ secrets.RENDER_DEPLOY_HOOK_PROD }}"
+          else
+            HOOK_URL="${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}"
+          fi
+          curl -s "$HOOK_URL" -X POST
+          echo "Deploy triggered for ${{ github.ref_name }}"
