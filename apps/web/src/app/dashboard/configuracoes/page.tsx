@@ -39,7 +39,7 @@ export default function ConfiguracoesPage() {
   const [activeTab, setActiveTab] = useState<'system' | 'users'>('system');
   const [showNewUser, setShowNewUser] = useState(false);
   const [showTrialGenerator, setShowTrialGenerator] = useState(false);
-  const [trialResult, setTrialResult] = useState<{ email: string; password: string; expiresAt: string } | null>(null);
+  const [trialResult, setTrialResult] = useState<{ email: string; password: string; expiresAt: string; loginUrl?: string; prefix?: string; name?: string } | null>(null);
   const [trialPrefix, setTrialPrefix] = useState<'Dr.' | 'Dra.'>('Dr.');
   const [trialName, setTrialName] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -138,7 +138,7 @@ export default function ConfiguracoesPage() {
   const createTrialMutation = useMutation({
     mutationFn: () => apiClient.createTrial({ prefix: trialPrefix, name: trialName }),
     onSuccess: (data: any) => {
-      setTrialResult({ email: data.email, password: data.password, expiresAt: data.expiresAt });
+      setTrialResult({ email: data.email, password: data.password, expiresAt: data.expiresAt, loginUrl: data.loginUrl, prefix: trialPrefix, name: trialName });
       setTrialName('');
     },
     onError: (e) => toast.error(extractApiErrorMessage(e)),
@@ -497,7 +497,19 @@ export default function ConfiguracoesPage() {
                       Expira em: {new Date(trialResult.expiresAt).toLocaleString('pt-BR')}
                     </p>
                   </div>
-                  <div className="flex justify-end">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => {
+                        const expiresFormatted = new Date(trialResult.expiresAt).toLocaleString('pt-BR');
+                        const loginUrl = trialResult.loginUrl ?? 'https://legal.lasolutions.me';
+                        const text = `Olá, ${trialResult.prefix ?? ''} ${trialResult.name ?? ''}!\n\nSeu acesso ao Assistente Jurídico IA está pronto. Válido por 24h.\n\n🔗 Link: ${loginUrl}\n📧 E-mail: ${trialResult.email}\n🔑 Senha: ${trialResult.password}\n\n⏰ Expira em: ${expiresFormatted}\n\nQualquer dúvida, estou à disposição.`;
+                        copyToClipboard(text, 'Mensagem');
+                      }}
+                      className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      Copiar mensagem para enviar
+                    </button>
                     <button
                       onClick={() => setTrialResult(null)}
                       className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
