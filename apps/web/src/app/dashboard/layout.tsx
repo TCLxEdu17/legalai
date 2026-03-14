@@ -6,6 +6,7 @@ import { isAuthenticated, logout } from '@/lib/auth';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { CookieBanner } from '@/components/ui/cookie-banner';
+import { TrialCountdown } from '@/components/ui/trial-countdown';
 import { WifiOff } from 'lucide-react';
 
 const ACTIVITY_KEY = 'legalai_last_activity';
@@ -70,6 +71,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header />
+        <TrialCountdown />
         {isOffline && (
           <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/15 border-b border-amber-500/20 text-amber-400 text-xs shrink-0">
             <WifiOff className="w-3.5 h-3.5 shrink-0" />

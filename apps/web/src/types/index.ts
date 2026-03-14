@@ -9,6 +9,8 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  trialId?: string;
+  trialExpiresAt?: string;
 }
 
 export interface AuthTokens {
