@@ -20,6 +20,8 @@ export interface AuthTokens {
     name: string;
     email: string;
     role: string;
+    trialId?: string;
+    trialExpiresAt?: string;
   };
 }
 
@@ -58,9 +60,23 @@ export class AuthService {
     const tokens = await this.generateTokens(user.id, user.email, user.role);
     this.logger.log(`Login bem-sucedido: ${user.email} | role=${user.role} | id=${user.id}`);
 
+    // Se for trial, incluir trialId e expiresAt na resposta
+    const trialUser = user.email.endsWith('@trial.legalai.com.br')
+      ? await this.prisma.trialUser.findFirst({ where: { systemUserId: user.id } })
+      : null;
+
     return {
       ...tokens,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        ...(trialUser && {
+          trialId: trialUser.id,
+          trialExpiresAt: trialUser.expiresAt.toISOString(),
+        }),
+      },
     };
   }
 
