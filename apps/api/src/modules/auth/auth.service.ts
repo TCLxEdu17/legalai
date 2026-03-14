@@ -72,6 +72,7 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
+        prefix: user.prefix,
         ...(trialUser && {
           trialId: trialUser.id,
           trialExpiresAt: trialUser.expiresAt.toISOString(),
@@ -118,6 +119,7 @@ export class AuthService {
         name: stored.user.name,
         email: stored.user.email,
         role: stored.user.role,
+        prefix: stored.user.prefix,
       },
     };
   }

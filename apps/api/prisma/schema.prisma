@@ -129,6 +129,7 @@ model User {
   role         UserRole  @default(USER)
   plan         String    @default("trial")
   isActive     Boolean   @default(true) @map("is_active")
+  prefix       String?   /// "Dr." ou "Dra."
   oabNumber    String?   @map("oab_number")
   tenantId     String?   @map("tenant_id") @db.Uuid
   createdAt    DateTime  @default(now()) @map("created_at")

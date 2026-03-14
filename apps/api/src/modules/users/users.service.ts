@@ -18,6 +18,7 @@ export interface CreateUserDto {
 export interface UpdateUserDto {
   name?: string;
   isActive?: boolean;
+  prefix?: string;
   oabNumber?: string;
 }
 
@@ -53,6 +54,7 @@ export class UsersService {
         email: true,
         role: true,
         isActive: true,
+        prefix: true,
         oabNumber: true,
         createdAt: true,
         updatedAt: true,
@@ -113,6 +115,7 @@ export class UsersService {
         email: true,
         role: true,
         isActive: true,
+        prefix: true,
         oabNumber: true,
         updatedAt: true,
       },

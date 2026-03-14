@@ -171,7 +171,7 @@ class ApiClient {
     return data;
   }
 
-  async updateProfile(payload: { name?: string; oabNumber?: string }) {
+  async updateProfile(payload: { name?: string; prefix?: string; oabNumber?: string }) {
     const { data } = await this.client.patch('/users/profile', payload);
     return data;
   }
