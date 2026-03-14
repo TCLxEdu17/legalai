@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { CreditCard, Zap, Star, Infinity as InfinityIcon, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
 
 const PLANS = [
   {
@@ -74,7 +73,7 @@ function UsageBar({ used, limit, label }: { used: number; limit: number | null; 
   );
 }
 
-export default function PlanosPage() {
+function PlanosContent() {
   const searchParams = useSearchParams();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
@@ -225,5 +224,13 @@ export default function PlanosPage() {
         })}
       </div>
     </div>
+  );
+}
+
+export default function PlanosPage() {
+  return (
+    <Suspense>
+      <PlanosContent />
+    </Suspense>
   );
 }

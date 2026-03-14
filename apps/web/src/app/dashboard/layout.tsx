@@ -8,6 +8,7 @@ import { Header } from '@/components/layout/header';
 import { CookieBanner } from '@/components/ui/cookie-banner';
 import { TrialCountdown } from '@/components/ui/trial-countdown';
 import { WifiOff } from 'lucide-react';
+import { DollarTicker } from '@/components/ui/dollar-ticker';
 
 const ACTIVITY_KEY = 'legalai_last_activity';
 const TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 horas sem atividade
@@ -78,6 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         )}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 relative z-10">{children}</main>
+        <DollarTicker />
       </div>
       <CookieBanner />
     </div>
