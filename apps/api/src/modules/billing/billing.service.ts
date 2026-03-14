@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import Stripe from 'stripe';
@@ -6,7 +6,7 @@ import Stripe from 'stripe';
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
-  private readonly stripe: Stripe;
+  private readonly stripe: Stripe | null;
   private readonly prices: Record<string, string>;
   private readonly webhookSecret: string;
   private readonly frontendUrl: string;
@@ -16,7 +16,7 @@ export class BillingService {
     private readonly prisma: PrismaService,
   ) {
     const secretKey = this.configService.get<string>('app.stripe.secretKey', '');
-    this.stripe = new Stripe(secretKey);
+    this.stripe = secretKey ? new Stripe(secretKey) : null;
     this.prices = {
       basic: this.configService.get<string>('app.stripe.prices.basic', ''),
       pro: this.configService.get<string>('app.stripe.prices.pro', ''),
@@ -33,12 +33,18 @@ export class BillingService {
     return null;
   }
 
+  private assertStripe(): Stripe {
+    if (!this.stripe) throw new ServiceUnavailableException('Pagamentos não configurados neste ambiente');
+    return this.stripe;
+  }
+
   private async getOrCreateCustomer(userId: string): Promise<string> {
+    const stripe = this.assertStripe();
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
     if (user.stripeCustomerId) return user.stripeCustomerId;
 
-    const customer = await this.stripe.customers.create({
+    const customer = await stripe.customers.create({
       email: user.email,
       name: user.name,
       metadata: { userId: user.id },
@@ -54,12 +60,13 @@ export class BillingService {
   }
 
   async createCheckoutSession(userId: string, planId: string): Promise<{ url: string }> {
+    const stripe = this.assertStripe();
     const priceId = this.prices[planId];
     if (!priceId) throw new BadRequestException(`Plano inválido: ${planId}`);
 
     const customerId = await this.getOrCreateCustomer(userId);
 
-    const session = await this.stripe.checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -77,13 +84,14 @@ export class BillingService {
   }
 
   async createPortalSession(userId: string): Promise<{ url: string }> {
+    const stripe = this.assertStripe();
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
     if (!user.stripeCustomerId) {
       throw new BadRequestException('Você não possui uma assinatura ativa');
     }
 
-    const session = await this.stripe.billingPortal.sessions.create({
+    const session = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
       return_url: `${this.frontendUrl}/dashboard/planos`,
     });
@@ -92,10 +100,11 @@ export class BillingService {
   }
 
   async handleWebhook(rawBody: Buffer, signature: string): Promise<void> {
+    const stripe = this.assertStripe();
     let event: Stripe.Event;
 
     try {
-      event = this.stripe.webhooks.constructEvent(rawBody, signature, this.webhookSecret);
+      event = stripe.webhooks.constructEvent(rawBody, signature, this.webhookSecret);
     } catch (err) {
       this.logger.error(`Webhook signature verification failed: ${(err as Error).message}`);
       throw new BadRequestException('Assinatura do webhook inválida');
@@ -125,7 +134,7 @@ export class BillingService {
     const userId = session.metadata?.userId;
     if (!userId || !session.subscription) return;
 
-    const subscription = await this.stripe.subscriptions.retrieve(session.subscription as string) as any;
+    const subscription = await this.assertStripe().subscriptions.retrieve(session.subscription as string) as any;
     const priceId = subscription.items.data[0]?.price?.id;
     const plan = this.getPlanFromPriceId(priceId) || 'basic';
     const periodEnd = subscription.current_period_end;
