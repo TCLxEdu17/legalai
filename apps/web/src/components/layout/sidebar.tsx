@@ -16,6 +16,7 @@ import {
   ScanSearch,
   BarChart2,
   Calculator,
+  CalendarDays,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
@@ -27,6 +28,7 @@ const navItems = [
   { href: '/dashboard/analise', icon: ScanSearch, label: 'Análise de Documento', badge: 'New!' },
   { href: '/dashboard/jurisprudencias', icon: FileText, label: 'Jurisprudências' },
   { href: '/dashboard/calculadora', icon: Calculator, label: 'Calc. Honorários', badge: 'New!' },
+  { href: '/dashboard/prazos', icon: CalendarDays, label: 'Prazos Processuais' },
   { href: '/dashboard/upload', icon: Upload, label: 'Upload Manual', adminOnly: true },
   { href: '/dashboard/fontes', icon: Globe, label: 'Fontes Automáticas', adminOnly: true, trialVisible: true },
   { href: '/dashboard/ingestoes', icon: Activity, label: 'Histórico de Ingestões', adminOnly: true, trialVisible: true },
