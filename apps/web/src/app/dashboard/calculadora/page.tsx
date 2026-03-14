@@ -33,6 +33,8 @@ interface CalcResult {
   max: number;
   minPct: number | null;
   maxPct: number | null;
+  minFloored: boolean;
+  maxFloored: boolean;
 }
 
 function calculate(fase: FaseKey, valorCausa: number, complexidade: Complexidade): CalcResult {
@@ -40,12 +42,30 @@ function calculate(fase: FaseKey, valorCausa: number, complexidade: Complexidade
   const mult = COMPLEXIDADE_MULT[complexidade];
 
   if (f.minPct !== null && f.maxPct !== null) {
-    const minVal = Math.max(f.minFixed, (valorCausa * f.minPct) / 100) * mult;
-    const maxVal = Math.max(f.minFixed, (valorCausa * f.maxPct) / 100) * mult;
-    return { min: minVal, max: maxVal, minPct: f.minPct, maxPct: f.maxPct };
+    // Aplica o multiplicador de complexidade sobre o valor percentual,
+    // depois aplica o piso (minFixed é o mínimo legal independente de complexidade)
+    const minByPct = (valorCausa * f.minPct) / 100 * mult;
+    const maxByPct = (valorCausa * f.maxPct) / 100 * mult;
+    const minVal = Math.max(f.minFixed, minByPct);
+    const maxVal = Math.max(f.minFixed, maxByPct);
+    return {
+      min: minVal,
+      max: maxVal,
+      minPct: f.minPct,
+      maxPct: f.maxPct,
+      minFloored: minByPct < f.minFixed,
+      maxFloored: maxByPct < f.minFixed,
+    };
   } else {
     const maxFixed = (f as { minFixed: number; maxFixed: number }).maxFixed;
-    return { min: f.minFixed * mult, max: maxFixed * mult, minPct: null, maxPct: null };
+    return {
+      min: f.minFixed,
+      max: maxFixed,
+      minPct: null,
+      maxPct: null,
+      minFloored: false,
+      maxFloored: false,
+    };
   }
 }
 
@@ -211,7 +231,9 @@ export default function CalculadoraPage() {
                     {formatBRL(result.min)}
                   </p>
                   {result.minPct !== null && (
-                    <p className="text-xs text-slate-600">{result.minPct}% do valor da causa</p>
+                    <p className="text-xs text-slate-600">
+                      {result.minFloored ? 'piso mínimo OAB aplicado' : `${result.minPct}% × mult. complexidade`}
+                    </p>
                   )}
                 </div>
                 <div className="bg-[#0a0a0a] rounded-lg border border-white/[0.07] p-4 space-y-1">
@@ -220,7 +242,9 @@ export default function CalculadoraPage() {
                     {formatBRL(result.max)}
                   </p>
                   {result.maxPct !== null && (
-                    <p className="text-xs text-slate-600">{result.maxPct}% do valor da causa</p>
+                    <p className="text-xs text-slate-600">
+                      {result.maxFloored ? 'piso mínimo OAB aplicado' : `${result.maxPct}% × mult. complexidade`}
+                    </p>
                   )}
                 </div>
               </div>
