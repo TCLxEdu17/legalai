@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Settings, Users, Plus, Loader2, Shield, Trash2, CheckCircle } from 'lucide-react';
+import { Settings, Users, Plus, Loader2, Shield, Trash2, CheckCircle, Clock, Copy, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
@@ -38,6 +38,10 @@ export default function ConfiguracoesPage() {
   useEffect(() => { setCurrentUser(getStoredUser()); }, []);
   const [activeTab, setActiveTab] = useState<'system' | 'users'>('system');
   const [showNewUser, setShowNewUser] = useState(false);
+  const [showTrialGenerator, setShowTrialGenerator] = useState(false);
+  const [trialResult, setTrialResult] = useState<{ email: string; password: string; expiresAt: string; loginUrl?: string; prefix?: string; name?: string } | null>(null);
+  const [trialPrefix, setTrialPrefix] = useState<'Dr.' | 'Dra.'>('Dr.');
+  const [trialName, setTrialName] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -130,6 +134,19 @@ export default function ConfiguracoesPage() {
     },
     onError: (e) => toast.error(extractApiErrorMessage(e)),
   });
+
+  const createTrialMutation = useMutation({
+    mutationFn: () => apiClient.createTrial({ prefix: trialPrefix, name: trialName }),
+    onSuccess: (data: any) => {
+      setTrialResult({ email: data.email, password: data.password, expiresAt: data.expiresAt, loginUrl: data.loginUrl, prefix: trialPrefix, name: trialName });
+      setTrialName('');
+    },
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text).then(() => toast.success(`${label} copiado!`));
+  };
 
   const isAdmin = currentUser?.role === 'ADMIN';
 
@@ -231,7 +248,7 @@ export default function ConfiguracoesPage() {
             <h3 className="font-semibold text-slate-100 mb-4">Sobre o sistema</h3>
             <div className="space-y-3">
               {[
-                { label: 'Versão', value: '1.0.0 — MVP' },
+                { label: 'Versão', value: 'v1.6.19' },
                 { label: 'Arquitetura', value: 'RAG (Retrieval-Augmented Generation)' },
                 { label: 'Banco vetorial', value: 'PostgreSQL + pgvector' },
                 { label: 'Embeddings', value: 'OpenAI text-embedding-3-small' },
@@ -297,13 +314,22 @@ export default function ConfiguracoesPage() {
             <p className="text-sm text-slate-400">
               {users.length} usuário{users.length !== 1 ? 's' : ''} cadastrado{users.length !== 1 ? 's' : ''}
             </p>
-            <button
-              onClick={() => setShowNewUser((v) => !v)}
-              className="flex items-center gap-2 px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Novo usuário
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setShowTrialGenerator((v) => !v); setShowNewUser(false); setTrialResult(null); }}
+                className="flex items-center gap-2 px-3 py-2 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/30 text-amber-400 rounded-lg text-sm font-medium transition-colors"
+              >
+                <Clock className="w-4 h-4" />
+                Acesso 24h
+              </button>
+              <button
+                onClick={() => { setShowNewUser((v) => !v); setShowTrialGenerator(false); setTrialResult(null); }}
+                className="flex items-center gap-2 px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Novo usuário
+              </button>
+            </div>
           </div>
 
           {/* Form novo usuário */}
@@ -373,6 +399,132 @@ export default function ConfiguracoesPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* Gerador de acesso 24h */}
+          {showTrialGenerator && (
+            <div className="bg-[#141414] border border-amber-500/20 rounded-xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-slate-100 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-400" />
+                    Gerar acesso temporário (24h)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Cria credenciais que expiram automaticamente em 24 horas.</p>
+                </div>
+                <button onClick={() => { setShowTrialGenerator(false); setTrialResult(null); }} className="text-slate-600 hover:text-slate-400">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {!trialResult ? (
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 mb-1.5">Tratamento</label>
+                      <div className="flex gap-2">
+                        {(['Dr.', 'Dra.'] as const).map((p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setTrialPrefix(p)}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                              trialPrefix === p
+                                ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                                : 'border-white/10 text-slate-400 hover:border-white/20'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs font-medium text-slate-500 mb-1.5">Nome do advogado(a)</label>
+                      <input
+                        value={trialName}
+                        onChange={(e) => setTrialName(e.target.value)}
+                        placeholder="Ex: João Silva"
+                        className="w-full px-3 py-2 bg-[#0f0f0f] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-transparent placeholder:text-slate-600"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => createTrialMutation.mutate()}
+                      disabled={createTrialMutation.isPending || trialName.trim().length < 2}
+                      className="flex items-center gap-2 px-4 py-2 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/30 text-amber-400 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {createTrialMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-3.5 h-3.5" />}
+                      Gerar credenciais
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2 px-3 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <span className="text-blue-400 text-xs mt-0.5">💡</span>
+                    <p className="text-blue-300 text-xs leading-relaxed">
+                      Para testar o acesso sem sair da sua sessão de admin, abra o link em uma <strong>janela anônima</strong> (Ctrl+Shift+N no Chrome).
+                    </p>
+                  </div>
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 space-y-3">
+                    <p className="text-xs text-emerald-400 font-medium uppercase tracking-wide flex items-center gap-1.5">
+                      <CheckCircle className="w-3.5 h-3.5" /> Credenciais geradas com sucesso
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-3 bg-black/30 rounded-lg px-3 py-2">
+                        <div>
+                          <p className="text-xs text-slate-500">E-mail</p>
+                          <p className="text-sm font-mono text-slate-200">{trialResult.email}</p>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(trialResult.email, 'E-mail')}
+                          className="text-slate-500 hover:text-slate-300 transition-colors"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 bg-black/30 rounded-lg px-3 py-2">
+                        <div>
+                          <p className="text-xs text-slate-500">Senha</p>
+                          <p className="text-sm font-mono text-slate-200">{trialResult.password}</p>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(trialResult.password, 'Senha')}
+                          className="text-slate-500 hover:text-slate-300 transition-colors"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Expira em: {new Date(trialResult.expiresAt).toLocaleString('pt-BR')}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => {
+                        const expiresFormatted = new Date(trialResult.expiresAt).toLocaleString('pt-BR');
+                        const loginUrl = trialResult.loginUrl ?? 'https://legal.lasolutions.me';
+                        const text = `Olá, ${trialResult.prefix ?? ''} ${trialResult.name ?? ''}!\n\nSeu acesso ao Assistente Jurídico IA está pronto. Válido por 24h.\n\n🔗 Link: ${loginUrl}\n📧 E-mail: ${trialResult.email}\n🔑 Senha: ${trialResult.password}\n\n⏰ Expira em: ${expiresFormatted}\n\nQualquer dúvida, estou à disposição.`;
+                        copyToClipboard(text, 'Mensagem');
+                      }}
+                      className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      Copiar mensagem para enviar
+                    </button>
+                    <button
+                      onClick={() => setTrialResult(null)}
+                      className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
+                    >
+                      Gerar outro acesso
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

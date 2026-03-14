@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Send, Loader2, MessageSquare, Plus, Trash2, ChevronRight } from 'lucide-react';
+import { Send, Loader2, MessageSquare, Plus, Trash2, ChevronRight, Paperclip, X, Filter } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
@@ -56,15 +56,48 @@ function getGreeting(): string {
   const timeGreet = hour >= 5 && hour < 12 ? 'Bom dia' : hour >= 12 && hour < 18 ? 'Boa tarde' : 'Boa noite';
   const user = getStoredUser();
   if (!user) return `${timeGreet}! Como posso ajudar hoje?`;
-  const firstName = user.name.split(' ')[0];
-  const prefix = user.role === 'ADMIN' ? '' : 'Dr. ';
-  return `${timeGreet}, ${prefix}${firstName}!`;
+  const nameAlreadyHasPrefix = /^Dr[a]?\./i.test(user.name.trim());
+  const displayName = nameAlreadyHasPrefix ? user.name.split(' ').slice(0, 2).join(' ') : user.name.split(' ')[0];
+  const prefix = user.role === 'ADMIN' || nameAlreadyHasPrefix ? '' : 'Dr. ';
+  return `${timeGreet}, ${prefix}${displayName}!`;
 }
 
 function getRandomExamples(n: number) {
   const shuffled = [...EXAMPLE_QUESTIONS].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, n);
 }
+
+// ===================== Area categorization =====================
+type LegalArea = 'Trabalhista' | 'Civil' | 'Penal' | 'Tributário' | 'Previdenciário' | 'Outro';
+
+const AREA_KEYWORDS: Record<LegalArea, string[]> = {
+  Trabalhista: ['clt', 'trabalhista', 'empregado', 'rescisão', 'fgts', 'aviso prévio', 'jornada'],
+  Civil: ['contrato', 'dano', 'indenização', 'responsabilidade', 'locação', 'posse', 'propriedade'],
+  Penal: ['crime', 'pena', 'réu', 'absolvição', 'condenação', 'prisão', 'furto', 'roubo'],
+  Tributário: ['imposto', 'tributo', 'icms', 'iss', 'irpf', 'contribuição', 'fiscal'],
+  Previdenciário: ['inss', 'aposentadoria', 'benefício', 'segurado', 'previdência'],
+  Outro: [],
+};
+
+const AREA_COLORS: Record<LegalArea, string> = {
+  Trabalhista: 'bg-amber-500/15 text-amber-400',
+  Civil: 'bg-brand-600/15 text-brand-400',
+  Penal: 'bg-red-500/15 text-red-400',
+  Tributário: 'bg-emerald-500/15 text-emerald-400',
+  Previdenciário: 'bg-violet-500/15 text-violet-400',
+  Outro: 'bg-white/5 text-slate-500',
+};
+
+function categorizeSession(title: string): LegalArea {
+  const lower = title.toLowerCase();
+  for (const [area, keywords] of Object.entries(AREA_KEYWORDS) as [LegalArea, string[]][]) {
+    if (area === 'Outro') continue;
+    if (keywords.some((kw) => lower.includes(kw))) return area;
+  }
+  return 'Outro';
+}
+
+// ===================== End categorization =====================
 
 const messageSchema = z.object({
   message: z
@@ -90,7 +123,12 @@ export default function ChatPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [showSidebar, setShowSidebar] = useState(true);
-  const [examples] = useState(() => getRandomExamples(4));
+  const [examples, setExamples] = useState<string[]>([]);
+  const [greeting, setGreeting] = useState('');
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [areaFilter, setAreaFilter] = useState<LegalArea | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -116,6 +154,12 @@ export default function ChatPage() {
     queryFn: () => apiClient.getSessionMessages(activeSessionId!),
     enabled: !!activeSessionId,
   });
+
+  // Client-only initialization — avoid hydration mismatch
+  useEffect(() => {
+    setExamples(getRandomExamples(4));
+    setGreeting(getGreeting());
+  }, []);
 
   useEffect(() => {
     if (sessionData) {
@@ -194,12 +238,43 @@ export default function ChatPage() {
     },
   });
 
-  const onSubmit = (data: MessageForm) => {
+  const onSubmit = async (data: MessageForm) => {
+    let messageText = data.message;
     reset({ message: '' });
-    sendMutation.mutate({ message: data.message, sessionId: activeSessionId });
+
+    if (attachedFile) {
+      setIsUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', attachedFile);
+        await apiClient.uploadDocument(formData);
+        messageText = `[Documento anexado: ${attachedFile.name}]\n\n${messageText}`;
+        toast.success(`Documento "${attachedFile.name}" carregado com sucesso`);
+      } catch {
+        toast.error('Falha ao fazer upload do documento');
+        setIsUploading(false);
+        return;
+      } finally {
+        setIsUploading(false);
+        setAttachedFile(null);
+      }
+    }
+
+    sendMutation.mutate({ message: messageText, sessionId: activeSessionId });
   };
 
-  const isLoading = sendMutation.isPending;
+  const isLoading = sendMutation.isPending || isUploading;
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 10MB.');
+      return;
+    }
+    setAttachedFile(file);
+    e.target.value = '';
+  };
 
   // Sugestões de follow-up baseadas no conteúdo da última resposta
   const followUpSuggestions = (() => {
@@ -265,13 +340,35 @@ export default function ChatPage() {
             </button>
           </div>
 
+          {/* Area filters */}
+          <div className="px-2 py-2 border-b border-white/[0.05] flex flex-wrap gap-1">
+            <button
+              onClick={() => setAreaFilter(null)}
+              className={cn('text-[10px] px-2 py-0.5 rounded-full transition-colors', !areaFilter ? 'bg-brand-600/20 text-brand-400' : 'bg-white/5 text-slate-500 hover:text-slate-300')}
+            >
+              Todas
+            </button>
+            {(Object.keys(AREA_COLORS) as LegalArea[]).filter(a => a !== 'Outro').map((area) => (
+              <button
+                key={area}
+                onClick={() => setAreaFilter(areaFilter === area ? null : area)}
+                className={cn('text-[10px] px-2 py-0.5 rounded-full transition-colors', areaFilter === area ? AREA_COLORS[area] : 'bg-white/5 text-slate-500 hover:text-slate-300')}
+              >
+                {area}
+              </button>
+            ))}
+          </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {sessions.length === 0 && (
               <p className="text-slate-600 text-xs text-center py-8 px-4">
                 Nenhuma consulta ainda. Inicie uma nova.
               </p>
             )}
-            {sessions.map((session) => (
+            {sessions
+              .filter((s) => !areaFilter || categorizeSession(s.title) === areaFilter)
+              .map((session) => {
+              const area = categorizeSession(session.title);
+              return (
               <div
                 key={session.id}
                 className={cn(
@@ -285,9 +382,16 @@ export default function ChatPage() {
                 <MessageSquare className="w-3.5 h-3.5 mt-0.5 shrink-0 text-slate-600" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate leading-tight">{session.title}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    {formatRelativeTime(session.updatedAt)}
-                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <p className="text-xs text-slate-600">
+                      {formatRelativeTime(session.updatedAt)}
+                    </p>
+                    {area !== 'Outro' && (
+                      <span className={cn('text-[9px] px-1.5 py-px rounded-full font-medium', AREA_COLORS[area])}>
+                        {area}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <button
                   onClick={(e) => {
@@ -299,7 +403,8 @@ export default function ChatPage() {
                   <Trash2 className="w-3 h-3" />
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -333,7 +438,7 @@ export default function ChatPage() {
               </div>
               {messages.length === 0 && !activeSessionId && (
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-slate-100">{getGreeting()}</h2>
+                  <h2 className="text-2xl font-bold text-slate-100">{greeting}</h2>
                   <p className="text-slate-500 text-sm mt-1">Como posso ajudar você hoje?</p>
                 </div>
               )}
@@ -386,6 +491,23 @@ export default function ChatPage() {
             </div>
           )}
           <form onSubmit={handleSubmit(onSubmit)}>
+            {/* File preview chip */}
+            {attachedFile && (
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-brand-600/10 border border-brand-500/20 rounded-full text-xs text-brand-400">
+                  <Paperclip className="w-3 h-3" />
+                  <span className="max-w-[200px] truncate">{attachedFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachedFile(null)}
+                    className="hover:text-red-400 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+                {isUploading && <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-400" />}
+              </div>
+            )}
             <div className="flex gap-3">
               <div className="flex-1">
                 <textarea
@@ -407,6 +529,24 @@ export default function ChatPage() {
                   <p className="text-red-400 text-xs mt-1">{errors.message.message}</p>
                 )}
               </div>
+              {/* Attach file button */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.txt"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                className="px-3 py-3 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed
+                           text-slate-400 hover:text-slate-200 rounded-xl transition-colors flex items-center justify-center shrink-0 self-start"
+                title="Anexar documento (PDF, DOCX, TXT — máx 10MB)"
+              >
+                <Paperclip className="w-4 h-4" />
+              </button>
               <button
                 type="submit"
                 disabled={isLoading || !messageValue?.trim()}
@@ -421,7 +561,7 @@ export default function ChatPage() {
               </button>
             </div>
             <p className="text-slate-600 text-xs mt-2">
-              Enter para enviar • Shift+Enter para nova linha
+              Enter para enviar • Shift+Enter para nova linha • 📎 anexe PDF/DOCX/TXT
             </p>
           </form>
         </div>

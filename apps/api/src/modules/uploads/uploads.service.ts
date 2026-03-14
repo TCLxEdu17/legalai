@@ -9,6 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ChunkingService } from '../rag/chunking.service';
 import { EmbeddingsService } from '../rag/embeddings.service';
 import { RagService } from '../rag/rag.service';
+import { StorageService } from '../storage/storage.service';
 import { PdfProcessor } from './processors/pdf.processor';
 import { DocxProcessor } from './processors/docx.processor';
 import { TextProcessor } from './processors/text.processor';
@@ -37,6 +38,7 @@ export class UploadsService {
     private readonly chunkingService: ChunkingService,
     private readonly embeddingsService: EmbeddingsService,
     private readonly ragService: RagService,
+    private readonly storageService: StorageService,
     private readonly pdfProcessor: PdfProcessor,
     private readonly docxProcessor: DocxProcessor,
     private readonly textProcessor: TextProcessor,
@@ -95,11 +97,12 @@ export class UploadsService {
 
   /**
    * Pipeline completo de processamento:
-   * 1. Extração de texto
-   * 2. Limpeza e normalização
-   * 3. Geração de chunks
-   * 4. Geração de embeddings
-   * 5. Indexação no banco vetorial
+   * 1. Upload do arquivo para storage (R2 ou disco local)
+   * 2. Extração de texto (do buffer em memória — sem leitura de disco)
+   * 3. Limpeza e normalização
+   * 4. Geração de chunks
+   * 5. Geração de embeddings
+   * 6. Indexação no banco vetorial
    */
   private async processDocumentAsync(
     documentId: string,
@@ -109,15 +112,24 @@ export class UploadsService {
     dto: UploadDocumentDto,
   ): Promise<void> {
     try {
-      // Etapa 1: Extração de texto do buffer (sem disco)
       await this.updateStatus(documentId, UploadStatus.PROCESSING, ProcessingStatus.CHUNKING);
 
+      // Etapa 1: Salvar arquivo no storage (R2 ou disco local)
+      const storageKey = this.buildStorageKey(documentId, originalname);
+      const filePath = await this.storageService.uploadFile(buffer, storageKey, mimetype);
+
+      await this.prisma.jurisprudenceDocument.update({
+        where: { id: documentId },
+        data: { filePath },
+      });
+
+      // Etapa 2: Extração de texto do buffer em memória (nunca lê do disco)
       const processor = this.getProcessor(mimetype, originalname);
       const extracted = await processor.process(buffer);
 
       const extractedText = extracted.text?.trim() || '';
 
-      // Etapa 2: Auto-extração de metadados se solicitado e houver texto
+      // Etapa 3: Auto-extração de metadados se solicitado e houver texto
       let metadata: Partial<typeof dto> = {};
       if (dto.autoExtractMetadata && extractedText.length > 0) {
         this.logger.debug(`Extraindo metadados automaticamente para ${documentId}`);
@@ -141,14 +153,14 @@ export class UploadsService {
         },
       });
 
-      // Etapa 3: Geração de chunks (somente se houver texto extraído)
+      // Etapa 4: Geração de chunks (somente se houver texto extraído)
       const chunks = extractedText.length > 0
         ? this.chunkingService.chunkText(extractedText)
         : [];
 
       this.logger.log(`${chunks.length} chunks gerados para ${documentId}`);
 
-      // Etapa 4 & 5: Embeddings + Indexação (somente se houver chunks)
+      // Etapa 5 & 6: Embeddings + Indexação (somente se houver chunks)
       if (chunks.length > 0) {
         await this.updateStatus(documentId, UploadStatus.PROCESSING, ProcessingStatus.EMBEDDING);
         await this.embeddingsService.generateAndStoreEmbeddings(
@@ -227,6 +239,15 @@ export class UploadsService {
     });
   }
 
+  /**
+   * Constrói a chave de armazenamento para o arquivo.
+   * Formato: documents/<documentId>/<hash>-<originalname>
+   */
+  private buildStorageKey(documentId: string, originalname: string): string {
+    const safeName = originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    return `documents/${documentId}/${safeName}`;
+  }
+
   private getFileType(mimetype: string, filename: string): string | null {
     const ext = path.extname(filename).toLowerCase();
     if (mimetype === 'application/pdf' || ext === '.pdf') return 'pdf';
@@ -265,5 +286,4 @@ export class UploadsService {
     this.logger.log(`Texto extraído: ${text.length} caracteres. Enviando para análise IA.`);
     return this.ragService.analyzeDocument(text);
   }
-
 }

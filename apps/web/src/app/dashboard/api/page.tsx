@@ -17,6 +17,7 @@ import {
   Code,
   Eye,
   EyeOff,
+  Webhook,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage } from '@/lib/utils';
@@ -37,10 +38,15 @@ function formatDate(date: string): string {
   }).format(new Date(date));
 }
 
+const WEBHOOK_EVENTS = ['ingestion.completed', 'ingestion.failed'];
+
 export default function ApiPage() {
   const [showForm, setShowForm] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showWebhookForm, setShowWebhookForm] = useState(false);
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [webhookEvents, setWebhookEvents] = useState<string[]>(['ingestion.completed']);
   const queryClient = useQueryClient();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<KeyForm>({
@@ -80,6 +86,29 @@ export default function ApiPage() {
     setTimeout(() => setCopied(false), 2000);
     toast.success('Chave copiada!');
   };
+
+  const { data: webhooks = [] } = useQuery({
+    queryKey: ['webhooks'],
+    queryFn: () => apiClient.getWebhooks(),
+  });
+
+  const createWebhookMutation = useMutation({
+    mutationFn: () => apiClient.createWebhook(webhookUrl, webhookEvents),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['webhooks'] });
+      setWebhookUrl('');
+      setWebhookEvents(['ingestion.completed']);
+      setShowWebhookForm(false);
+      toast.success('Webhook criado!');
+    },
+    onError: (err) => toast.error(extractApiErrorMessage(err)),
+  });
+
+  const deleteWebhookMutation = useMutation({
+    mutationFn: (id: string) => apiClient.deleteWebhook(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['webhooks'] }); toast.success('Webhook removido'); },
+    onError: (err) => toast.error(extractApiErrorMessage(err)),
+  });
 
   return (
     <div className="space-y-6">
@@ -294,6 +323,84 @@ curl http://localhost:3001/api/v1/ai/query \\
             </pre>
           </div>
         </div>
+      </div>
+
+      {/* Webhooks section */}
+      <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.05]">
+          <div className="flex items-center gap-2">
+            <Webhook className="w-4 h-4 text-brand-400" />
+            <h2 className="text-sm font-semibold text-slate-200">Webhooks</h2>
+            <span className="text-xs text-slate-500">({(webhooks as any[]).length})</span>
+          </div>
+          <button
+            onClick={() => setShowWebhookForm((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-xs transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Novo webhook
+          </button>
+        </div>
+
+        {showWebhookForm && (
+          <div className="p-4 border-b border-white/[0.05] bg-white/[0.02] space-y-3">
+            <div>
+              <label className="text-xs text-slate-500 mb-1 block">URL do endpoint</label>
+              <input
+                type="url"
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                placeholder="https://meuapp.com/webhook"
+                className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500 mb-1.5 block">Eventos</label>
+              <div className="flex flex-wrap gap-2">
+                {WEBHOOK_EVENTS.map((ev) => (
+                  <label key={ev} className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={webhookEvents.includes(ev)}
+                      onChange={(e) => setWebhookEvents(e.target.checked ? [...webhookEvents, ev] : webhookEvents.filter((x) => x !== ev))}
+                      className="accent-brand-600"
+                    />
+                    <span className="text-xs text-slate-400 font-mono">{ev}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={() => createWebhookMutation.mutate()}
+              disabled={!webhookUrl || webhookEvents.length === 0 || createWebhookMutation.isPending}
+              className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              {createWebhookMutation.isPending ? 'Salvando...' : 'Salvar webhook'}
+            </button>
+          </div>
+        )}
+
+        {(webhooks as any[]).length === 0 ? (
+          <div className="py-8 text-center text-slate-500 text-sm">Nenhum webhook configurado</div>
+        ) : (
+          <div className="divide-y divide-white/[0.05]">
+            {(webhooks as any[]).map((wh) => (
+              <div key={wh.id} className="px-4 py-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-slate-200 text-xs font-mono truncate">{wh.url}</p>
+                  <div className="flex gap-1 mt-1 flex-wrap">
+                    {wh.events.map((ev: string) => (
+                      <span key={ev} className="text-[10px] bg-brand-600/10 text-brand-400 px-1.5 py-0.5 rounded font-mono">{ev}</span>
+                    ))}
+                  </div>
+                </div>
+                <button onClick={() => deleteWebhookMutation.mutate(wh.id)} className="text-slate-600 hover:text-red-400 p-1 rounded transition-colors shrink-0">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

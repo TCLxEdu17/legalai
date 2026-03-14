@@ -19,4 +19,11 @@ export class MetricsController {
     this.logger.log(`GET /metrics/usage — userId=${user?.id} role=${user?.role}`);
     return this.metricsService.getUsageSummary(user.id, user.role);
   }
+
+  @Get('tokens')
+  @ApiOperation({ summary: 'Get token usage summary from UsageLog' })
+  getTokenUsageSummary(@CurrentUser() user: any) {
+    this.logger.log(`GET /metrics/tokens — userId=${user?.id} role=${user?.role}`);
+    return this.metricsService.getTokenUsageSummary(user.id, user.role);
+  }
 }

@@ -17,6 +17,7 @@
     "db:studio": "npm run prisma:studio --workspace=apps/api"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "@nestjs/cli": "^10.4.5"
   }
 }

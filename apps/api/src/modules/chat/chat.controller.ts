@@ -19,6 +19,7 @@ import { Throttle } from '@nestjs/throttler';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UserThrottlerGuard } from '../../common/guards/user-throttler.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('chat')
@@ -29,7 +30,8 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post('message')
-  @Throttle({ short: { ttl: 10000, limit: 5 }, long: { ttl: 60000, limit: 30 } })
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @ApiOperation({ summary: 'Enviar mensagem ao assistente jurídico' })
   @ApiResponse({ status: 201, description: 'Resposta gerada com sucesso' })
   @ApiResponse({ status: 429, description: 'Limite de requisições excedido' })

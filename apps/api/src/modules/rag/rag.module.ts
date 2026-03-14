@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RagService } from './rag.service';
+import { RagController } from './rag.controller';
 import { ChunkingService } from './chunking.service';
 import { EmbeddingsService } from './embeddings.service';
 import { VectorSearchService } from './vector-search.service';
@@ -29,6 +30,7 @@ const aiProviderFactory = {
 };
 
 @Module({
+  controllers: [RagController],
   providers: [
     OpenAIProvider,
     AnthropicProvider,

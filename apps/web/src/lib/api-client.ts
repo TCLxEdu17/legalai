@@ -97,6 +97,11 @@ class ApiClient {
     await this.client.delete(`/documents/${id}`);
   }
 
+  async generateDocumentSummary(id: string): Promise<{ summary: string }> {
+    const { data } = await this.client.post(`/documents/${id}/summary`);
+    return data;
+  }
+
   async getDocumentStats() {
     const { data } = await this.client.get('/documents/stats');
     return data;
@@ -154,6 +159,16 @@ class ApiClient {
 
   async deleteAccount() {
     await this.client.delete('/users/me');
+  }
+
+  async getPlanInfo() {
+    const { data } = await this.client.get('/users/me/plan');
+    return data as { plan: string; limits: { chatMessages: number | null; uploads: number | null; apiCalls: number | null }; usage: { chatMessages: number; uploads: number; apiCalls: number } };
+  }
+
+  async getProcesso(numero: string) {
+    const { data } = await this.client.get(`/processos/${encodeURIComponent(numero)}`);
+    return data;
   }
 
   async updateProfile(payload: { name?: string; oabNumber?: string }) {
@@ -258,6 +273,66 @@ class ApiClient {
     await this.client.delete(`/api-keys/${id}`);
   }
 
+  // ==================== CLIENTS ====================
+  async getClients(search?: string) {
+    const { data } = await this.client.get('/clients', { params: { search } });
+    return data;
+  }
+
+  async createClient(client: { name: string; email?: string; phone?: string; cpfCnpj?: string; address?: string; notes?: string }) {
+    const { data } = await this.client.post('/clients', client);
+    return data;
+  }
+
+  async updateClient(id: string, client: Partial<{ name: string; email: string; phone: string; cpfCnpj: string; address: string; notes: string; isActive: boolean }>) {
+    const { data } = await this.client.patch(`/clients/${id}`, client);
+    return data;
+  }
+
+  async deleteClient(id: string) {
+    await this.client.delete(`/clients/${id}`);
+  }
+
+  // ==================== HEARINGS ====================
+  async getHearings() {
+    const { data } = await this.client.get('/hearings');
+    return data;
+  }
+
+  async createHearing(hearing: { title: string; client?: string; processNumber?: string; court?: string; date: string; location?: string; notes?: string }) {
+    const { data } = await this.client.post('/hearings', hearing);
+    return data;
+  }
+
+  async updateHearing(id: string, hearing: Partial<{ title: string; client: string; processNumber: string; court: string; date: string; location: string; notes: string }>) {
+    const { data } = await this.client.patch(`/hearings/${id}`, hearing);
+    return data;
+  }
+
+  async deleteHearing(id: string) {
+    await this.client.delete(`/hearings/${id}`);
+  }
+
+  // ==================== FAVORITES ====================
+  async getFavorites() {
+    const { data } = await this.client.get('/favorites');
+    return data;
+  }
+
+  async getFavoriteIds(): Promise<string[]> {
+    const { data } = await this.client.get('/favorites/ids');
+    return data;
+  }
+
+  async addFavorite(documentId: string, collection?: string, note?: string) {
+    const { data } = await this.client.post('/favorites', { documentId, collection, note });
+    return data;
+  }
+
+  async removeFavorite(documentId: string) {
+    await this.client.delete(`/favorites/${documentId}`);
+  }
+
   // ==================== TRIAL ====================
   async createTrial(data: { prefix: string; name: string }) {
     const { data: res } = await this.client.post('/trial', data);
@@ -282,6 +357,66 @@ class ApiClient {
     return data;
   }
 
+  // ==================== WEBHOOKS ====================
+  async getWebhooks() {
+    const { data } = await this.client.get('/webhooks');
+    return data as Array<{ id: string; url: string; events: string[]; isActive: boolean; secret: string; createdAt: string }>;
+  }
+
+  async createWebhook(url: string, events: string[]) {
+    const { data } = await this.client.post('/webhooks', { url, events });
+    return data;
+  }
+
+  async deleteWebhook(id: string) {
+    await this.client.delete(`/webhooks/${id}`);
+  }
+
+  // ==================== COMMENTS ====================
+  async getDocumentComments(documentId: string) {
+    const { data } = await this.client.get(`/documents/${documentId}/comments`);
+    return data as Array<{ id: string; content: string; createdAt: string }>;
+  }
+
+  async addDocumentComment(documentId: string, content: string) {
+    const { data } = await this.client.post(`/documents/${documentId}/comments`, { content });
+    return data;
+  }
+
+  async deleteDocumentComment(documentId: string, commentId: string) {
+    await this.client.delete(`/documents/${documentId}/comments/${commentId}`);
+  }
+
+  // ==================== NOTIFICATIONS ====================
+  async getNotifications() {
+    const { data } = await this.client.get('/notifications');
+    return data as Array<{ id: string; title: string; body: string; read: boolean; link?: string; createdAt: string }>;
+  }
+
+  async markNotificationRead(id: string) {
+    await this.client.patch(`/notifications/${id}/read`);
+  }
+
+  async markAllNotificationsRead() {
+    await this.client.patch('/notifications/read-all');
+  }
+
+  // ==================== RAG TOOLS ====================
+  async reviewPeca(text: string): Promise<{ review: string }> {
+    const { data } = await this.client.post('/rag/review', { text }, { timeout: 120000 });
+    return data;
+  }
+
+  async generateMinuta(template: string, fields: Record<string, string>): Promise<{ minuta: string }> {
+    const { data } = await this.client.post('/rag/minuta', { template, fields }, { timeout: 120000 });
+    return data;
+  }
+
+  async compareDocuments(documentIds: string[], perspective?: string): Promise<{ comparison: string; documents: any[] }> {
+    const { data } = await this.client.post('/rag/compare', { documentIds, perspective }, { timeout: 120000 });
+    return data;
+  }
+
   // ==================== METRICS ====================
   async getTrialMetrics() {
     const { data } = await this.client.get('/trial/admin/metrics');
@@ -290,6 +425,11 @@ class ApiClient {
 
   async getUsageSummary() {
     const { data } = await this.client.get('/metrics/usage');
+    return data;
+  }
+
+  async getTokenUsage() {
+    const { data } = await this.client.get('/metrics/tokens');
     return data;
   }
 }

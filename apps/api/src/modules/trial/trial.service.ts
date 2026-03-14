@@ -5,8 +5,8 @@ import { FeedbackTrialDto } from './dto/feedback-trial.dto';
 import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 
-const ADJECTIVES = ['habil', 'brilhante', 'justo', 'fiel', 'douto', 'nobre', 'sábio', 'ágil', 'forte', 'leal'];
-const NOUNS = ['Jurista', 'Advogado', 'Doutor', 'Consul', 'Legis', 'Iuris', 'Toga', 'Forum', 'Codex', 'Pactum'];
+const ADJECTIVES = ['habil', 'brilhante', 'justo', 'fiel', 'douto', 'nobre', 'sabio', 'agil', 'forte', 'leal'];
+const NOUNS = ['jurista', 'advogado', 'doutor', 'consul', 'legis', 'iuris', 'toga', 'forum', 'codex', 'pactum'];
 
 @Injectable()
 export class TrialService {
@@ -71,6 +71,7 @@ export class TrialService {
       password: rawPassword,
       expiresAt: trialUser.expiresAt,
       onboardingStep: trialUser.onboardingStep,
+      loginUrl: process.env.APP_URL ?? 'https://legal.lasolutions.me',
     };
   }
 

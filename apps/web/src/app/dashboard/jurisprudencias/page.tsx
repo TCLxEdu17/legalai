@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, RefreshCw, Trash2, Eye, FileText, Filter } from 'lucide-react';
+import { Search, RefreshCw, Trash2, Eye, FileText, Filter, Sparkles, ChevronDown, ChevronUp, Heart, MessageCircle, Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import {
@@ -60,6 +60,18 @@ export default function JurisprudenciasPage() {
 
   const documents = data?.data || [];
   const pagination = data?.pagination;
+
+  const { data: favoriteIds = [] } = useQuery<string[]>({
+    queryKey: ['favorite-ids'],
+    queryFn: () => apiClient.getFavoriteIds(),
+  });
+
+  const favoriteMutation = useMutation({
+    mutationFn: ({ id, isFav }: { id: string; isFav: boolean }) =>
+      isFav ? apiClient.removeFavorite(id) : apiClient.addFavorite(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['favorite-ids'] }),
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -164,6 +176,13 @@ export default function JurisprudenciasPage() {
                   <td className="px-4 py-3.5">
                     <div className="flex items-center justify-end gap-2">
                       <button
+                        onClick={() => favoriteMutation.mutate({ id: doc.id, isFav: favoriteIds.includes(doc.id) })}
+                        className={cn('transition-colors p-1 rounded', favoriteIds.includes(doc.id) ? 'text-red-400 hover:text-red-300' : 'text-slate-500 hover:text-red-400')}
+                        title={favoriteIds.includes(doc.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                      >
+                        <Heart className={cn('w-4 h-4', favoriteIds.includes(doc.id) && 'fill-current')} />
+                      </button>
+                      <button
                         onClick={() => setSelected(doc)}
                         className="text-slate-500 hover:text-brand-400 transition-colors p-1 rounded"
                         title="Ver detalhes"
@@ -242,6 +261,37 @@ function DocumentModal({
   doc: JurisprudenceDocument;
   onClose: () => void;
 }) {
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const queryClient = useQueryClient();
+
+  const { data: comments = [] } = useQuery({
+    queryKey: ['comments', doc.id],
+    queryFn: () => apiClient.getDocumentComments(doc.id),
+  });
+
+  const addCommentMutation = useMutation({
+    mutationFn: () => apiClient.addDocumentComment(doc.id, commentText),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', doc.id] });
+      setCommentText('');
+    },
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => apiClient.deleteDocumentComment(doc.id, commentId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['comments', doc.id] }),
+  });
+
+  const summaryMutation = useMutation({
+    mutationFn: () => apiClient.generateDocumentSummary(doc.id),
+    onSuccess: (data) => {
+      setSummary(data.summary);
+      setSummaryOpen(true);
+    },
+  });
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-[#141414] border border-white/10 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
@@ -263,7 +313,7 @@ function DocumentModal({
             { label: 'Tribunal', value: doc.tribunal },
             { label: 'Número do processo', value: doc.processNumber },
             { label: 'Relator', value: doc.relator },
-            { label: 'Nº OAB', value: doc.oabNumber },
+            { label: 'Nº OAB', value: (doc as any).oabNumber },
             { label: 'Data do julgamento', value: formatDate(doc.judgmentDate) },
             { label: 'Indexado em', value: formatDateTime(doc.createdAt) },
             { label: 'Tema', value: doc.theme },
@@ -293,6 +343,84 @@ function DocumentModal({
               <p className="text-xs text-red-500">{doc.processingError}</p>
             </div>
           )}
+
+          {/* Resumo automático */}
+          <div className="border-t border-white/[0.07] pt-4">
+            {!summary && (
+              <button
+                onClick={() => summaryMutation.mutate()}
+                disabled={summaryMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2 bg-brand-600/10 text-brand-400 border border-brand-500/20 rounded-lg text-sm hover:bg-brand-600/15 transition-colors disabled:opacity-60"
+              >
+                <Sparkles className="w-4 h-4" />
+                {summaryMutation.isPending ? 'Gerando resumo...' : 'Gerar resumo com IA'}
+              </button>
+            )}
+            {summaryMutation.isPending && (
+              <div className="mt-3 space-y-2">
+                <div className="h-3 rounded shimmer w-full" />
+                <div className="h-3 rounded shimmer w-4/5" />
+                <div className="h-3 rounded shimmer w-3/5" />
+              </div>
+            )}
+            {summary && (
+              <div>
+                <button
+                  onClick={() => setSummaryOpen((v) => !v)}
+                  className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-slate-100 transition-colors"
+                >
+                  <Sparkles className="w-4 h-4 text-brand-400" />
+                  Resumo executivo
+                  {summaryOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-500" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />}
+                </button>
+                {summaryOpen && (
+                  <div className="mt-2 p-3 bg-brand-600/5 border border-brand-500/15 rounded-lg">
+                    <p className="text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">{summary}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Notas/Comentários */}
+          <div className="border-t border-white/[0.07] pt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <MessageCircle className="w-4 h-4 text-slate-400" />
+              <h4 className="text-sm font-medium text-slate-300">Notas pessoais</h4>
+            </div>
+            {(comments as any[]).length > 0 && (
+              <div className="space-y-2 mb-3">
+                {(comments as any[]).map((c) => (
+                  <div key={c.id} className="flex items-start gap-2 p-2.5 bg-white/[0.03] border border-white/[0.06] rounded-lg">
+                    <p className="text-slate-300 text-xs flex-1">{c.content}</p>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-slate-600 text-[10px]">{new Date(c.createdAt).toLocaleDateString('pt-BR')}</span>
+                      <button onClick={() => deleteCommentMutation.mutate(c.id)} className="text-slate-600 hover:text-red-400 p-0.5 rounded transition-colors">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Adicionar nota..."
+                onKeyDown={(e) => { if (e.key === 'Enter' && commentText.trim()) addCommentMutation.mutate(); }}
+                className="flex-1 px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
+              <button
+                onClick={() => commentText.trim() && addCommentMutation.mutate()}
+                disabled={!commentText.trim() || addCommentMutation.isPending}
+                className="px-3 py-2 bg-brand-600/15 text-brand-400 border border-brand-500/20 rounded-lg transition-colors hover:bg-brand-600/25 disabled:opacity-50"
+              >
+                {addCommentMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

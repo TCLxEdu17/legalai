@@ -1,0 +1,56 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  deploy-api:
+    name: Deploy API (Render)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            HOOK_URL="${{ secrets.RENDER_DEPLOY_HOOK_PROD }}"
+          else
+            HOOK_URL="${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}"
+          fi
+          HOOK_URL=$(echo "$HOOK_URL" | tr -d '[:space:]')
+          if [ -z "$HOOK_URL" ]; then
+            echo "No deploy hook configured for ${{ github.ref_name }}, skipping."
+            exit 0
+          fi
+          curl -sf "$HOOK_URL" -X POST
+          echo "Deploy triggered for ${{ github.ref_name }}"
+
+  deploy-web-staging:
+    name: Alias staging domain (Vercel)
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'develop'
+    steps:
+      - name: Wait for Vercel preview deployment
+        run: sleep 90
+
+      - name: Get latest deployment and alias to staging domain
+        run: |
+          # Get latest deployment for develop branch
+          DEPLOY_ID=$(curl -s "https://api.vercel.com/v6/deployments?projectId=prj_ZLXKgt8Xn7LpEn8qAPeEy4MsVkao&limit=1" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" | \
+            python3 -c "import sys,json; deps=json.load(sys.stdin).get('deployments',[]); print(deps[0]['uid'] if deps else '')")
+
+          if [ -z "$DEPLOY_ID" ]; then
+            echo "No deployment found, skipping alias."
+            exit 0
+          fi
+
+          echo "Aliasing $DEPLOY_ID to dev.legalai.lasolutions.me"
+
+          curl -sf -X POST "https://api.vercel.com/v2/deployments/$DEPLOY_ID/aliases" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"alias":"dev.legalai.lasolutions.me"}'
+
+          echo "Done."

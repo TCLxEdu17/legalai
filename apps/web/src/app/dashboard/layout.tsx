@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated, logout } from '@/lib/auth';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { CookieBanner } from '@/components/ui/cookie-banner';
+import { WifiOff } from 'lucide-react';
 
 const ACTIVITY_KEY = 'legalai_last_activity';
 const TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 horas sem atividade
@@ -16,6 +17,24 @@ function updateActivity() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const [isOffline, setIsOffline] = useState(false);
+
+  useEffect(() => {
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+    // Offline detection
+    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => setIsOffline(false);
+    setIsOffline(!navigator.onLine);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
 
   const checkSession = useCallback(async () => {
     if (!isAuthenticated()) {
@@ -51,6 +70,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header />
+        {isOffline && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/15 border-b border-amber-500/20 text-amber-400 text-xs shrink-0">
+            <WifiOff className="w-3.5 h-3.5 shrink-0" />
+            Você está offline — algumas funcionalidades podem estar indisponíveis
+          </div>
+        )}
         <main className="flex-1 overflow-y-auto p-6 relative z-10">{children}</main>
       </div>
       <CookieBanner />

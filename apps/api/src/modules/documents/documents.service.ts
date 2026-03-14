@@ -3,9 +3,11 @@ import {
   NotFoundException,
   Logger,
   ForbiddenException,
+  Inject,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import * as fs from 'fs/promises';
+import { StorageService } from '../storage/storage.service';
+import { AI_PROVIDER_TOKEN, IAIProvider } from '../rag/providers/ai-provider.interface';
 
 export interface ListDocumentsQuery {
   page?: number;
@@ -20,7 +22,11 @@ export interface ListDocumentsQuery {
 export class DocumentsService {
   private readonly logger = new Logger(DocumentsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+    @Inject(AI_PROVIDER_TOKEN) private readonly aiProvider: IAIProvider,
+  ) {}
 
   async findAll(query: ListDocumentsQuery) {
     const page = Math.max(1, query.page || 1);
@@ -124,17 +130,35 @@ export class DocumentsService {
       throw new ForbiddenException('Sem permissão para deletar este documento');
     }
 
-    // Deletar arquivo físico
-    try {
-      await fs.unlink(document.filePath);
-    } catch (err) {
-      this.logger.warn(`Arquivo físico não encontrado: ${document.filePath}`);
+    // Deletar arquivo do storage (R2 ou disco local)
+    if (document.filePath) {
+      await this.storageService.deleteFile(document.filePath);
     }
 
     // Deletar registro (chunks são deletados em cascade pelo Prisma)
     await this.prisma.jurisprudenceDocument.delete({ where: { id } });
 
     this.logger.log(`Documento ${id} deletado por ${userId}`);
+  }
+
+  async generateSummary(id: string): Promise<{ summary: string }> {
+    const document = await this.findById(id);
+
+    // Get up to 5 chunks for context
+    const chunks = await this.prisma.jurisprudenceChunk.findMany({
+      where: { documentId: id },
+      orderBy: { chunkIndex: 'asc' },
+      take: 5,
+      select: { content: true },
+    });
+
+    const content = chunks.length > 0
+      ? chunks.map((c: any) => c.content).join('\n\n')
+      : document.title;
+
+    const prompt = `Faça um resumo executivo em 3 pontos principais deste documento jurídico:\n\n${content}`;
+    const result = await this.aiProvider.generateChatCompletion([{ role: 'user', content: prompt }]);
+    return { summary: result.content };
   }
 
   async getStats() {
