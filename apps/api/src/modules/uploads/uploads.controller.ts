@@ -89,8 +89,7 @@ export class UploadsController {
   ) {}
 
   @Post()
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Upload de jurisprudência (admin)' })
+  @ApiOperation({ summary: 'Upload de jurisprudência' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
