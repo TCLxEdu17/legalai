@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Send, Loader2, MessageSquare, Plus, Trash2, ChevronRight } from 'lucide-react';
+import { Send, Loader2, MessageSquare, Plus, Trash2, ChevronRight, Paperclip, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
@@ -92,6 +92,9 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [showSidebar, setShowSidebar] = useState(true);
   const [examples] = useState(() => getRandomExamples(4));
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -195,12 +198,43 @@ export default function ChatPage() {
     },
   });
 
-  const onSubmit = (data: MessageForm) => {
+  const onSubmit = async (data: MessageForm) => {
+    let messageText = data.message;
     reset({ message: '' });
-    sendMutation.mutate({ message: data.message, sessionId: activeSessionId });
+
+    if (attachedFile) {
+      setIsUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', attachedFile);
+        await apiClient.uploadDocument(formData);
+        messageText = `[Documento anexado: ${attachedFile.name}]\n\n${messageText}`;
+        toast.success(`Documento "${attachedFile.name}" carregado com sucesso`);
+      } catch {
+        toast.error('Falha ao fazer upload do documento');
+        setIsUploading(false);
+        return;
+      } finally {
+        setIsUploading(false);
+        setAttachedFile(null);
+      }
+    }
+
+    sendMutation.mutate({ message: messageText, sessionId: activeSessionId });
   };
 
-  const isLoading = sendMutation.isPending;
+  const isLoading = sendMutation.isPending || isUploading;
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 10MB.');
+      return;
+    }
+    setAttachedFile(file);
+    e.target.value = '';
+  };
 
   // Sugestões de follow-up baseadas no conteúdo da última resposta
   const followUpSuggestions = (() => {
@@ -387,6 +421,23 @@ export default function ChatPage() {
             </div>
           )}
           <form onSubmit={handleSubmit(onSubmit)}>
+            {/* File preview chip */}
+            {attachedFile && (
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-brand-600/10 border border-brand-500/20 rounded-full text-xs text-brand-400">
+                  <Paperclip className="w-3 h-3" />
+                  <span className="max-w-[200px] truncate">{attachedFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachedFile(null)}
+                    className="hover:text-red-400 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+                {isUploading && <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-400" />}
+              </div>
+            )}
             <div className="flex gap-3">
               <div className="flex-1">
                 <textarea
@@ -408,6 +459,24 @@ export default function ChatPage() {
                   <p className="text-red-400 text-xs mt-1">{errors.message.message}</p>
                 )}
               </div>
+              {/* Attach file button */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.txt"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                className="px-3 py-3 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed
+                           text-slate-400 hover:text-slate-200 rounded-xl transition-colors flex items-center justify-center shrink-0 self-start"
+                title="Anexar documento (PDF, DOCX, TXT — máx 10MB)"
+              >
+                <Paperclip className="w-4 h-4" />
+              </button>
               <button
                 type="submit"
                 disabled={isLoading || !messageValue?.trim()}
@@ -422,7 +491,7 @@ export default function ChatPage() {
               </button>
             </div>
             <p className="text-slate-600 text-xs mt-2">
-              Enter para enviar • Shift+Enter para nova linha
+              Enter para enviar • Shift+Enter para nova linha • 📎 anexe PDF/DOCX/TXT
             </p>
           </form>
         </div>
