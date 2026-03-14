@@ -352,6 +352,21 @@ class ApiClient {
     return data;
   }
 
+  // ==================== WEBHOOKS ====================
+  async getWebhooks() {
+    const { data } = await this.client.get('/webhooks');
+    return data as Array<{ id: string; url: string; events: string[]; isActive: boolean; secret: string; createdAt: string }>;
+  }
+
+  async createWebhook(url: string, events: string[]) {
+    const { data } = await this.client.post('/webhooks', { url, events });
+    return data;
+  }
+
+  async deleteWebhook(id: string) {
+    await this.client.delete(`/webhooks/${id}`);
+  }
+
   // ==================== COMMENTS ====================
   async getDocumentComments(documentId: string) {
     const { data } = await this.client.get(`/documents/${documentId}/comments`);

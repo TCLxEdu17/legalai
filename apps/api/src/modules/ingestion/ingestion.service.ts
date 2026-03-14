@@ -7,6 +7,7 @@ import { RagService } from '../rag/rag.service';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 
 export interface AutoIngestionResult {
   jobId: string;
@@ -30,6 +31,7 @@ export class IngestionService {
     private readonly ragService: RagService,
     private readonly configService: ConfigService,
     @Optional() private readonly notificationsService?: NotificationsService,
+    @Optional() private readonly webhooksService?: WebhooksService,
   ) {
     this.embeddingModel = configService.get('app.ai.openai.embeddingModel', 'text-embedding-3-small');
   }
@@ -266,6 +268,12 @@ export class IngestionService {
       });
 
       addLog(`Job ${job.id} concluído: ${itemsIndexed} indexados, ${errors.length} erros`);
+
+      // Disparar webhook
+      if (this.webhooksService) {
+        const eventName = finalStatus === 'COMPLETED' ? 'ingestion.completed' : 'ingestion.failed';
+        await this.webhooksService.dispatch(eventName, { jobId: job.id, sourceId, itemsIndexed }).catch(() => {});
+      }
 
       // Notificar usuários quando indexações forem realizadas
       if (finalStatus === 'COMPLETED' && itemsIndexed > 0 && this.notificationsService) {
