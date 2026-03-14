@@ -97,6 +97,11 @@ class ApiClient {
     await this.client.delete(`/documents/${id}`);
   }
 
+  async generateDocumentSummary(id: string): Promise<{ summary: string }> {
+    const { data } = await this.client.post(`/documents/${id}/summary`);
+    return data;
+  }
+
   async getDocumentStats() {
     const { data } = await this.client.get('/documents/stats');
     return data;

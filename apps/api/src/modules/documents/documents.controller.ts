@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Delete,
   Param,
   Query,
@@ -58,6 +59,12 @@ export class DocumentsController {
   @ApiOperation({ summary: 'Detalhe de uma jurisprudência' })
   findOne(@Param('id') id: string) {
     return this.documentsService.findById(id);
+  }
+
+  @Post(':id/summary')
+  @ApiOperation({ summary: 'Gerar resumo executivo de um documento via IA' })
+  async generateSummary(@Param('id') id: string) {
+    return this.documentsService.generateSummary(id);
   }
 
   @Delete(':id')

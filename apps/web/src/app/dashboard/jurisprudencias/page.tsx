@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, RefreshCw, Trash2, Eye, FileText, Filter } from 'lucide-react';
+import { Search, RefreshCw, Trash2, Eye, FileText, Filter, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import {
@@ -242,6 +242,17 @@ function DocumentModal({
   doc: JurisprudenceDocument;
   onClose: () => void;
 }) {
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+
+  const summaryMutation = useMutation({
+    mutationFn: () => apiClient.generateDocumentSummary(doc.id),
+    onSuccess: (data) => {
+      setSummary(data.summary);
+      setSummaryOpen(true);
+    },
+  });
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-[#141414] border border-white/10 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
@@ -263,7 +274,7 @@ function DocumentModal({
             { label: 'Tribunal', value: doc.tribunal },
             { label: 'Número do processo', value: doc.processNumber },
             { label: 'Relator', value: doc.relator },
-            { label: 'Nº OAB', value: doc.oabNumber },
+            { label: 'Nº OAB', value: (doc as any).oabNumber },
             { label: 'Data do julgamento', value: formatDate(doc.judgmentDate) },
             { label: 'Indexado em', value: formatDateTime(doc.createdAt) },
             { label: 'Tema', value: doc.theme },
@@ -293,6 +304,44 @@ function DocumentModal({
               <p className="text-xs text-red-500">{doc.processingError}</p>
             </div>
           )}
+
+          {/* Resumo automático */}
+          <div className="border-t border-white/[0.07] pt-4">
+            {!summary && (
+              <button
+                onClick={() => summaryMutation.mutate()}
+                disabled={summaryMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2 bg-brand-600/10 text-brand-400 border border-brand-500/20 rounded-lg text-sm hover:bg-brand-600/15 transition-colors disabled:opacity-60"
+              >
+                <Sparkles className="w-4 h-4" />
+                {summaryMutation.isPending ? 'Gerando resumo...' : 'Gerar resumo com IA'}
+              </button>
+            )}
+            {summaryMutation.isPending && (
+              <div className="mt-3 space-y-2">
+                <div className="h-3 rounded shimmer w-full" />
+                <div className="h-3 rounded shimmer w-4/5" />
+                <div className="h-3 rounded shimmer w-3/5" />
+              </div>
+            )}
+            {summary && (
+              <div>
+                <button
+                  onClick={() => setSummaryOpen((v) => !v)}
+                  className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-slate-100 transition-colors"
+                >
+                  <Sparkles className="w-4 h-4 text-brand-400" />
+                  Resumo executivo
+                  {summaryOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-500" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />}
+                </button>
+                {summaryOpen && (
+                  <div className="mt-2 p-3 bg-brand-600/5 border border-brand-500/15 rounded-lg">
+                    <p className="text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">{summary}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
