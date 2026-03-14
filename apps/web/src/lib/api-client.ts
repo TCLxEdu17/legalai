@@ -347,6 +347,22 @@ class ApiClient {
     return data;
   }
 
+  // ==================== RAG TOOLS ====================
+  async reviewPeca(text: string): Promise<{ review: string }> {
+    const { data } = await this.client.post('/rag/review', { text }, { timeout: 120000 });
+    return data;
+  }
+
+  async generateMinuta(template: string, fields: Record<string, string>): Promise<{ minuta: string }> {
+    const { data } = await this.client.post('/rag/minuta', { template, fields }, { timeout: 120000 });
+    return data;
+  }
+
+  async compareDocuments(documentIds: string[], perspective?: string): Promise<{ comparison: string; documents: any[] }> {
+    const { data } = await this.client.post('/rag/compare', { documentIds, perspective }, { timeout: 120000 });
+    return data;
+  }
+
   // ==================== METRICS ====================
   async getTrialMetrics() {
     const { data } = await this.client.get('/trial/admin/metrics');
