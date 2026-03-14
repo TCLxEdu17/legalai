@@ -78,19 +78,6 @@ export function DollarTicker() {
           <TickerItem key={`${r.code}-${i}`} rate={r} />
         ))}
       </div>
-      <style jsx>{`
-        .ticker-track {
-          display: inline-block;
-          animation: ticker-scroll 35s linear infinite;
-        }
-        .ticker-track:hover {
-          animation-play-state: paused;
-        }
-        @keyframes ticker-scroll {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-33.333%); }
-        }
-      `}</style>
     </div>
   );
 }

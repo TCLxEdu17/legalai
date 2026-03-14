@@ -219,7 +219,7 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen?: boolean; onClose
       {/* Version */}
       {!collapsed && (
         <div className="p-4 border-t border-white/[0.06] shrink-0">
-          <p className="text-slate-700 text-xs text-center">v1.6.19</p>
+          <p className="text-slate-700 text-xs text-center">v1.8.0</p>
         </div>
       )}
     </>
