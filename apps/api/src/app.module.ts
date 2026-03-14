@@ -25,6 +25,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
 import { HearingsModule } from './modules/hearings/hearings.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { CommentsModule } from './modules/comments/comments.module';
 
 @Module({
   imports: [
@@ -93,6 +94,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 
     // Notificações
     NotificationsModule,
+
+    // Comentários
+    CommentsModule,
   ],
   providers: [
     {

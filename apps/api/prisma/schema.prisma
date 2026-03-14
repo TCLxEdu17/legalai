@@ -112,10 +112,11 @@ model User {
   refreshTokens     RefreshToken[]
   apiKeys           ApiKey[]
   usageLogs         UsageLog[]
-  favorites         Favorite[]
-  hearings          Hearing[]
-  clients           Client[]
-  notifications     Notification[]
+  favorites              Favorite[]
+  hearings               Hearing[]
+  clients                Client[]
+  notifications          Notification[]
+  documentComments       DocumentComment[]
 
   @@index([tenantId])
   @@map("users")
@@ -180,6 +181,7 @@ model JurisprudenceDocument {
   createdBy        User             @relation(fields: [createdById], references: [id])
   chunks           JurisprudenceChunk[]
   favorites        Favorite[]
+  comments         DocumentComment[]
 
   @@index([tribunal])
   @@index([theme])
@@ -403,6 +405,26 @@ model Hearing {
   @@index([userId])
   @@index([date])
   @@map("hearings")
+}
+
+// ============================================================
+// COMENTÁRIOS EM DOCUMENTOS
+// ============================================================
+
+model DocumentComment {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  documentId String   @map("document_id") @db.Uuid
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document JurisprudenceDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([userId])
+  @@map("document_comments")
 }
 
 // ============================================================

@@ -352,6 +352,21 @@ class ApiClient {
     return data;
   }
 
+  // ==================== COMMENTS ====================
+  async getDocumentComments(documentId: string) {
+    const { data } = await this.client.get(`/documents/${documentId}/comments`);
+    return data as Array<{ id: string; content: string; createdAt: string }>;
+  }
+
+  async addDocumentComment(documentId: string, content: string) {
+    const { data } = await this.client.post(`/documents/${documentId}/comments`, { content });
+    return data;
+  }
+
+  async deleteDocumentComment(documentId: string, commentId: string) {
+    await this.client.delete(`/documents/${documentId}/comments/${commentId}`);
+  }
+
   // ==================== NOTIFICATIONS ====================
   async getNotifications() {
     const { data } = await this.client.get('/notifications');

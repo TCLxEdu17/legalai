@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, RefreshCw, Trash2, Eye, FileText, Filter, Sparkles, ChevronDown, ChevronUp, Heart } from 'lucide-react';
+import { Search, RefreshCw, Trash2, Eye, FileText, Filter, Sparkles, ChevronDown, ChevronUp, Heart, MessageCircle, Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import {
@@ -263,6 +263,26 @@ function DocumentModal({
 }) {
   const [summary, setSummary] = useState<string | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const queryClient = useQueryClient();
+
+  const { data: comments = [] } = useQuery({
+    queryKey: ['comments', doc.id],
+    queryFn: () => apiClient.getDocumentComments(doc.id),
+  });
+
+  const addCommentMutation = useMutation({
+    mutationFn: () => apiClient.addDocumentComment(doc.id, commentText),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', doc.id] });
+      setCommentText('');
+    },
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => apiClient.deleteDocumentComment(doc.id, commentId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['comments', doc.id] }),
+  });
 
   const summaryMutation = useMutation({
     mutationFn: () => apiClient.generateDocumentSummary(doc.id),
@@ -360,6 +380,46 @@ function DocumentModal({
                 )}
               </div>
             )}
+          </div>
+
+          {/* Notas/Comentários */}
+          <div className="border-t border-white/[0.07] pt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <MessageCircle className="w-4 h-4 text-slate-400" />
+              <h4 className="text-sm font-medium text-slate-300">Notas pessoais</h4>
+            </div>
+            {(comments as any[]).length > 0 && (
+              <div className="space-y-2 mb-3">
+                {(comments as any[]).map((c) => (
+                  <div key={c.id} className="flex items-start gap-2 p-2.5 bg-white/[0.03] border border-white/[0.06] rounded-lg">
+                    <p className="text-slate-300 text-xs flex-1">{c.content}</p>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-slate-600 text-[10px]">{new Date(c.createdAt).toLocaleDateString('pt-BR')}</span>
+                      <button onClick={() => deleteCommentMutation.mutate(c.id)} className="text-slate-600 hover:text-red-400 p-0.5 rounded transition-colors">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Adicionar nota..."
+                onKeyDown={(e) => { if (e.key === 'Enter' && commentText.trim()) addCommentMutation.mutate(); }}
+                className="flex-1 px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
+              <button
+                onClick={() => commentText.trim() && addCommentMutation.mutate()}
+                disabled={!commentText.trim() || addCommentMutation.isPending}
+                className="px-3 py-2 bg-brand-600/15 text-brand-400 border border-brand-500/20 rounded-lg transition-colors hover:bg-brand-600/25 disabled:opacity-50"
+              >
+                {addCommentMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
