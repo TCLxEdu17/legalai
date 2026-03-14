@@ -153,6 +153,7 @@ model User {
   documentComments       DocumentComment[]
   webhooks               Webhook[]
   cases                  Case[]
+  savedProcesses         SavedProcess[]
 
   @@index([tenantId])
   @@map("users")
@@ -701,4 +702,27 @@ model TrialMetric {
   @@index([event])
   @@index([createdAt])
   @@map("trial_metrics")
+}
+
+// ============================================================
+// PROCESSOS MONITORADOS
+// ============================================================
+
+model SavedProcess {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  number           String    // Número CNJ formatado
+  title            String?   // Apelido definido pelo usuário
+  area             String?
+  lastMovementDate DateTime? @map("last_movement_date")
+  lastStatus       String?   @map("last_status")
+  checkEnabled     Boolean   @default(true) @map("check_enabled")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, number])
+  @@index([userId])
+  @@map("saved_processes")
 }

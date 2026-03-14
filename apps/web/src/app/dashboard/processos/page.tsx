@@ -1,8 +1,22 @@
 'use client';
 
-import { useState } from 'react';
-import { Gavel, Search, Loader2, AlertCircle, User, Building2, Clock, Scale, ExternalLink } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Gavel, Search, Loader2, AlertCircle, User, Building2, Clock, Scale, ExternalLink, Bell, BellOff, Trash2, BookmarkPlus, BookmarkCheck } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
+import { FadeIn } from '@/components/ui/motion';
+
+interface SavedProcess {
+  id: string;
+  number: string;
+  title?: string;
+  area?: string;
+  lastMovementDate?: string;
+  lastStatus?: string;
+  checkEnabled: boolean;
+  createdAt: string;
+}
 
 
 const CNJ_REGEX = /^\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2}\.\d{4}$/;
@@ -83,6 +97,32 @@ export default function ProcessosPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [processo, setProcesso] = useState<ProcessoResult | null>(null);
+  const [tab, setTab] = useState<'consulta' | 'monitorados'>('consulta');
+  const queryClient = useQueryClient();
+
+  // URL param: ?q=numero
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('q');
+    if (q) { setInput(formatInput(q)); }
+  }, []);
+
+  const { data: savedProcesses = [], isLoading: savedLoading } = useQuery<SavedProcess[]>({
+    queryKey: ['savedProcesses'],
+    queryFn: () => apiClient.listSavedProcesses(),
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: (payload: { number: string; title?: string }) => apiClient.saveProcess(payload),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['savedProcesses'] }); toast.success('Processo adicionado ao monitoramento'); },
+    onError: () => toast.error('Erro ao salvar processo'),
+  });
+
+  const deleteSavedMutation = useMutation({
+    mutationFn: (id: string) => apiClient.deleteSavedProcess(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['savedProcesses'] }); toast.success('Processo removido do monitoramento'); },
+  });
+
+  const isSaved = processo ? savedProcesses.some((s) => s.number === processo.number) : false;
 
   const handleSearch = async () => {
     if (!CNJ_REGEX.test(input)) {
@@ -110,20 +150,30 @@ export default function ProcessosPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-          <Gavel className="w-6 h-6 text-brand-400" />
-          Consulta Processual
-        </h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Dados oficiais via{' '}
-          <span className="text-brand-400 font-medium">DataJud — CNJ</span>
-          {' '}· Todos os tribunais brasileiros
-        </p>
-      </div>
+      <FadeIn>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+              <Gavel className="w-6 h-6 text-brand-400" />
+              Processos
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">
+              DataJud — CNJ · Todos os tribunais brasileiros
+            </p>
+          </div>
+          <div className="flex gap-1 bg-[#141414] border border-white/[0.07] rounded-xl p-1 shrink-0">
+            {(['consulta', 'monitorados'] as const).map((t) => (
+              <button key={t} onClick={() => setTab(t)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === t ? 'bg-brand-600/20 text-brand-400' : 'text-slate-500 hover:text-slate-300'}`}>
+                {t === 'consulta' ? 'Consultar' : `Monitorados (${savedProcesses.length})`}
+              </button>
+            ))}
+          </div>
+        </div>
+      </FadeIn>
 
-      {/* Search */}
-      <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5 space-y-3">
+      {/* Search — visible only on consulta tab */}
+      {tab === 'consulta' && <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5 space-y-3">
         <label className="text-xs text-slate-500 block">Número do processo (formato CNJ)</label>
         <div className="flex gap-3">
           <div className="flex-1">
@@ -155,10 +205,10 @@ export default function ProcessosPage() {
         <p className="text-xs text-slate-600">
           Ex.: TJSP → J=8, TT=26 · TJRJ → J=8, TT=19 · TRF1 → J=5, TT=01 · TRT2 → J=4, TT=02
         </p>
-      </div>
+      </div>}
 
       {/* Loading state */}
-      {loading && (
+      {tab === 'consulta' && loading && (
         <div className="flex items-center justify-center py-16 gap-3 text-slate-500">
           <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
           <span className="text-sm">Consultando DataJud...</span>
@@ -166,7 +216,7 @@ export default function ProcessosPage() {
       )}
 
       {/* Result */}
-      {processo && (
+      {tab === 'consulta' && processo && (
         <div className="space-y-4">
           {/* Header card */}
           <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5 space-y-4">
@@ -289,11 +339,75 @@ export default function ProcessosPage() {
             </div>
           )}
 
-          {/* Source badge */}
-          <div className="flex items-center justify-end gap-2 text-xs text-slate-600">
-            <ExternalLink className="w-3 h-3" />
-            Dados obtidos via DataJud · Conselho Nacional de Justiça
+          {/* Source badge + monitor button */}
+          <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
+            <div className="flex items-center gap-1.5">
+              <ExternalLink className="w-3 h-3" />
+              Dados obtidos via DataJud · Conselho Nacional de Justiça
+            </div>
+            <button
+              onClick={() => isSaved
+                ? toast.info('Processo já monitorado. Veja a aba "Monitorados".')
+                : saveMutation.mutate({ number: processo.number })
+              }
+              disabled={saveMutation.isPending}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                isSaved
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  : 'bg-brand-600/10 text-brand-400 border-brand-500/20 hover:bg-brand-600/20'
+              }`}
+            >
+              {isSaved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
+              {isSaved ? 'Monitorando' : 'Monitorar processo'}
+            </button>
           </div>
+        </div>
+      )}
+
+      {/* Tab: Monitorados */}
+      {tab === 'monitorados' && (
+        <div className="space-y-3">
+          {savedLoading ? (
+            <div className="flex items-center justify-center py-16"><Loader2 className="w-5 h-5 text-brand-400 animate-spin" /></div>
+          ) : savedProcesses.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Bell className="w-10 h-10 text-slate-700 mb-3" />
+              <p className="text-slate-400 font-medium">Nenhum processo monitorado</p>
+              <p className="text-slate-600 text-sm mt-1">Consulte um processo e clique em "Monitorar" para receber notificações de andamento.</p>
+            </div>
+          ) : (
+            savedProcesses.map((sp) => (
+              <div key={sp.id} className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-slate-100 font-mono text-sm font-semibold">{sp.number}</p>
+                    {sp.title && <p className="text-slate-400 text-xs mt-0.5">{sp.title}</p>}
+                    {sp.lastStatus && (
+                      <p className="text-slate-500 text-xs mt-1.5 truncate">
+                        Última movimentação: {sp.lastStatus}
+                        {sp.lastMovementDate && <span className="text-slate-600"> · {new Date(sp.lastMovementDate).toLocaleDateString('pt-BR')}</span>}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => { setTab('consulta'); setInput(formatInput(sp.number)); }}
+                      className="text-xs px-2.5 py-1.5 bg-brand-600/10 text-brand-400 border border-brand-500/20 rounded-lg hover:bg-brand-600/20 transition-colors"
+                    >
+                      Consultar
+                    </button>
+                    <button
+                      onClick={() => deleteSavedMutation.mutate(sp.id)}
+                      className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                      title="Parar monitoramento"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>

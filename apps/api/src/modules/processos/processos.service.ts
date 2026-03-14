@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import axios from 'axios';
+import { PrismaService } from '../../prisma/prisma.service';
 
 // Chave pública do DataJud (CNJ) — disponível na documentação oficial
 const DATAJUD_API_KEY =
@@ -61,6 +62,10 @@ export interface ProcessoResult {
 
 @Injectable()
 export class ProcessosService {
+  private readonly logger = new Logger(ProcessosService.name);
+
+  constructor(private readonly prisma: PrismaService) {}
+
   private getTribunalIndex(cnj: string): string {
     const match = CNJ_REGEX.exec(cnj);
     if (!match) throw new BadRequestException('Número CNJ inválido');
@@ -155,5 +160,62 @@ export class ProcessosService {
       movements,
       source: 'datajud',
     };
+  }
+
+  async saveProcess(userId: string, dto: { number: string; title?: string; area?: string }) {
+    const formatted = dto.number.replace(/\D/g, '');
+    if (formatted.length !== 20) throw new BadRequestException('Número CNJ deve ter 20 dígitos');
+    const cnj = `${formatted.slice(0, 7)}-${formatted.slice(7, 9)}.${formatted.slice(9, 13)}.${formatted[13]}.${formatted.slice(14, 16)}.${formatted.slice(16)}`;
+
+    return this.prisma.savedProcess.upsert({
+      where: { userId_number: { userId, number: cnj } },
+      create: { userId, number: cnj, title: dto.title, area: dto.area },
+      update: { title: dto.title, area: dto.area, checkEnabled: true },
+    });
+  }
+
+  async listSavedProcesses(userId: string) {
+    return this.prisma.savedProcess.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async deleteSavedProcess(userId: string, id: string) {
+    const sp = await this.prisma.savedProcess.findFirst({ where: { id, userId } });
+    if (!sp) throw new NotFoundException('Processo não encontrado');
+    await this.prisma.savedProcess.delete({ where: { id } });
+  }
+
+  async checkAndNotify(notificationsService: { createForUser: (userId: string, title: string, body: string, link?: string) => Promise<void> }) {
+    const processes = await this.prisma.savedProcess.findMany({ where: { checkEnabled: true } });
+    this.logger.log(`Verificando ${processes.length} processos monitorados...`);
+
+    for (const sp of processes) {
+      try {
+        const result = await this.consultar(sp.number);
+        const latestMov = result.movements[0];
+        if (!latestMov) continue;
+
+        const latestDate = new Date(latestMov.date);
+        if (sp.lastMovementDate && latestDate <= sp.lastMovementDate) continue;
+
+        // Nova movimentação detectada
+        await this.prisma.savedProcess.update({
+          where: { id: sp.id },
+          data: { lastMovementDate: latestDate, lastStatus: latestMov.name },
+        });
+
+        await notificationsService.createForUser(
+          sp.userId,
+          `Nova movimentação: ${sp.title || sp.number}`,
+          latestMov.name,
+          `/dashboard/processos?q=${encodeURIComponent(sp.number)}`,
+        );
+        this.logger.log(`Notificação enviada para processo ${sp.number}`);
+      } catch (err) {
+        this.logger.warn(`Erro ao verificar processo ${sp.number}: ${(err as Error).message}`);
+      }
+    }
   }
 }

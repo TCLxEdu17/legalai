@@ -171,6 +171,21 @@ class ApiClient {
     return data;
   }
 
+  async listSavedProcesses() {
+    const { data } = await this.client.get('/processos/saved/list');
+    return data;
+  }
+
+  async saveProcess(payload: { number: string; title?: string; area?: string }) {
+    const { data } = await this.client.post('/processos/saved', payload);
+    return data;
+  }
+
+  async deleteSavedProcess(id: string) {
+    const { data } = await this.client.delete(`/processos/saved/${id}`);
+    return data;
+  }
+
   async updateProfile(payload: { name?: string; prefix?: string; oabNumber?: string }) {
     const { data } = await this.client.patch('/users/profile', payload);
     return data;
