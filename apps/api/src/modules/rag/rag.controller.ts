@@ -1,8 +1,11 @@
-import { Controller, Post, Body, UseGuards, Inject } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Controller, Post, Body, UseGuards, Inject, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AI_PROVIDER_TOKEN, IAIProvider } from './providers/ai-provider.interface';
 import { PrismaService } from '../../prisma/prisma.service';
+import * as pdfParse from 'pdf-parse';
+import * as mammoth from 'mammoth';
 
 @ApiTags('rag')
 @ApiBearerAuth('access-token')
@@ -20,6 +23,33 @@ export class RagController {
     const prompt = `Você é um revisor jurídico especialista. Analise a peça processual abaixo e identifique: 1) Inconsistências jurídicas, 2) Erros de fundamentação, 3) Lacunas argumentativas, 4) Sugestões de melhoria. Seja específico e cite trechos.\n\nPeça:\n${body.text.slice(0, 12000)}`;
     const result = await this.aiProvider.generateChatCompletion([{ role: 'user', content: prompt }], { temperature: 0.3 });
     return { review: result.content };
+  }
+
+  @Post('review-file')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload e revisão de peça processual (PDF/DOCX/TXT)' })
+  async reviewPecaFile(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new Error('Arquivo não enviado');
+
+    let text: string;
+    const ext = file.originalname.toLowerCase();
+
+    if (ext.endsWith('.pdf')) {
+      const parsed = await pdfParse(file.buffer);
+      text = parsed.text;
+    } else if (ext.endsWith('.docx')) {
+      const result = await mammoth.extractRawText({ buffer: file.buffer });
+      text = result.value;
+    } else if (ext.endsWith('.txt')) {
+      text = file.buffer.toString('utf-8');
+    } else {
+      throw new Error('Formato não suportado. Use PDF, DOCX ou TXT.');
+    }
+
+    const prompt = `Você é um revisor jurídico especialista. Analise a peça processual abaixo e identifique: 1) Inconsistências jurídicas, 2) Erros de fundamentação, 3) Lacunas argumentativas, 4) Sugestões de melhoria. Seja específico e cite trechos.\n\nPeça:\n${text.slice(0, 12000)}`;
+    const result = await this.aiProvider.generateChatCompletion([{ role: 'user', content: prompt }], { temperature: 0.3 });
+    return { review: result.content, extractedLength: text.length };
   }
 
   @Post('minuta')

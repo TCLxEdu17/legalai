@@ -407,6 +407,16 @@ class ApiClient {
     return data;
   }
 
+  async reviewPecaFile(file: File): Promise<{ review: string; extractedLength: number }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await this.client.post('/rag/review-file', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
+    });
+    return data;
+  }
+
   async generateMinuta(template: string, fields: Record<string, string>): Promise<{ minuta: string }> {
     const { data } = await this.client.post('/rag/minuta', { template, fields }, { timeout: 120000 });
     return data;
