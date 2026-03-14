@@ -7,16 +7,18 @@ import { Calculator, Info, Copy, Check } from 'lucide-react';
 // minPct / maxPct em %. minFixed = piso mínimo independente de complexidade.
 // Para criminal: faixa fixa, complexidade desloca a sugestão dentro da faixa.
 
+// Tabela baseada nas diretrizes gerais do CFOAB e tabelas estaduais de referência (OAB-SP/MG/SC/RS).
+// Os valores orientativos: cada seccional publica sua tabela anualmente.
 const FASES = {
-  consultoria:    { label: 'Consultoria / Parecer',           minPct: 1,    maxPct: 5,    minFixed: 500,   maxFixed: null   },
-  extrajudicial:  { label: 'Extrajudicial / Negociação',      minPct: 2,    maxPct: 10,   minFixed: 1000,  maxFixed: null   },
-  primeira:       { label: '1ª Instância',                    minPct: 10,   maxPct: 20,   minFixed: 2500,  maxFixed: null   },
-  segunda:        { label: '2ª Instância (Recurso)',          minPct: 5,    maxPct: 15,   minFixed: 2000,  maxFixed: null   },
-  superior:       { label: 'Tribunal Superior (STJ / STF)',   minPct: 5,    maxPct: 20,   minFixed: 3000,  maxFixed: null   },
-  trabalhista:    { label: 'Trabalhista',                     minPct: 15,   maxPct: 25,   minFixed: 1500,  maxFixed: null   },
-  inventario:     { label: 'Inventário / Partilha',           minPct: 4,    maxPct: 10,   minFixed: 2000,  maxFixed: null   },
-  criminal:       { label: 'Criminal',                        minPct: null, maxPct: null, minFixed: 1500,  maxFixed: 15000  },
-  criminal_juri:  { label: 'Criminal — Júri',                 minPct: null, maxPct: null, minFixed: 3000,  maxFixed: 20000  },
+  consultoria:    { label: 'Consultoria / Parecer',           minPct: 5,    maxPct: 15,   minFixed: 1500,  maxFixed: null   },
+  extrajudicial:  { label: 'Extrajudicial / Negociação',      minPct: 5,    maxPct: 10,   minFixed: 1500,  maxFixed: null   },
+  primeira:       { label: '1ª Instância',                    minPct: 10,   maxPct: 20,   minFixed: 3500,  maxFixed: null   },
+  segunda:        { label: '2ª Instância (Recurso)',          minPct: 5,    maxPct: 15,   minFixed: 2500,  maxFixed: null   },
+  superior:       { label: 'Tribunal Superior (STJ / STF)',   minPct: 10,   maxPct: 20,   minFixed: 15000, maxFixed: null   },
+  trabalhista:    { label: 'Trabalhista',                     minPct: 20,   maxPct: 30,   minFixed: 2000,  maxFixed: null   },
+  inventario:     { label: 'Inventário / Partilha',           minPct: 6,    maxPct: 10,   minFixed: 3000,  maxFixed: null   },
+  criminal:       { label: 'Criminal',                        minPct: null, maxPct: null, minFixed: 2500,  maxFixed: 25000  },
+  criminal_juri:  { label: 'Criminal — Júri',                 minPct: null, maxPct: null, minFixed: 4000,  maxFixed: 35000  },
 } as const;
 
 type FaseKey = keyof typeof FASES;
@@ -49,6 +51,7 @@ interface Result {
   max: number;
   suggested: number;
   pisoAplicado: boolean;
+  pisoDomainsMax: boolean; // true quando o piso também cobre o máximo
   formula: string;
   isCriminal: boolean;
 }
@@ -67,40 +70,38 @@ function calculate(fase: FaseKey, valor: number, complexidade: Complexidade): Re
       max: maxFixed,
       suggested: Math.round(suggested / 100) * 100,
       pisoAplicado: false,
-      formula: `Faixa fixa OAB: ${formatBRL(f.minFixed)} – ${formatBRL(maxFixed)}`,
+      pisoDomainsMax: false,
+      formula: `Faixa fixa OAB: ${formatBRL(f.minFixed)} – ${formatBRL(maxFixed)}. Complexidade posiciona a sugestão na faixa.`,
       isCriminal: true,
     };
   }
 
-  // % aplicado antes do piso
-  const minByPct  = (valor * f.minPct!)  / 100;
-  const maxByPct  = (valor * f.maxPct!)  / 100;
+  // Faixa OAB pura (sem complexidade — são os limites da tabela)
+  const rawMin = (valor * f.minPct!) / 100;
+  const rawMax = (valor * f.maxPct!) / 100;
 
-  // Multiplica complexidade, depois aplica piso ao mínimo
-  const minCalc  = minByPct  * mult;
-  const maxCalc  = maxByPct  * mult;
-  const minVal   = Math.max(f.minFixed, minCalc);
-  // Piso só aplica ao mínimo; máximo preserva a proporção pct quando piso domina
-  const maxRaw   = Math.max(minVal, maxCalc);
-  const maxVal   = maxRaw === minVal && minVal === f.minFixed
-    ? f.minFixed * (f.maxPct! / f.minPct!)
-    : maxRaw;
-  const pisoAplicado = minCalc < f.minFixed;
+  // Piso aplica ao mínimo; máximo é o teto da tabela ou o piso se a causa for muito pequena
+  const minVal = Math.max(f.minFixed, rawMin);
+  const maxVal = Math.max(minVal, rawMax);
 
-  const midVal = (minVal + maxVal) / 2;
+  const pisoAplicado   = rawMin < f.minFixed;
+  const pisoDomainsMax = rawMax < f.minFixed; // piso engoliu o intervalo todo
 
-  const formula = pisoAplicado
-    ? `Piso OAB ${formatBRL(f.minFixed)} aplicado — faixa: ${formatBRL(minVal)} – ${formatBRL(maxVal)} (${f.minPct}–${f.maxPct}% × ×${mult.toFixed(1)})`
-    : `${formatBRL(valor)} × ${f.minPct}–${f.maxPct}% × ×${mult.toFixed(1)} (complexidade)`;
+  // Sugestão: ponto médio da faixa × complexidade, com piso como chão
+  // (a tabela OAB é de honorários MÍNIMOS — o valor pode superar o máximo da faixa)
+  const midPct   = (f.minPct! + f.maxPct!) / 2;
+  const suggested = Math.max(minVal, (valor * midPct * mult) / 100);
 
-  return {
-    min: minVal,
-    max: maxVal,
-    suggested: midVal,
-    pisoAplicado,
-    formula,
-    isCriminal: false,
-  };
+  let formula: string;
+  if (pisoDomainsMax) {
+    formula = `Valor da causa insuficiente para gerar honorários acima do piso OAB (${f.minPct}–${f.maxPct}% = ${formatBRL(rawMin)} – ${formatBRL(rawMax)} < piso ${formatBRL(f.minFixed)})`;
+  } else if (pisoAplicado) {
+    formula = `Mínimo: piso OAB ${formatBRL(f.minFixed)} (${f.minPct}% = ${formatBRL(rawMin)} < piso). Máximo: ${formatBRL(valor)} × ${f.maxPct}% = ${formatBRL(rawMax)}. Sugerido: ${formatBRL(valor)} × ${midPct}% × ${mult.toFixed(1)} = ${formatBRL((valor * midPct * mult) / 100)}`;
+  } else {
+    formula = `${formatBRL(valor)} × ${f.minPct}% = ${formatBRL(rawMin)} / × ${f.maxPct}% = ${formatBRL(rawMax)}. Sugerido: × ${midPct}% × ${mult.toFixed(1)} (complexidade) = ${formatBRL((valor * midPct * mult) / 100)}`;
+  }
+
+  return { min: minVal, max: maxVal, suggested, pisoAplicado, pisoDomainsMax, formula, isCriminal: false };
 }
 
 function gerarProposta(
@@ -339,25 +340,38 @@ export default function CalculadoraPage() {
                   <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Mínimo OAB</p>
                   <p className="text-lg font-bold text-emerald-400">{formatBRL(result.min)}</p>
                   {!result.isCriminal && result.pisoAplicado && (
-                    <p className="text-[10px] text-amber-400/70 mt-1">piso mínimo aplicado</p>
+                    <p className="text-[10px] text-amber-400/70 mt-1">piso aplicado</p>
                   )}
                 </div>
                 <div className="bg-[#0d0d0d] rounded-lg border border-white/[0.06] p-4">
                   <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Máximo OAB</p>
                   <p className="text-lg font-bold text-indigo-400">{formatBRL(result.max)}</p>
+                  {!result.isCriminal && result.pisoDomainsMax && (
+                    <p className="text-[10px] text-amber-400/70 mt-1">piso aplicado</p>
+                  )}
                 </div>
               </div>
+
+              {/* Alerta quando piso domina tudo */}
+              {!result.isCriminal && result.pisoDomainsMax && (
+                <div className="flex items-start gap-2 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2.5">
+                  <Info className="w-3.5 h-3.5 text-amber-400/70 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-amber-400/70 leading-relaxed">
+                    O valor da causa é insuficiente para superar o piso OAB desta fase. O honorário mínimo se aplica independentemente do percentual.
+                  </p>
+                </div>
+              )}
 
               {/* Sugestão */}
               <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-lg p-4 flex items-center justify-between">
                 <div>
                   <p className="text-xs text-indigo-300/70 mb-0.5">
-                    {result.isCriminal ? 'Sugerido para esta complexidade' : 'Ponto médio sugerido'}
+                    {result.isCriminal ? 'Sugerido para esta complexidade' : 'Valor sugerido'}
                   </p>
                   <p className="text-2xl font-bold text-indigo-300">{formatBRL(result.suggested)}</p>
                 </div>
                 <div className="text-right">
-                  {!result.isCriminal && valorRaw > 0 && (
+                  {!result.isCriminal && valorRaw > 0 && !result.pisoDomainsMax && (
                     <p className="text-xs text-slate-600">
                       {((result.suggested / valorRaw) * 100).toFixed(1)}% da causa
                     </p>
