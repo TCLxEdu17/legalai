@@ -1,319 +1,432 @@
 'use client';
 
-import { useState } from 'react';
-import { Calculator } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Calculator, Info, Copy, Check } from 'lucide-react';
+
+// ─── Tabela OAB ────────────────────────────────────────────────────────────
+// minPct / maxPct em %. minFixed = piso mínimo independente de complexidade.
+// Para criminal: faixa fixa, complexidade desloca a sugestão dentro da faixa.
 
 const FASES = {
-  consultoria: { label: 'Consultoria / Parecer', minPct: 1, maxPct: 5, minFixed: 500, maxFixed: null },
-  extrajudicial: { label: 'Extrajudicial', minPct: 2, maxPct: 10, minFixed: 1000, maxFixed: null },
-  primeira: { label: '1ª Instância', minPct: 10, maxPct: 20, minFixed: 2500, maxFixed: null },
-  segunda: { label: '2ª Instância (Recurso)', minPct: 5, maxPct: 15, minFixed: 2000, maxFixed: null },
-  superior: { label: 'Tribunal Superior (STJ/STF)', minPct: 5, maxPct: 20, minFixed: 3000, maxFixed: null },
-  trabalhista: { label: 'Trabalhista', minPct: 15, maxPct: 25, minFixed: 1500, maxFixed: null },
-  criminal: { label: 'Criminal', minPct: null, maxPct: null, minFixed: 1500, maxFixed: 15000 },
+  consultoria:    { label: 'Consultoria / Parecer',           minPct: 1,    maxPct: 5,    minFixed: 500,   maxFixed: null   },
+  extrajudicial:  { label: 'Extrajudicial / Negociação',      minPct: 2,    maxPct: 10,   minFixed: 1000,  maxFixed: null   },
+  primeira:       { label: '1ª Instância',                    minPct: 10,   maxPct: 20,   minFixed: 2500,  maxFixed: null   },
+  segunda:        { label: '2ª Instância (Recurso)',          minPct: 5,    maxPct: 15,   minFixed: 2000,  maxFixed: null   },
+  superior:       { label: 'Tribunal Superior (STJ / STF)',   minPct: 5,    maxPct: 20,   minFixed: 3000,  maxFixed: null   },
+  trabalhista:    { label: 'Trabalhista',                     minPct: 15,   maxPct: 25,   minFixed: 1500,  maxFixed: null   },
+  inventario:     { label: 'Inventário / Partilha',           minPct: 4,    maxPct: 10,   minFixed: 2000,  maxFixed: null   },
+  criminal:       { label: 'Criminal',                        minPct: null, maxPct: null, minFixed: 1500,  maxFixed: 15000  },
+  criminal_juri:  { label: 'Criminal — Júri',                 minPct: null, maxPct: null, minFixed: 3000,  maxFixed: 20000  },
 } as const;
 
 type FaseKey = keyof typeof FASES;
 type Complexidade = 'simples' | 'medio' | 'complexo';
+type Modelo = 'fixo' | 'exito' | 'misto';
 
-const COMPLEXIDADE_MULT: Record<Complexidade, number> = {
-  simples: 1,
-  medio: 1.3,
-  complexo: 1.6,
+const MULT: Record<Complexidade, number> = { simples: 1.0, medio: 1.3, complexo: 1.6 };
+const MULT_LABEL: Record<Complexidade, string> = { simples: 'Simples ×1,0', medio: 'Médio ×1,3', complexo: 'Complexo ×1,6' };
+
+// Para causas criminais: complexidade indica a posição sugerida dentro da faixa fixa
+const CRIMINAL_PCT: Record<Complexidade, number> = { simples: 0.2, medio: 0.5, complexo: 0.9 };
+
+const formatBRL = (v: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
+const parseCurrency = (raw: string): number => {
+  const digits = raw.replace(/\D/g, '');
+  return digits ? parseInt(digits, 10) / 100 : 0;
 };
 
-const COMPLEXIDADE_LABELS: Record<Complexidade, string> = {
-  simples: 'Simples',
-  medio: 'Médio',
-  complexo: 'Complexo',
-};
+const displayCurrency = (v: number): string =>
+  v === 0
+    ? ''
+    : new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
 
-interface CalcResult {
+// ─── Lógica de cálculo ─────────────────────────────────────────────────────
+
+interface Result {
   min: number;
   max: number;
-  minPct: number | null;
-  maxPct: number | null;
-  minFloored: boolean;
-  maxFloored: boolean;
+  suggested: number;
+  pisoAplicado: boolean;
+  formula: string;
+  isCriminal: boolean;
 }
 
-function calculate(fase: FaseKey, valorCausa: number, complexidade: Complexidade): CalcResult {
+function calculate(fase: FaseKey, valor: number, complexidade: Complexidade): Result {
   const f = FASES[fase];
-  const mult = COMPLEXIDADE_MULT[complexidade];
+  const mult = MULT[complexidade];
+  const isCriminal = f.minPct === null;
 
-  if (f.minPct !== null && f.maxPct !== null) {
-    // Aplica o multiplicador de complexidade sobre o valor percentual,
-    // depois aplica o piso (minFixed é o mínimo legal independente de complexidade)
-    const minByPct = (valorCausa * f.minPct) / 100 * mult;
-    const maxByPct = (valorCausa * f.maxPct) / 100 * mult;
-    const minVal = Math.max(f.minFixed, minByPct);
-    const maxVal = Math.max(f.minFixed, maxByPct);
-    return {
-      min: minVal,
-      max: maxVal,
-      minPct: f.minPct,
-      maxPct: f.maxPct,
-      minFloored: minByPct < f.minFixed,
-      maxFloored: maxByPct < f.minFixed,
-    };
-  } else {
+  if (isCriminal) {
     const maxFixed = (f as { minFixed: number; maxFixed: number }).maxFixed;
+    const range = maxFixed - f.minFixed;
+    const suggested = f.minFixed + range * CRIMINAL_PCT[complexidade];
     return {
       min: f.minFixed,
       max: maxFixed,
-      minPct: null,
-      maxPct: null,
-      minFloored: false,
-      maxFloored: false,
+      suggested: Math.round(suggested / 100) * 100,
+      pisoAplicado: false,
+      formula: `Faixa fixa OAB: ${formatBRL(f.minFixed)} – ${formatBRL(maxFixed)}`,
+      isCriminal: true,
     };
   }
+
+  // % aplicado antes do piso
+  const minByPct  = (valor * f.minPct!)  / 100;
+  const maxByPct  = (valor * f.maxPct!)  / 100;
+
+  // Multiplica complexidade primeiro, depois aplica o piso
+  const minCalc  = minByPct  * mult;
+  const maxCalc  = maxByPct  * mult;
+  const minVal   = Math.max(f.minFixed, minCalc);
+  const maxVal   = Math.max(f.minFixed, maxCalc);
+  const pisoAplicado = minCalc < f.minFixed || maxCalc < f.minFixed;
+
+  const midVal = (minVal + maxVal) / 2;
+
+  const formula = pisoAplicado
+    ? `Piso OAB ${formatBRL(f.minFixed)} aplicado (valor da causa insuficiente para os percentuais mínimos)`
+    : `${formatBRL(valor)} × ${f.minPct}–${f.maxPct}% × ×${mult.toFixed(1)} (complexidade)`;
+
+  return {
+    min: minVal,
+    max: maxVal,
+    suggested: midVal,
+    pisoAplicado,
+    formula,
+    isCriminal: false,
+  };
 }
 
-const formatBRL = (value: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+function gerarProposta(
+  fase: FaseKey,
+  modelo: Modelo,
+  result: Result,
+  valor: number,
+  complexidade: Complexidade,
+  exito: number,
+): string {
+  const faseLabel = FASES[fase].label;
+  const now = new Date().toLocaleDateString('pt-BR');
 
-const parseCurrencyInput = (raw: string): number => {
-  const digits = raw.replace(/\D/g, '');
-  if (!digits) return 0;
-  return parseInt(digits, 10) / 100;
-};
+  const linhas: string[] = [
+    `PROPOSTA DE HONORÁRIOS ADVOCATÍCIOS`,
+    `Data: ${now}`,
+    ``,
+    `Referência: ${faseLabel}`,
+    `Complexidade: ${MULT_LABEL[complexidade]}`,
+    valor > 0 ? `Valor da causa: ${formatBRL(valor)}` : '',
+    ``,
+  ];
 
-const displayCurrencyInput = (cents: number): string => {
-  if (cents === 0) return '';
-  return new Intl.NumberFormat('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(cents);
-};
+  if (modelo === 'fixo') {
+    linhas.push(
+      `MODELO: HONORÁRIOS FIXOS`,
+      ``,
+      `Honorários mínimos (OAB): ${formatBRL(result.min)}`,
+      `Honorários máximos (OAB): ${formatBRL(result.max)}`,
+      `Valor sugerido: ${formatBRL(result.suggested)}`,
+    );
+  } else if (modelo === 'exito') {
+    linhas.push(
+      `MODELO: HONORÁRIOS DE ÊXITO`,
+      ``,
+      `Percentual sobre o benefício obtido: ${exito}%`,
+      `Estimativa sobre valor da causa: ${formatBRL((valor * exito) / 100)}`,
+      `Obs.: Nenhum honorário fixo antecipado.`,
+    );
+  } else {
+    const fixo = result.min * 0.5;
+    linhas.push(
+      `MODELO: HONORÁRIOS MISTOS`,
+      ``,
+      `Honorário fixo (entrada): ${formatBRL(fixo)}`,
+      `Honorário de êxito: ${exito}% sobre o benefício obtido`,
+      `Estimativa de êxito: ${formatBRL((valor * exito) / 100)}`,
+    );
+  }
+
+  linhas.push(
+    ``,
+    `Base: Tabela de Honorários OAB. Valores orientativos — sujeitos a negociação e contrato escrito.`,
+  );
+
+  return linhas.filter((l) => l !== undefined).join('\n');
+}
+
+// ─── Componente ────────────────────────────────────────────────────────────
 
 export default function CalculadoraPage() {
   const [fase, setFase] = useState<FaseKey>('primeira');
-  const [valorRaw, setValorRaw] = useState<number>(0);
+  const [valorRaw, setValorRaw] = useState(0);
   const [complexidade, setComplexidade] = useState<Complexidade>('simples');
-  const [result, setResult] = useState<CalcResult | null>(null);
+  const [modelo, setModelo] = useState<Modelo>('fixo');
+  const [exitoPct, setExitoPct] = useState(20);
+  const [copied, setCopied] = useState(false);
 
-  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const parsed = parseCurrencyInput(e.target.value);
-    setValorRaw(parsed);
-  };
+  const result = useMemo(
+    () => calculate(fase, valorRaw, complexidade),
+    [fase, valorRaw, complexidade],
+  );
 
-  const handleCalcular = () => {
-    const res = calculate(fase, valorRaw, complexidade);
-    setResult(res);
-  };
+  const isCriminal = FASES[fase].minPct === null;
+  const canCalc = isCriminal || valorRaw > 0;
 
-  const handleReset = () => {
-    setFase('primeira');
-    setValorRaw(0);
-    setComplexidade('simples');
-    setResult(null);
-  };
+  const proposta = useMemo(
+    () => (canCalc ? gerarProposta(fase, modelo, result, valorRaw, complexidade, exitoPct) : ''),
+    [fase, modelo, result, valorRaw, complexidade, exitoPct, canCalc],
+  );
+
+  function copyProposta() {
+    navigator.clipboard.writeText(proposta);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] p-6 space-y-6">
+    <div className="min-h-full bg-[#0a0a0a] p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-          <Calculator className="w-5 h-5 text-indigo-400" />
+        <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+          <Calculator className="w-4 h-4 text-indigo-400" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-slate-100">Calculadora de Honorários</h1>
-          <p className="text-sm text-slate-500">Baseada na Tabela OAB de Honorários Mínimos</p>
+          <h1 className="text-base font-semibold text-slate-100">Calculadora de Honorários</h1>
+          <p className="text-xs text-slate-500">Baseada na Tabela OAB de Honorários Mínimos</p>
         </div>
       </div>
 
-      {/* Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Form card */}
-        <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-6 space-y-5">
-          <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Dados da causa</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* ── Formulário ────────────────────────────────────────────── */}
+        <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 space-y-5">
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Dados da causa</p>
 
-          {/* Fase processual */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-300">
-              Fase processual
-            </label>
+          {/* Fase */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-300">Fase processual</label>
             <select
               value={fase}
-              onChange={(e) => { setFase(e.target.value as FaseKey); setResult(null); }}
-              className="w-full bg-[#1a1a1a] border border-white/[0.07] rounded-lg px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-colors"
+              onChange={(e) => setFase(e.target.value as FaseKey)}
+              className="w-full bg-[#1a1a1a] border border-white/[0.07] rounded-lg px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
             >
-              {(Object.keys(FASES) as FaseKey[]).map((key) => (
-                <option key={key} value={key} className="bg-[#1a1a1a]">
-                  {FASES[key].label}
-                </option>
+              {(Object.keys(FASES) as FaseKey[]).map((k) => (
+                <option key={k} value={k} className="bg-[#1a1a1a]">{FASES[k].label}</option>
               ))}
             </select>
           </div>
 
           {/* Valor da causa */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-300">
-              Valor da causa
-            </label>
-            <div className="relative flex items-center">
-              <span className="absolute left-3 text-sm text-slate-500 pointer-events-none select-none">R$</span>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-300">Valor da causa</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 pointer-events-none">R$</span>
               <input
                 type="text"
                 inputMode="numeric"
-                value={displayCurrencyInput(valorRaw)}
-                onChange={handleValorChange}
+                value={displayCurrency(valorRaw)}
+                onChange={(e) => setValorRaw(parseCurrency(e.target.value))}
                 placeholder="0,00"
-                className="w-full bg-[#1a1a1a] border border-white/[0.07] rounded-lg pl-9 pr-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-colors"
+                disabled={isCriminal}
+                className="w-full bg-[#1a1a1a] border border-white/[0.07] rounded-lg pl-9 pr-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 disabled:opacity-40 disabled:cursor-not-allowed"
               />
             </div>
-            {fase === 'criminal' && (
-              <p className="text-xs text-slate-500">
-                Para causas criminais, o valor da causa não é utilizado — aplicamos a tabela de honorários fixos.
+            {isCriminal && (
+              <p className="text-xs text-slate-600 flex items-start gap-1.5">
+                <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-600" />
+                Causas criminais usam tabela de faixa fixa — valor da causa não é aplicado.
               </p>
             )}
           </div>
 
           {/* Complexidade */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-300">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-300">
               Complexidade
+              {isCriminal && (
+                <span className="ml-2 text-xs text-slate-600 font-normal">
+                  (indica posição sugerida na faixa)
+                </span>
+              )}
             </label>
             <div className="grid grid-cols-3 gap-2">
-              {(Object.keys(COMPLEXIDADE_MULT) as Complexidade[]).map((key) => (
+              {(['simples', 'medio', 'complexo'] as Complexidade[]).map((c) => (
                 <button
-                  key={key}
-                  type="button"
-                  onClick={() => { setComplexidade(key); setResult(null); }}
-                  className={`py-2 px-3 rounded-lg border text-sm font-medium transition-all ${
-                    complexidade === key
-                      ? 'bg-indigo-500/15 border-indigo-500/50 text-indigo-300'
-                      : 'bg-[#1a1a1a] border-white/[0.07] text-slate-400 hover:border-white/[0.15] hover:text-slate-300'
+                  key={c}
+                  onClick={() => setComplexidade(c)}
+                  className={`py-2.5 px-2 rounded-lg border text-xs font-medium transition-all text-center ${
+                    complexidade === c
+                      ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300'
+                      : 'bg-[#1a1a1a] border-white/[0.07] text-slate-400 hover:border-white/20 hover:text-slate-300'
                   }`}
                 >
-                  {COMPLEXIDADE_LABELS[key]}
-                  <span className="block text-xs font-normal opacity-60 mt-0.5">
-                    {key === 'simples' ? '×1,0' : key === 'medio' ? '×1,3' : '×1,6'}
+                  {{ simples: 'Simples', medio: 'Médio', complexo: 'Complexo' }[c]}
+                  <span className="block text-[10px] font-normal opacity-60 mt-0.5">
+                    {{ simples: '×1,0', medio: '×1,3', complexo: '×1,6' }[c]}
                   </span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Calcular button */}
-          <button
-            type="button"
-            onClick={handleCalcular}
-            disabled={fase !== 'criminal' && valorRaw === 0}
-            className="w-full py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            <Calculator className="w-4 h-4" />
-            Calcular honorários
-          </button>
+          {/* Modelo de honorários */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-300">Modelo de cobrança</label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                ['fixo',  'Fixo'],
+                ['exito', 'Êxito'],
+                ['misto', 'Misto'],
+              ] as [Modelo, string][]).map(([m, lbl]) => (
+                <button
+                  key={m}
+                  onClick={() => setModelo(m)}
+                  className={`py-2 rounded-lg border text-xs font-medium transition-all ${
+                    modelo === m
+                      ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300'
+                      : 'bg-[#1a1a1a] border-white/[0.07] text-slate-400 hover:border-white/20 hover:text-slate-300'
+                  }`}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* % de êxito */}
+          {(modelo === 'exito' || modelo === 'misto') && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-300">
+                Percentual de êxito: <span className="text-indigo-400">{exitoPct}%</span>
+              </label>
+              <input
+                type="range"
+                min={5}
+                max={40}
+                step={5}
+                value={exitoPct}
+                onChange={(e) => setExitoPct(Number(e.target.value))}
+                className="w-full accent-indigo-500"
+              />
+              <div className="flex justify-between text-[10px] text-slate-600">
+                <span>5%</span><span>20%</span><span>40%</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Result card */}
-        <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-6 flex flex-col">
-          <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-5">
-            Resultado
-          </h2>
+        {/* ── Resultado ─────────────────────────────────────────────── */}
+        <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 flex flex-col gap-4">
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Resultado</p>
 
-          {result === null ? (
+          {!canCalc ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-10">
-              <div className="w-14 h-14 rounded-full bg-white/[0.03] border border-white/[0.07] flex items-center justify-center mb-4">
-                <Calculator className="w-6 h-6 text-slate-600" />
+              <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/[0.07] flex items-center justify-center mb-3">
+                <Calculator className="w-5 h-5 text-slate-700" />
               </div>
-              <p className="text-sm text-slate-500">Preencha os dados ao lado</p>
-              <p className="text-xs text-slate-600 mt-1">e clique em "Calcular honorários"</p>
+              <p className="text-sm text-slate-500">Informe o valor da causa</p>
+              <p className="text-xs text-slate-700 mt-1">para ver o resultado em tempo real</p>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col gap-4">
-              {/* Stat cards */}
+            <>
+              {/* Min / Max */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#0a0a0a] rounded-lg border border-white/[0.07] p-4 space-y-1">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider">Mínimo sugerido</p>
-                  <p className="text-xl font-bold text-emerald-400 leading-tight">
-                    {formatBRL(result.min)}
-                  </p>
-                  {result.minPct !== null && (
-                    <p className="text-xs text-slate-600">
-                      {result.minFloored ? 'piso mínimo OAB aplicado' : `${result.minPct}% × mult. complexidade`}
-                    </p>
+                <div className="bg-[#0d0d0d] rounded-lg border border-white/[0.06] p-4">
+                  <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Mínimo OAB</p>
+                  <p className="text-lg font-bold text-emerald-400">{formatBRL(result.min)}</p>
+                  {!result.isCriminal && result.pisoAplicado && (
+                    <p className="text-[10px] text-amber-400/70 mt-1">piso mínimo aplicado</p>
                   )}
                 </div>
-                <div className="bg-[#0a0a0a] rounded-lg border border-white/[0.07] p-4 space-y-1">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider">Máximo sugerido</p>
-                  <p className="text-xl font-bold text-indigo-400 leading-tight">
-                    {formatBRL(result.max)}
-                  </p>
-                  {result.maxPct !== null && (
-                    <p className="text-xs text-slate-600">
-                      {result.maxFloored ? 'piso mínimo OAB aplicado' : `${result.maxPct}% × mult. complexidade`}
-                    </p>
-                  )}
+                <div className="bg-[#0d0d0d] rounded-lg border border-white/[0.06] p-4">
+                  <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Máximo OAB</p>
+                  <p className="text-lg font-bold text-indigo-400">{formatBRL(result.max)}</p>
                 </div>
               </div>
 
-              {/* Percentage range */}
-              {result.minPct !== null && result.maxPct !== null && (
-                <div className="bg-[#0a0a0a] rounded-lg border border-white/[0.07] px-4 py-3 flex items-center justify-between">
-                  <span className="text-xs text-slate-500">Faixa percentual OAB</span>
-                  <span className="text-sm font-semibold text-slate-300">
-                    {result.minPct}% – {result.maxPct}%
-                  </span>
+              {/* Sugestão */}
+              <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-lg p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-indigo-300/70 mb-0.5">
+                    {result.isCriminal ? 'Sugerido para esta complexidade' : 'Ponto médio sugerido'}
+                  </p>
+                  <p className="text-2xl font-bold text-indigo-300">{formatBRL(result.suggested)}</p>
+                </div>
+                <div className="text-right">
+                  {!result.isCriminal && valorRaw > 0 && (
+                    <p className="text-xs text-slate-600">
+                      {((result.suggested / valorRaw) * 100).toFixed(1)}% da causa
+                    </p>
+                  )}
+                  <p className="text-xs text-slate-600 mt-0.5">{MULT_LABEL[complexidade]}</p>
+                </div>
+              </div>
+
+              {/* Fórmula */}
+              <div className="bg-[#0d0d0d] rounded-lg border border-white/[0.06] px-4 py-3">
+                <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Como foi calculado</p>
+                <p className="text-xs text-slate-400">{result.formula}</p>
+              </div>
+
+              {/* Modelo êxito */}
+              {(modelo === 'exito' || modelo === 'misto') && valorRaw > 0 && (
+                <div className="bg-[#0d0d0d] rounded-lg border border-white/[0.06] px-4 py-3 flex justify-between items-center">
+                  <p className="text-xs text-slate-500">Estimativa de êxito ({exitoPct}%)</p>
+                  <p className="text-sm font-semibold text-emerald-400">
+                    {formatBRL((valorRaw * exitoPct) / 100)}
+                  </p>
                 </div>
               )}
 
-              {/* Complexidade applied */}
-              <div className="bg-[#0a0a0a] rounded-lg border border-white/[0.07] px-4 py-3 flex items-center justify-between">
-                <span className="text-xs text-slate-500">Multiplicador de complexidade</span>
-                <span className="text-sm font-semibold text-slate-300">
-                  ×{COMPLEXIDADE_MULT[complexidade].toFixed(1)} ({COMPLEXIDADE_LABELS[complexidade]})
-                </span>
-              </div>
-
               {/* Disclaimer */}
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-                <p className="text-xs text-amber-400/80 leading-relaxed">
-                  Baseado na Tabela OAB. Valores orientativos — consulte a seccional da OAB do seu estado.
-                </p>
-              </div>
-
-              {/* Reset button */}
-              <button
-                type="button"
-                onClick={handleReset}
-                className="mt-auto w-full py-2 px-4 rounded-lg border border-white/[0.07] text-slate-400 hover:text-slate-200 hover:border-white/[0.15] text-sm transition-colors"
-              >
-                Calcular novamente
-              </button>
-            </div>
+              <p className="text-[10px] text-slate-600 leading-relaxed">
+                ⚖️ Valores orientativos — Tabela OAB. Consulte a seccional do seu estado.
+              </p>
+            </>
           )}
         </div>
       </div>
 
-      {/* Info section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 space-y-2">
-          <h3 className="text-sm font-semibold text-slate-200">Honorários Convencionados</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Ajustados livremente entre advogado e cliente por contrato escrito, respeitando os mínimos da tabela OAB estadual.
-          </p>
+      {/* ── Proposta ────────────────────────────────────────────────────── */}
+      {canCalc && (
+        <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Rascunho de proposta</p>
+            <button
+              onClick={copyProposta}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] rounded-lg transition-colors border border-white/[0.06]"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? 'Copiado!' : 'Copiar texto'}
+            </button>
+          </div>
+          <pre className="text-xs text-slate-400 leading-relaxed whitespace-pre-wrap font-mono bg-[#0d0d0d] rounded-lg border border-white/[0.06] p-4">
+            {proposta}
+          </pre>
         </div>
-        <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 space-y-2">
-          <h3 className="text-sm font-semibold text-slate-200">Honorários Sucumbenciais</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Fixados pelo juiz e pagos pela parte vencida. Pertencem ao advogado e não se confundem com os honorários contratuais.
-          </p>
-        </div>
-        <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 space-y-2">
-          <h3 className="text-sm font-semibold text-slate-200">Tabela OAB</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Cada seccional estadual publica sua tabela de honorários mínimos. Os valores desta calculadora seguem as diretrizes gerais do CFOAB.
-          </p>
-        </div>
-      </div>
+      )}
 
-      {/* Info box */}
-      <div className="rounded-xl border border-white/[0.07] bg-[#141414] px-5 py-4">
-        <p className="text-xs text-slate-500 leading-relaxed">
-          ⚖️ Esta calculadora é uma ferramenta de apoio. Os valores são baseados nas tabelas orientativas da OAB e podem variar conforme a seccional estadual, complexidade real do caso e acordo entre as partes.
-        </p>
+      {/* ── Info cards ──────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          {
+            title: 'Honorários Convencionados',
+            text: 'Livremente ajustados entre advogado e cliente por contrato escrito, respeitando os mínimos da tabela OAB estadual.',
+          },
+          {
+            title: 'Honorários Sucumbenciais',
+            text: 'Fixados pelo juiz e pagos pela parte vencida. Pertencem exclusivamente ao advogado (art. 85 CPC).',
+          },
+          {
+            title: 'Tabela OAB',
+            text: 'Cada seccional estadual publica sua tabela de honorários mínimos. Esta calculadora segue as diretrizes gerais do CFOAB.',
+          },
+        ].map((c) => (
+          <div key={c.title} className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 space-y-2">
+            <h3 className="text-sm font-semibold text-slate-200">{c.title}</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">{c.text}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

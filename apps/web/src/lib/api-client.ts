@@ -417,6 +417,104 @@ class ApiClient {
     return data;
   }
 
+  // ==================== CASOS JURÍDICOS ====================
+  async getCases() {
+    const { data } = await this.client.get('/cases');
+    return data;
+  }
+
+  async getCase(id: string) {
+    const { data } = await this.client.get(`/cases/${id}`);
+    return data;
+  }
+
+  async createCase(payload: {
+    title: string;
+    area?: string;
+    processNumber?: string;
+    court?: string;
+    judge?: string;
+    plaintiff?: string;
+    defendant?: string;
+    caseValue?: number;
+    notes?: string;
+  }) {
+    const { data } = await this.client.post('/cases', payload);
+    return data;
+  }
+
+  async updateCase(id: string, payload: Record<string, any>) {
+    const { data } = await this.client.patch(`/cases/${id}`, payload);
+    return data;
+  }
+
+  async deleteCase(id: string) {
+    await this.client.delete(`/cases/${id}`);
+  }
+
+  async getCaseSummary(id: string) {
+    const { data } = await this.client.get(`/cases/${id}/summary`, { timeout: 90000 });
+    return data;
+  }
+
+  async uploadCaseDocument(caseId: string, file: File, docType?: string, title?: string) {
+    const form = new FormData();
+    form.append('file', file);
+    const params = new URLSearchParams();
+    if (docType) params.append('docType', docType);
+    if (title) params.append('title', title);
+    const { data } = await this.client.post(
+      `/cases/${caseId}/documents?${params.toString()}`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 },
+    );
+    return data;
+  }
+
+  async deleteCaseDocument(caseId: string, docId: string) {
+    await this.client.delete(`/cases/${caseId}/documents/${docId}`);
+  }
+
+  async chatWithCase(caseId: string, message: string) {
+    const { data } = await this.client.post(
+      `/cases/${caseId}/chat`,
+      { message },
+      { timeout: 120000 },
+    );
+    return data;
+  }
+
+  async getCaseChatHistory(caseId: string) {
+    const { data } = await this.client.get(`/cases/${caseId}/chat/history`);
+    return data;
+  }
+
+  async clearCaseChatHistory(caseId: string) {
+    await this.client.delete(`/cases/${caseId}/chat/history`);
+  }
+
+  async generateCasePiece(caseId: string, payload: {
+    pieceType: string;
+    title: string;
+    instructions?: string;
+  }) {
+    const { data } = await this.client.post(
+      `/cases/${caseId}/pieces`,
+      payload,
+      { timeout: 180000 },
+    );
+    return data;
+  }
+
+  async getCasePiece(caseId: string, pieceId: string) {
+    const { data } = await this.client.get(`/cases/${caseId}/pieces/${pieceId}`);
+    return data;
+  }
+
+  async deleteCasePiece(caseId: string, pieceId: string) {
+    await this.client.delete(`/cases/${caseId}/pieces/${pieceId}`);
+  }
+
   // ==================== METRICS ====================
   async getTrialMetrics() {
     const { data } = await this.client.get('/trial/admin/metrics');
