@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Send, Loader2, MessageSquare, Plus, Trash2, ChevronRight, Paperclip, X } from 'lucide-react';
+import { Send, Loader2, MessageSquare, Plus, Trash2, ChevronRight, Paperclip, X, Filter } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
@@ -67,6 +67,38 @@ function getRandomExamples(n: number) {
   return shuffled.slice(0, n);
 }
 
+// ===================== Area categorization =====================
+type LegalArea = 'Trabalhista' | 'Civil' | 'Penal' | 'Tributário' | 'Previdenciário' | 'Outro';
+
+const AREA_KEYWORDS: Record<LegalArea, string[]> = {
+  Trabalhista: ['clt', 'trabalhista', 'empregado', 'rescisão', 'fgts', 'aviso prévio', 'jornada'],
+  Civil: ['contrato', 'dano', 'indenização', 'responsabilidade', 'locação', 'posse', 'propriedade'],
+  Penal: ['crime', 'pena', 'réu', 'absolvição', 'condenação', 'prisão', 'furto', 'roubo'],
+  Tributário: ['imposto', 'tributo', 'icms', 'iss', 'irpf', 'contribuição', 'fiscal'],
+  Previdenciário: ['inss', 'aposentadoria', 'benefício', 'segurado', 'previdência'],
+  Outro: [],
+};
+
+const AREA_COLORS: Record<LegalArea, string> = {
+  Trabalhista: 'bg-amber-500/15 text-amber-400',
+  Civil: 'bg-brand-600/15 text-brand-400',
+  Penal: 'bg-red-500/15 text-red-400',
+  Tributário: 'bg-emerald-500/15 text-emerald-400',
+  Previdenciário: 'bg-violet-500/15 text-violet-400',
+  Outro: 'bg-white/5 text-slate-500',
+};
+
+function categorizeSession(title: string): LegalArea {
+  const lower = title.toLowerCase();
+  for (const [area, keywords] of Object.entries(AREA_KEYWORDS) as [LegalArea, string[]][]) {
+    if (area === 'Outro') continue;
+    if (keywords.some((kw) => lower.includes(kw))) return area;
+  }
+  return 'Outro';
+}
+
+// ===================== End categorization =====================
+
 const messageSchema = z.object({
   message: z
     .string()
@@ -94,6 +126,7 @@ export default function ChatPage() {
   const [examples] = useState(() => getRandomExamples(4));
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [areaFilter, setAreaFilter] = useState<LegalArea | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -300,13 +333,35 @@ export default function ChatPage() {
             </button>
           </div>
 
+          {/* Area filters */}
+          <div className="px-2 py-2 border-b border-white/[0.05] flex flex-wrap gap-1">
+            <button
+              onClick={() => setAreaFilter(null)}
+              className={cn('text-[10px] px-2 py-0.5 rounded-full transition-colors', !areaFilter ? 'bg-brand-600/20 text-brand-400' : 'bg-white/5 text-slate-500 hover:text-slate-300')}
+            >
+              Todas
+            </button>
+            {(Object.keys(AREA_COLORS) as LegalArea[]).filter(a => a !== 'Outro').map((area) => (
+              <button
+                key={area}
+                onClick={() => setAreaFilter(areaFilter === area ? null : area)}
+                className={cn('text-[10px] px-2 py-0.5 rounded-full transition-colors', areaFilter === area ? AREA_COLORS[area] : 'bg-white/5 text-slate-500 hover:text-slate-300')}
+              >
+                {area}
+              </button>
+            ))}
+          </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {sessions.length === 0 && (
               <p className="text-slate-600 text-xs text-center py-8 px-4">
                 Nenhuma consulta ainda. Inicie uma nova.
               </p>
             )}
-            {sessions.map((session) => (
+            {sessions
+              .filter((s) => !areaFilter || categorizeSession(s.title) === areaFilter)
+              .map((session) => {
+              const area = categorizeSession(session.title);
+              return (
               <div
                 key={session.id}
                 className={cn(
@@ -320,9 +375,16 @@ export default function ChatPage() {
                 <MessageSquare className="w-3.5 h-3.5 mt-0.5 shrink-0 text-slate-600" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate leading-tight">{session.title}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    {formatRelativeTime(session.updatedAt)}
-                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <p className="text-xs text-slate-600">
+                      {formatRelativeTime(session.updatedAt)}
+                    </p>
+                    {area !== 'Outro' && (
+                      <span className={cn('text-[9px] px-1.5 py-px rounded-full font-medium', AREA_COLORS[area])}>
+                        {area}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <button
                   onClick={(e) => {
@@ -334,7 +396,8 @@ export default function ChatPage() {
                   <Trash2 className="w-3 h-3" />
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
