@@ -248,7 +248,7 @@ export default function ConfiguracoesPage() {
             <h3 className="font-semibold text-slate-100 mb-4">Sobre o sistema</h3>
             <div className="space-y-3">
               {[
-                { label: 'Versão', value: 'v1.5.0' },
+                { label: 'Versão', value: 'v1.6.19' },
                 { label: 'Arquitetura', value: 'RAG (Retrieval-Augmented Generation)' },
                 { label: 'Banco vetorial', value: 'PostgreSQL + pgvector' },
                 { label: 'Embeddings', value: 'OpenAI text-embedding-3-small' },

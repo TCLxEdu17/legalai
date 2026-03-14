@@ -26,32 +26,46 @@ import {
   FileBarChart,
   GitCompare,
   Gavel,
+  Flag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
 import { useState, useEffect } from 'react';
+import { isEnabled, type FeatureFlag } from '@/lib/features';
 
-const navItems = [
+type NavItem = {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  exact?: boolean;
+  badge?: string;
+  adminOnly?: boolean;
+  trialVisible?: boolean;
+  flag?: FeatureFlag;
+};
+
+const navItems: NavItem[] = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Painel', exact: true },
   { href: '/dashboard/chat', icon: MessageSquare, label: 'Assistente Jurídico' },
-  { href: '/dashboard/analise', icon: ScanSearch, label: 'Análise de Documento', badge: 'New!' },
-  { href: '/dashboard/jurisprudencias', icon: FileText, label: 'Jurisprudências' },
-  { href: '/dashboard/calculadora', icon: Calculator, label: 'Calc. Honorários', badge: 'New!' },
-  { href: '/dashboard/prazos', icon: CalendarDays, label: 'Prazos Processuais' },
+  { href: '/dashboard/analise', icon: ScanSearch, label: 'Análise de Documento', badge: 'New!', flag: 'analise' },
+  { href: '/dashboard/jurisprudencias', icon: FileText, label: 'Jurisprudências', flag: 'jurisprudencias' },
+  { href: '/dashboard/calculadora', icon: Calculator, label: 'Calc. Honorários', badge: 'New!', flag: 'calculadora' },
+  { href: '/dashboard/prazos', icon: CalendarDays, label: 'Prazos Processuais', flag: 'prazos' },
   { href: '/dashboard/favoritos', icon: Heart, label: 'Favoritos' },
-  { href: '/dashboard/agenda', icon: Calendar, label: 'Agenda de Audiências' },
-  { href: '/dashboard/clientes', icon: Users, label: 'Clientes' },
-  { href: '/dashboard/revisor', icon: ClipboardCheck, label: 'Revisor de Peças' },
-  { href: '/dashboard/minutas', icon: FileEdit, label: 'Minutas Automáticas' },
-  { href: '/dashboard/planos', icon: CreditCard, label: 'Planos e Uso' },
-  { href: '/dashboard/relatorio', icon: FileBarChart, label: 'Relatório Mensal' },
-  { href: '/dashboard/comparador', icon: GitCompare, label: 'Comparador de Decisões' },
-  { href: '/dashboard/processos', icon: Gavel, label: 'Consulta Processual' },
+  { href: '/dashboard/agenda', icon: Calendar, label: 'Agenda de Audiências', flag: 'agenda' },
+  { href: '/dashboard/clientes', icon: Users, label: 'Clientes', flag: 'clientes' },
+  { href: '/dashboard/revisor', icon: ClipboardCheck, label: 'Revisor de Peças', flag: 'revisor' },
+  { href: '/dashboard/minutas', icon: FileEdit, label: 'Minutas Automáticas', flag: 'minutas' },
+  { href: '/dashboard/planos', icon: CreditCard, label: 'Planos e Uso', flag: 'planos' },
+  { href: '/dashboard/relatorio', icon: FileBarChart, label: 'Relatório Mensal', flag: 'relatorio' },
+  { href: '/dashboard/comparador', icon: GitCompare, label: 'Comparador de Decisões', flag: 'comparador' },
+  { href: '/dashboard/processos', icon: Gavel, label: 'Consulta Processual', flag: 'processos' },
   { href: '/dashboard/upload', icon: Upload, label: 'Upload Manual', adminOnly: true },
   { href: '/dashboard/fontes', icon: Globe, label: 'Fontes Automáticas', adminOnly: true, trialVisible: true },
   { href: '/dashboard/ingestoes', icon: Activity, label: 'Histórico de Ingestões', adminOnly: true, trialVisible: true },
   { href: '/dashboard/metricas', icon: BarChart2, label: 'Métricas', adminOnly: true },
-  { href: '/dashboard/api', icon: Key, label: 'API & Chaves', badge: 'New!' },
+  { href: '/dashboard/api', icon: Key, label: 'API & Chaves', badge: 'New!', flag: 'api' },
+  { href: '/dashboard/admin/flags', icon: Flag, label: 'Feature Flags', adminOnly: true },
   { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações', adminOnly: true },
 ];
 
@@ -59,6 +73,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const [admin, setAdmin] = useState(false);
   const [isTrial, setIsTrial] = useState(false);
+  const [flags, setFlags] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setAdmin(isAdmin());
@@ -66,11 +81,26 @@ export function Sidebar() {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       setIsTrial(user?.email?.endsWith('@trial.legalai.com.br') ?? false);
     } catch {}
+    // Load feature flags
+    const flagMap: Record<string, boolean> = {};
+    const featureFlags = [
+      'calculadora', 'prazos', 'agenda', 'clientes', 'minutas',
+      'revisor', 'comparador', 'processos', 'relatorio', 'webhooks',
+      'planos', 'analise', 'jurisprudencias', 'api',
+    ] as FeatureFlag[];
+    featureFlags.forEach((f) => { flagMap[f] = isEnabled(f); });
+    setFlags(flagMap);
   }, []);
 
-  const isActive = (item: (typeof navItems)[0]) => {
+  const isActive = (item: NavItem) => {
     if (item.exact) return pathname === item.href;
     return pathname.startsWith(item.href);
+  };
+
+  const isVisible = (item: NavItem) => {
+    if (item.flag && flags[item.flag] === false) return false;
+    if (item.adminOnly && !admin && !(item.trialVisible && isTrial)) return false;
+    return true;
   };
 
   return (
@@ -94,7 +124,7 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto relative z-10">
         {navItems
-          .filter((item) => !item.adminOnly || admin || (item.trialVisible && isTrial))
+          .filter(isVisible)
           .map((item) => {
             const active = isActive(item);
             return (
@@ -128,7 +158,7 @@ export function Sidebar() {
 
       {/* Version */}
       <div className="p-4 border-t border-white/[0.06]">
-        <p className="text-slate-700 text-xs text-center">v1.5.0</p>
+        <p className="text-slate-700 text-xs text-center">v1.6.19</p>
       </div>
     </aside>
   );
