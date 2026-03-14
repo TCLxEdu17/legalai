@@ -43,6 +43,12 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 
+  @Get('me/plan')
+  @ApiOperation({ summary: 'Plano e uso do usuário autenticado' })
+  getPlan(@CurrentUser('id') id: string) {
+    return this.usersService.getPlanInfo(id);
+  }
+
   @Patch('profile')
   @ApiOperation({ summary: 'Atualizar perfil do próprio usuário' })
   updateProfile(

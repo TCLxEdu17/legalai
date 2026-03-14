@@ -98,6 +98,7 @@ model User {
   email        String    @unique
   passwordHash String    @map("password_hash")
   role         UserRole  @default(USER)
+  plan         String    @default("trial")
   isActive     Boolean   @default(true) @map("is_active")
   oabNumber    String?   @map("oab_number")
   tenantId     String?   @map("tenant_id") @db.Uuid

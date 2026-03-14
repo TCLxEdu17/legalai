@@ -119,6 +119,45 @@ export class UsersService {
     });
   }
 
+  async getPlanInfo(userId: string) {
+    const PLAN_LIMITS: Record<string, { chatMessages: number; uploads: number; apiCalls: number }> = {
+      trial: { chatMessages: 20, uploads: 3, apiCalls: 50 },
+      basic: { chatMessages: 200, uploads: 20, apiCalls: 500 },
+      pro: { chatMessages: 2000, uploads: 200, apiCalls: 5000 },
+      unlimited: { chatMessages: Infinity, uploads: Infinity, apiCalls: Infinity },
+    };
+
+    const user = await this.findById(userId);
+    const plan = (user as any).plan || 'trial';
+    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS['trial'];
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const [chatMessages, uploads, apiCalls] = await Promise.all([
+      this.prisma.chatMessage.count({
+        where: { session: { userId }, role: 'USER', createdAt: { gte: startOfMonth } },
+      }),
+      this.prisma.jurisprudenceDocument.count({
+        where: { createdById: userId, createdAt: { gte: startOfMonth } },
+      }),
+      this.prisma.usageLog.count({
+        where: { userId, createdAt: { gte: startOfMonth } },
+      }),
+    ]);
+
+    return {
+      plan,
+      limits: {
+        chatMessages: limits.chatMessages === Infinity ? null : limits.chatMessages,
+        uploads: limits.uploads === Infinity ? null : limits.uploads,
+        apiCalls: limits.apiCalls === Infinity ? null : limits.apiCalls,
+      },
+      usage: { chatMessages, uploads, apiCalls },
+    };
+  }
+
   async deleteAccount(id: string) {
     await this.findById(id);
 

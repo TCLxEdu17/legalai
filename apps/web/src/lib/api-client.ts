@@ -161,6 +161,11 @@ class ApiClient {
     await this.client.delete('/users/me');
   }
 
+  async getPlanInfo() {
+    const { data } = await this.client.get('/users/me/plan');
+    return data as { plan: string; limits: { chatMessages: number | null; uploads: number | null; apiCalls: number | null }; usage: { chatMessages: number; uploads: number; apiCalls: number } };
+  }
+
   async updateProfile(payload: { name?: string; oabNumber?: string }) {
     const { data } = await this.client.patch('/users/profile', payload);
     return data;
