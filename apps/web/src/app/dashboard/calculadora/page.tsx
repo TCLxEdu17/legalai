@@ -76,17 +76,21 @@ function calculate(fase: FaseKey, valor: number, complexidade: Complexidade): Re
   const minByPct  = (valor * f.minPct!)  / 100;
   const maxByPct  = (valor * f.maxPct!)  / 100;
 
-  // Multiplica complexidade primeiro, depois aplica o piso
+  // Multiplica complexidade, depois aplica piso ao mínimo
   const minCalc  = minByPct  * mult;
   const maxCalc  = maxByPct  * mult;
   const minVal   = Math.max(f.minFixed, minCalc);
-  const maxVal   = Math.max(f.minFixed, maxCalc);
-  const pisoAplicado = minCalc < f.minFixed || maxCalc < f.minFixed;
+  // Piso só aplica ao mínimo; máximo preserva a proporção pct quando piso domina
+  const maxRaw   = Math.max(minVal, maxCalc);
+  const maxVal   = maxRaw === minVal && minVal === f.minFixed
+    ? f.minFixed * (f.maxPct! / f.minPct!)
+    : maxRaw;
+  const pisoAplicado = minCalc < f.minFixed;
 
   const midVal = (minVal + maxVal) / 2;
 
   const formula = pisoAplicado
-    ? `Piso OAB ${formatBRL(f.minFixed)} aplicado (valor da causa insuficiente para os percentuais mínimos)`
+    ? `Piso OAB ${formatBRL(f.minFixed)} aplicado — faixa: ${formatBRL(minVal)} – ${formatBRL(maxVal)} (${f.minPct}–${f.maxPct}% × ×${mult.toFixed(1)})`
     : `${formatBRL(valor)} × ${f.minPct}–${f.maxPct}% × ×${mult.toFixed(1)} (complexidade)`;
 
   return {
