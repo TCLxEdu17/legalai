@@ -122,8 +122,8 @@ class ApiClient {
   }
 
   // ==================== CHAT ====================
-  async sendMessage(message: string, sessionId?: string) {
-    const { data } = await this.client.post('/chat/message', { message, sessionId });
+  async sendMessage(message: string, sessionId?: string, legalArea?: string) {
+    const { data } = await this.client.post('/chat/message', { message, sessionId, legalArea });
     return data;
   }
 

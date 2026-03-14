@@ -6,6 +6,7 @@ import {
   LEGAL_FALLBACK_SYSTEM_PROMPT,
   buildRagUserPrompt,
   buildFallbackUserPrompt,
+  buildSpecialtyInstruction,
   SUMMARIZATION_PROMPT,
   METADATA_EXTRACTION_PROMPT,
   DOCUMENT_ANALYSIS_SYSTEM_PROMPT,
@@ -61,11 +62,12 @@ export class RagService {
   async query(
     question: string,
     sessionHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+    legalArea?: string,
   ): Promise<RagQueryResult> {
     const RAG_TIMEOUT_MS = 60_000;
 
     return Promise.race([
-      this._queryInternal(question, sessionHistory),
+      this._queryInternal(question, sessionHistory, legalArea),
       new Promise<never>((_, reject) =>
         setTimeout(
           () => reject(new Error(`[RAG] Timeout após ${RAG_TIMEOUT_MS / 1000}s`)),
@@ -78,6 +80,7 @@ export class RagService {
   private async _queryInternal(
     question: string,
     sessionHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+    legalArea?: string,
   ): Promise<RagQueryResult> {
     const start = Date.now();
     this.logger.log(`[RAG] Query: "${question.slice(0, 100)}"`);
@@ -100,7 +103,7 @@ export class RagService {
     }
 
     // 3. Construir mensagens para o LLM
-    const messages = this.buildMessages(question, retrievedChunks, sessionHistory);
+    const messages = this.buildMessages(question, retrievedChunks, sessionHistory, legalArea);
 
     // 4. Gerar resposta — sem contexto usa temperatura maior para explorar conhecimento amplo
     const llmStart = Date.now();
@@ -212,11 +215,14 @@ Use linguagem técnica e seja completo. Mínimo de 400 palavras.`,
     question: string,
     chunks: RetrievedChunk[],
     history?: Array<{ role: 'user' | 'assistant'; content: string }>,
+    legalArea?: string,
   ) {
     const hasContext = chunks.length > 0;
+    const specialtyInstruction = buildSpecialtyInstruction(legalArea);
+    const basePrompt = hasContext ? LEGAL_SYSTEM_PROMPT : LEGAL_FALLBACK_SYSTEM_PROMPT;
 
     const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
-      { role: 'system', content: hasContext ? LEGAL_SYSTEM_PROMPT : LEGAL_FALLBACK_SYSTEM_PROMPT },
+      { role: 'system', content: basePrompt + specialtyInstruction },
     ];
 
     // Incluir histórico recente da sessão (últimas 6 mensagens)

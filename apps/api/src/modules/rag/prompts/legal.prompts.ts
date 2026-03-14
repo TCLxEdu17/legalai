@@ -5,6 +5,61 @@ import { RetrievedChunk } from '../vector-search.service';
  * Centralizados aqui para facilitar ajuste e evolução.
  */
 
+export const LEGAL_AREAS = [
+  'Generalista',
+  'Civil',
+  'Penal',
+  'Trabalhista',
+  'Tributário',
+  'Administrativo',
+  'Constitucional',
+  'Consumidor',
+  'Família e Sucessões',
+  'Previdenciário',
+  'Ambiental',
+  'Digital / LGPD',
+  'Empresarial',
+  'Imobiliário',
+  'Bancário / Financeiro',
+  'Eleitoral',
+  'Internacional',
+  'Saúde',
+  'Marítimo e Portuário',
+] as const;
+
+export type LegalAreaMode = (typeof LEGAL_AREAS)[number];
+
+const AREA_SPECIALTY_INSTRUCTIONS: Partial<Record<LegalAreaMode, string>> = {
+  Civil: `MODO ESPECIALISTA: Direito Civil. Profundidade máxima em CC/2002, CPC/2015, responsabilidade civil objetiva e subjetiva, contratos, obrigações, direitos reais, posse, usucapião, sucessões. Cite artigos precisos do CC. Explore divergências entre STJ e TJs. Analise Enunciados das Jornadas de Direito Civil.`,
+  Penal: `MODO ESPECIALISTA: Direito Penal e Processual Penal. Priorize CP, CPP e legislação especial (Lei 9.613/98, Lei 11.343/06, Lei Maria da Penha, Lei 9.099/95, etc.). Sempre analise teses defensivas e acusatórias, garantias constitucionais, habeas corpus, nulidades processuais, prisões cautelares e súmulas do STF/STJ em matéria penal.`,
+  Trabalhista: `MODO ESPECIALISTA: Direito do Trabalho e Processual do Trabalho. Priorize CLT pós-Reforma (Lei 13.467/17), súmulas e OJs do TST, convenções coletivas, NR, reconhecimento de vínculo, verbas rescisórias, prescrição trabalhista, dano moral na JT e equiparação salarial. Sinalize impactos da Reforma Trabalhista.`,
+  Tributário: `MODO ESPECIALISTA: Direito Tributário. Priorize CTN, CF/88 arts. 145-162, legislação do ICMS, ISS, PIS/COFINS, IRPF/IRPJ, CSLL. Cite súmulas do STF e STJ em matéria tributária. Explore teses de exclusão de tributos de bases de cálculo, imunidades, isenções, repetição de indébito e parcelamentos (PERT, REFIS). Analise teses do CARF quando pertinente.`,
+  Administrativo: `MODO ESPECIALISTA: Direito Administrativo. Priorize Lei 8.666/93, Lei 14.133/21 (Nova Lei de Licitações), Lei 9.784/99, improbidade administrativa (Lei 8.429/92 com alterações da Lei 14.230/21), servidores públicos, concessões, permissões e controle pelo TCU/TCE. Analise precedentes do STJ e STF sobre atos administrativos.`,
+  Constitucional: `MODO ESPECIALISTA: Direito Constitucional. Profundidade máxima em CF/88, controle de constitucionalidade (ADI, ADC, ADPF, ADO), direitos fundamentais, repercussão geral no STF, súmulas vinculantes, separação de poderes, federalismo, MS, MI e remédios constitucionais. Explore argumentação constitucional para teses processuais.`,
+  Consumidor: `MODO ESPECIALISTA: Direito do Consumidor. Priorize CDC (Lei 8.078/90), responsabilidade objetiva do fornecedor, vício e fato do produto/serviço, prazos decadenciais, práticas abusivas, proteção contratual, inversão do ônus da prova e dano moral nas relações de consumo. Analise súmulas do STJ sobre CDC e contratos bancários.`,
+  'Família e Sucessões': `MODO ESPECIALISTA: Direito de Família e Sucessões. Priorize CC/2002 (arts. 1.511-1.783-A), CPC/2015 (família), divórcio, guarda (Lei 13.058/14), alimentos (Lei 5.478/68), união estável, inventário, partilha, testamento, herança e multiparentalidade. Cite Enunciados das Jornadas e súmulas do STJ em família.`,
+  Previdenciário: `MODO ESPECIALISTA: Direito Previdenciário. Priorize Lei 8.213/91, Lei 8.212/91, Emenda Constitucional 103/19 (Reforma da Previdência), regras de transição, aposentadoria por tempo de contribuição e por idade, BPC/LOAS, auxílio-doença, pensão por morte e revisão do benefício. Analise teses do STJ e TNU sobre benefícios.`,
+  Ambiental: `MODO ESPECIALISTA: Direito Ambiental. Priorize CF/88 art. 225, Lei 9.605/98 (crimes ambientais), Lei 12.651/12 (Código Florestal), PNMA (Lei 6.938/81), responsabilidade civil ambiental objetiva e solidária, licenciamento, AIA e precedentes do STJ (responsabilidade por dano ambiental, inversão do ônus da prova).`,
+  'Digital / LGPD': `MODO ESPECIALISTA: Direito Digital e Proteção de Dados. Priorize LGPD (Lei 13.709/18), Marco Civil da Internet (Lei 12.965/14), responsabilidade civil por vazamento de dados, bases legais para tratamento, direitos do titular, ANPD, crimes cibernéticos (Lei 12.737/12) e remoção de conteúdo. Analise precedentes do STJ sobre privacidade digital.`,
+  Empresarial: `MODO ESPECIALISTA: Direito Empresarial e Societário. Priorize CC/2002 (Direito de Empresa), Lei das S/A (Lei 6.404/76), Lei das ME/EPP (LC 123/06), desconsideração da personalidade jurídica, recuperação judicial e falência (Lei 11.101/05 com alterações da Lei 14.112/20), contratos empresariais e títulos de crédito.`,
+  Imobiliário: `MODO ESPECIALISTA: Direito Imobiliário. Priorize CC/2002 (direitos reais), Lei 4.591/64 (condomínios), Lei 8.245/91 (locações), Lei 9.514/97 (alienação fiduciária), usucapião, regularização fundiária (Lei 13.465/17), ITBI, incorporações e loteamentos. Analise súmulas do STJ sobre locação e financiamento imobiliário.`,
+  'Bancário / Financeiro': `MODO ESPECIALISTA: Direito Bancário e Financeiro. Priorize CDC nas relações bancárias, súmulas do STJ sobre juros, anatocismo (Súmula 121 STF e 539 STJ), capitalização de juros (MP 2.170/01), busca e apreensão (Dec.-Lei 911/69), contratos de mútuo, cédulas de crédito e regulação BACEN. Analise teses de revisão contratual.`,
+  Eleitoral: `MODO ESPECIALISTA: Direito Eleitoral. Priorize CE (Lei 4.737/65), LOPP (Lei 9.096/95), Lei das Eleições (Lei 9.504/97), AIJE, AIME, RCD, impugnação de registro de candidatura, propaganda eleitoral, financiamento de campanha e resolução do TSE. Cite jurisprudência do TSE e STF em matéria eleitoral.`,
+  Internacional: `MODO ESPECIALISTA: Direito Internacional. Priorize LINDB (arts. 7-17), Convenção de Viena (tratados), convenções da OIT ratificadas, Convenção de Nova York (arbitragem), extradição, cooperação jurídica internacional (MLAT), imunidade de jurisdição, homologação de sentença estrangeira (STJ) e CISG.`,
+  Saúde: `MODO ESPECIALISTA: Direito da Saúde. Priorize CF/88 art. 196, Lei 8.080/90 (SUS), Lei 9.656/98 (planos de saúde), RN ANS, responsabilidade civil médica (objetiva para hospitais, subjetiva para médicos), erro médico, recusa de cobertura por plano e judicialização da saúde. Cite súmulas do STJ sobre planos de saúde.`,
+  'Marítimo e Portuário': `MODO ESPECIALISTA: Direito Marítimo e Portuário. Priorize LESTA (Lei 9.432/97), Lei dos Portos (Lei 12.815/13), Código Comercial (arts. 457-796), Convenção MARPOL, SOLAS, responsabilidade do transportador marítimo, avaria grossa, afretamento e contratos de navegação. Analise precedentes do STJ em matéria marítima.`,
+};
+
+/**
+ * Retorna a instrução de especialidade para injetar no system prompt.
+ * Retorna string vazia para modo Generalista.
+ */
+export function buildSpecialtyInstruction(legalArea?: string): string {
+  if (!legalArea || legalArea === 'Generalista') return '';
+  const instruction = AREA_SPECIALTY_INSTRUCTIONS[legalArea as LegalAreaMode];
+  return instruction ? `\n\n${instruction}` : '';
+}
+
 /**
  * Prompt usado quando há documentos relevantes na base de dados.
  * Prioriza as fontes indexadas mas pode complementar com conhecimento geral.

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Send, Loader2, MessageSquare, Plus, Trash2, ChevronRight, Paperclip, X, Filter } from 'lucide-react';
+import { Send, Loader2, MessageSquare, Plus, Trash2, ChevronRight, Paperclip, X, Scale } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
@@ -67,6 +67,32 @@ function getRandomExamples(n: number) {
   return shuffled.slice(0, n);
 }
 
+// ===================== Specialty mode selector =====================
+const LEGAL_SPECIALTY_AREAS = [
+  'Generalista',
+  'Civil',
+  'Penal',
+  'Trabalhista',
+  'Tributário',
+  'Administrativo',
+  'Constitucional',
+  'Consumidor',
+  'Família e Sucessões',
+  'Previdenciário',
+  'Ambiental',
+  'Digital / LGPD',
+  'Empresarial',
+  'Imobiliário',
+  'Bancário / Financeiro',
+  'Eleitoral',
+  'Internacional',
+  'Saúde',
+  'Marítimo e Portuário',
+] as const;
+
+type LegalSpecialtyArea = (typeof LEGAL_SPECIALTY_AREAS)[number];
+// ===================== End specialty mode =====================
+
 // ===================== Area categorization =====================
 type LegalArea = 'Trabalhista' | 'Civil' | 'Penal' | 'Tributário' | 'Previdenciário' | 'Outro';
 
@@ -128,6 +154,7 @@ export default function ChatPage() {
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [areaFilter, setAreaFilter] = useState<LegalArea | null>(null);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<LegalSpecialtyArea>('Generalista');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -180,7 +207,7 @@ export default function ChatPage() {
   // Enviar mensagem
   const sendMutation = useMutation({
     mutationFn: ({ message, sessionId }: { message: string; sessionId?: string }) =>
-      apiClient.sendMessage(message, sessionId),
+      apiClient.sendMessage(message, sessionId, selectedSpecialty === 'Generalista' ? undefined : selectedSpecialty),
     onMutate: (vars) => {
       const tempUserMsg: LocalMessage = {
         id: `temp-user-${Date.now()}`,
@@ -472,6 +499,30 @@ export default function ChatPage() {
 
         {/* Input */}
         <div className="shrink-0 bg-[#101010]/80 border-t border-white/[0.06] p-4 backdrop-blur-sm">
+          {/* Seletor de especialidade */}
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Scale className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+              <span className="text-xs text-slate-500">Especialidade do assistente</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {LEGAL_SPECIALTY_AREAS.map((area) => (
+                <button
+                  key={area}
+                  type="button"
+                  onClick={() => setSelectedSpecialty(area)}
+                  className={cn(
+                    'text-[11px] px-2.5 py-1 rounded-full border transition-colors',
+                    selectedSpecialty === area
+                      ? 'bg-brand-600/20 border-brand-500/40 text-brand-300'
+                      : 'bg-white/[0.03] border-white/[0.06] text-slate-500 hover:text-slate-300 hover:border-white/10',
+                  )}
+                >
+                  {area}
+                </button>
+              ))}
+            </div>
+          </div>
           {/* Sugestões de follow-up */}
           {followUpSuggestions.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">

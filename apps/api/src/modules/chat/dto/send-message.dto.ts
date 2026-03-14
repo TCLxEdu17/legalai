@@ -13,4 +13,9 @@ export class SendMessageDto {
   @IsOptional()
   @IsUUID()
   sessionId?: string;
+
+  @ApiProperty({ required: false, description: 'Área jurídica de especialização do assistente (ex: Civil, Penal, Trabalhista). Default: Generalista.' })
+  @IsOptional()
+  @IsString()
+  legalArea?: string;
 }
