@@ -42,7 +42,10 @@ export function Sidebar() {
 
   useEffect(() => {
     setAdmin(isAdmin());
-    try { setIsTrial(!!localStorage.getItem('legalai_trial')); } catch {}
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      setIsTrial(user?.email?.endsWith('@trial.legalai.com.br') ?? false);
+    } catch {}
   }, []);
 
   const isActive = (item: (typeof navItems)[0]) => {
