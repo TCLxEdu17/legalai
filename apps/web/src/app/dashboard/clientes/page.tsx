@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Plus, Search, Trash2, Edit2, Loader2, X, MapPin, Building2 } from 'lucide-react';
+import { Users, Plus, Search, Trash2, Edit2, Loader2, X, MapPin, Building2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
-import { fetchCep, fetchCnpj } from '@/lib/lookups';
+import { fetchCep, fetchCnpj, fetchUfs, fetchMunicipios, type IbgeUf, type IbgeMunicipio } from '@/lib/lookups';
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/ui/motion';
 
 interface Client {
@@ -21,7 +21,7 @@ interface Client {
   createdAt: string;
 }
 
-const emptyForm = { name: '', email: '', phone: '', cpfCnpj: '', address: '', notes: '' };
+const emptyForm = { name: '', email: '', phone: '', cpfCnpj: '', address: '', uf: '', municipio: '', notes: '' };
 
 export default function ClientesPage() {
   const [search, setSearch] = useState('');
@@ -30,7 +30,27 @@ export default function ClientesPage() {
   const [form, setForm] = useState(emptyForm);
   const [lookingUpCep, setLookingUpCep] = useState(false);
   const [lookingUpCnpj, setLookingUpCnpj] = useState(false);
+  const [ufs, setUfs] = useState<IbgeUf[]>([]);
+  const [municipios, setMunicipios] = useState<IbgeMunicipio[]>([]);
+  const [loadingMunicipios, setLoadingMunicipios] = useState(false);
   const queryClient = useQueryClient();
+
+  // Carrega UFs ao abrir o modal
+  useEffect(() => {
+    if (showModal && ufs.length === 0) {
+      fetchUfs().then(setUfs).catch(() => {});
+    }
+  }, [showModal, ufs.length]);
+
+  // Carrega municípios quando UF muda
+  useEffect(() => {
+    if (!form.uf) { setMunicipios([]); return; }
+    setLoadingMunicipios(true);
+    fetchMunicipios(form.uf)
+      .then(setMunicipios)
+      .catch(() => {})
+      .finally(() => setLoadingMunicipios(false));
+  }, [form.uf]);
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
     queryKey: ['clients', search],
@@ -38,13 +58,13 @@ export default function ClientesPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => apiClient.createClient(form),
+    mutationFn: () => apiClient.createClient(buildPayload()),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['clients'] }); toast.success('Cliente criado'); closeModal(); },
     onError: (e) => toast.error(extractApiErrorMessage(e)),
   });
 
   const updateMutation = useMutation({
-    mutationFn: () => apiClient.updateClient(editingClient!.id, form),
+    mutationFn: () => apiClient.updateClient(editingClient!.id, buildPayload()),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['clients'] }); toast.success('Cliente atualizado'); closeModal(); },
     onError: (e) => toast.error(extractApiErrorMessage(e)),
   });
@@ -60,15 +80,30 @@ export default function ClientesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['clients'] }),
   });
 
+  function buildPayload() {
+    const addr = [form.address, form.municipio, form.uf].filter(Boolean).join(', ');
+    return { name: form.name, email: form.email, phone: form.phone, cpfCnpj: form.cpfCnpj, address: addr || undefined, notes: form.notes };
+  }
+
+  function parseAddress(raw: string): { street: string; uf: string; municipio: string } {
+    const parts = raw.split(',').map((s) => s.trim());
+    if (parts.length >= 3) {
+      return { street: parts.slice(0, -2).join(', '), municipio: parts[parts.length - 2], uf: parts[parts.length - 1] };
+    }
+    return { street: raw, uf: '', municipio: '' };
+  }
+
   function openCreate() {
     setEditingClient(null);
     setForm(emptyForm);
+    setMunicipios([]);
     setShowModal(true);
   }
 
   function openEdit(c: Client) {
     setEditingClient(c);
-    setForm({ name: c.name, email: c.email || '', phone: c.phone || '', cpfCnpj: c.cpfCnpj || '', address: c.address || '', notes: c.notes || '' });
+    const { street, uf, municipio } = parseAddress(c.address || '');
+    setForm({ name: c.name, email: c.email || '', phone: c.phone || '', cpfCnpj: c.cpfCnpj || '', address: street, uf, municipio, notes: c.notes || '' });
     setShowModal(true);
   }
 
@@ -76,16 +111,21 @@ export default function ClientesPage() {
     setShowModal(false);
     setEditingClient(null);
     setForm(emptyForm);
+    setMunicipios([]);
   }
 
   async function handleCepLookup() {
-    const cepDigits = form.address?.replace(/\D/g, '');
-    if (!cepDigits || cepDigits.length !== 8) return;
+    const cepDigits = form.address.replace(/\D/g, '');
+    if (cepDigits.length !== 8) return;
     setLookingUpCep(true);
     try {
       const data = await fetchCep(cepDigits);
-      const addr = [data.logradouro, data.bairro, `${data.localidade}/${data.uf}`].filter(Boolean).join(', ');
-      setForm((f) => ({ ...f, address: addr }));
+      setForm((f) => ({
+        ...f,
+        address: [data.logradouro, data.bairro].filter(Boolean).join(', '),
+        uf: data.uf,
+        municipio: data.localidade,
+      }));
       toast.success('Endereço preenchido via CEP');
     } catch {
       toast.error('CEP não encontrado');
@@ -95,18 +135,19 @@ export default function ClientesPage() {
   }
 
   async function handleCnpjLookup() {
-    const cnpjDigits = form.cpfCnpj?.replace(/\D/g, '');
-    if (!cnpjDigits || cnpjDigits.length !== 14) return;
+    const cnpjDigits = form.cpfCnpj.replace(/\D/g, '');
+    if (cnpjDigits.length !== 14) return;
     setLookingUpCnpj(true);
     try {
       const data = await fetchCnpj(cnpjDigits);
-      const addr = [data.logradouro, data.numero, data.bairro, `${data.municipio}/${data.uf}`].filter(Boolean).join(', ');
       setForm((f) => ({
         ...f,
         name: f.name || data.razao_social,
         email: f.email || data.email || '',
         phone: f.phone || data.telefone1 || '',
-        address: f.address || addr,
+        address: f.address || [data.logradouro, data.numero, data.bairro].filter(Boolean).join(', '),
+        uf: f.uf || data.uf,
+        municipio: f.municipio || data.municipio,
       }));
       toast.success('Dados preenchidos via CNPJ');
     } catch {
@@ -119,6 +160,7 @@ export default function ClientesPage() {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const inputCls = "w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500";
+  const selectCls = "w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 appearance-none";
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -223,9 +265,10 @@ export default function ClientesPage() {
           <div className="bg-[#141414] border border-white/10 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-5 border-b border-white/[0.07]">
               <h3 className="font-semibold text-slate-100">{editingClient ? 'Editar cliente' : 'Novo cliente'}</h3>
-              <button onClick={closeModal} className="text-slate-500 hover:text-slate-300 text-xl"><X className="w-4 h-4" /></button>
+              <button onClick={closeModal} className="text-slate-500 hover:text-slate-300"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 space-y-3">
+
               {/* CPF/CNPJ com lookup */}
               <div>
                 <label className="text-xs text-slate-500 mb-1 block">CPF / CNPJ</label>
@@ -234,16 +277,11 @@ export default function ClientesPage() {
                     type="text"
                     value={form.cpfCnpj}
                     onChange={(e) => setForm({ ...form, cpfCnpj: e.target.value })}
-                    onBlur={() => {
-                      const digits = form.cpfCnpj.replace(/\D/g, '');
-                      if (digits.length === 14) handleCnpjLookup();
-                    }}
+                    onBlur={() => { if (form.cpfCnpj.replace(/\D/g, '').length === 14) handleCnpjLookup(); }}
                     placeholder="000.000.000-00 ou 00.000.000/0000-00"
                     className={inputCls}
                   />
-                  <button
-                    type="button"
-                    onClick={handleCnpjLookup}
+                  <button type="button" onClick={handleCnpjLookup}
                     disabled={lookingUpCnpj || form.cpfCnpj.replace(/\D/g, '').length !== 14}
                     className="shrink-0 px-2.5 py-2 bg-brand-600/15 border border-brand-500/20 text-brand-400 rounded-lg hover:bg-brand-600/25 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Buscar CNPJ"
@@ -251,7 +289,7 @@ export default function ClientesPage() {
                     {lookingUpCnpj ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[10px] text-slate-600 mt-1">Para CNPJ, clique no ícone ou saia do campo para preencher automaticamente</p>
+                <p className="text-[10px] text-slate-600 mt-1">CNPJ: sai do campo ou clica no ícone para preencher automaticamente</p>
               </div>
 
               {/* Nome */}
@@ -260,36 +298,31 @@ export default function ClientesPage() {
                 <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome completo ou Razão Social" className={inputCls} />
               </div>
 
-              {/* Email */}
-              <div>
-                <label className="text-xs text-slate-500 mb-1 block">Email</label>
-                <input type="text" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" className={inputCls} />
+              {/* Email + Telefone em grid */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-slate-500 mb-1 block">Email</label>
+                  <input type="text" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" className={inputCls} />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 mb-1 block">Telefone</label>
+                  <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" className={inputCls} />
+                </div>
               </div>
 
-              {/* Telefone */}
+              {/* Endereço (rua/bairro) + CEP lookup */}
               <div>
-                <label className="text-xs text-slate-500 mb-1 block">Telefone</label>
-                <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" className={inputCls} />
-              </div>
-
-              {/* Endereço com CEP lookup */}
-              <div>
-                <label className="text-xs text-slate-500 mb-1 block">Endereço</label>
+                <label className="text-xs text-slate-500 mb-1 block">Logradouro / Bairro</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={form.address}
                     onChange={(e) => setForm({ ...form, address: e.target.value })}
-                    onBlur={() => {
-                      const digits = form.address.replace(/\D/g, '');
-                      if (digits.length === 8 && !form.address.includes(',')) handleCepLookup();
-                    }}
-                    placeholder="CEP ou endereço completo"
+                    onBlur={() => { if (form.address.replace(/\D/g, '').length === 8 && !form.address.includes(',')) handleCepLookup(); }}
+                    placeholder="CEP ou logradouro e bairro"
                     className={inputCls}
                   />
-                  <button
-                    type="button"
-                    onClick={handleCepLookup}
+                  <button type="button" onClick={handleCepLookup}
                     disabled={lookingUpCep || form.address.replace(/\D/g, '').length !== 8}
                     className="shrink-0 px-2.5 py-2 bg-brand-600/15 border border-brand-500/20 text-brand-400 rounded-lg hover:bg-brand-600/25 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Buscar CEP"
@@ -297,19 +330,42 @@ export default function ClientesPage() {
                     {lookingUpCep ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[10px] text-slate-600 mt-1">Digite apenas o CEP e clique no ícone para preencher o endereço</p>
+                <p className="text-[10px] text-slate-600 mt-1">Digite o CEP e clique no ícone para preencher UF/município</p>
+              </div>
+
+              {/* UF + Município via IBGE */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-slate-500 mb-1 block">UF</label>
+                  <div className="relative">
+                    <select value={form.uf} onChange={(e) => setForm({ ...form, uf: e.target.value, municipio: '' })} className={selectCls}>
+                      <option value="">Estado</option>
+                      {ufs.map((u) => <option key={u.sigla} value={u.sigla}>{u.sigla} — {u.nome}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 mb-1 block">
+                    Município {loadingMunicipios && <Loader2 className="inline w-3 h-3 animate-spin ml-1" />}
+                  </label>
+                  <div className="relative">
+                    <select value={form.municipio} onChange={(e) => setForm({ ...form, municipio: e.target.value })} disabled={!form.uf || loadingMunicipios} className={cn(selectCls, (!form.uf || loadingMunicipios) && 'opacity-50 cursor-not-allowed')}>
+                      <option value="">Município</option>
+                      {municipios.map((m) => <option key={m.id} value={m.nome}>{m.nome}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
+                  </div>
+                </div>
               </div>
 
               {/* Observações */}
               <div>
                 <label className="text-xs text-slate-500 mb-1 block">Observações</label>
-                <textarea
-                  value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  rows={2}
-                  className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand-500"
-                />
+                <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2}
+                  className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand-500" />
               </div>
+
               <button
                 onClick={() => editingClient ? updateMutation.mutate() : createMutation.mutate()}
                 disabled={!form.name || isPending}

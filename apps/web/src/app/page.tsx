@@ -1,8 +1,42 @@
 'use client';
 
 import Link from 'next/link';
-import { Scale, Search, ShieldCheck, ArrowRight, CheckCircle, Zap, FileText } from 'lucide-react';
+import { Scale, Search, ShieldCheck, ArrowRight, CheckCircle, Zap, FileText, Users, FolderOpen, BookOpen } from 'lucide-react';
 import { ScrollReveal, FadeIn, InteractiveCard, Parallax, StaggerContainer, StaggerItem } from '@/components/ui/motion';
+import { Carousel } from '@/components/ui/carousel';
+
+const RECURSOS = [
+  {
+    icon: Search,
+    title: 'Busca semântica',
+    description: 'Encontre jurisprudências pelo significado, não apenas por palavras-chave.',
+  },
+  {
+    icon: FileText,
+    title: 'Base própria',
+    description: 'Suba PDFs e DOCX. O sistema indexa e torna cada documento consultável.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Respostas fundamentadas',
+    description: 'Cada resposta cita a fonte, o trecho relevante e o nível de confiança.',
+  },
+  {
+    icon: Users,
+    title: 'Gestão de clientes',
+    description: 'Cadastro completo com busca automática de CEP e CNPJ integrada.',
+  },
+  {
+    icon: FolderOpen,
+    title: 'Copiloto por caso',
+    description: 'Cada processo tem seu próprio assistente com RAG scoped nos autos.',
+  },
+  {
+    icon: BookOpen,
+    title: 'Gerador de peças',
+    description: 'Redija contestações, recursos e apelações com suporte de IA.',
+  },
+];
 
 export default function LandingPage() {
   return (
@@ -61,33 +95,13 @@ export default function LandingPage() {
         </FadeIn>
       </section>
 
-      {/* Recursos */}
+      {/* Recursos — grid no desktop, carrossel no mobile */}
       <section className="max-w-5xl mx-auto px-6 pb-24">
-        <StaggerContainer className="grid md:grid-cols-3 gap-4">
-          {[
-            {
-              icon: Search,
-              title: 'Busca semântica',
-              description:
-                'Encontre jurisprudências pelo significado, não apenas por palavras-chave.',
-            },
-            {
-              icon: FileText,
-              title: 'Base própria',
-              description:
-                'Suba PDFs e DOCX. O sistema indexa e torna cada documento consultável.',
-            },
-            {
-              icon: ShieldCheck,
-              title: 'Respostas fundamentadas',
-              description:
-                'Cada resposta cita a fonte, o trecho relevante e o nível de confiança.',
-            },
-          ].map(({ icon: Icon, title, description }) => (
+        {/* Desktop grid */}
+        <StaggerContainer className="hidden md:grid md:grid-cols-3 gap-4">
+          {RECURSOS.map(({ icon: Icon, title, description }) => (
             <StaggerItem key={title}>
-              <InteractiveCard
-                className="bg-[#111111] border border-white/[0.06] rounded-xl p-5 hover:border-white/[0.12] transition-colors h-full"
-              >
+              <InteractiveCard className="bg-[#111111] border border-white/[0.06] rounded-xl p-5 hover:border-white/[0.12] transition-colors h-full">
                 <div className="w-9 h-9 bg-brand-600/10 border border-brand-500/15 rounded-lg flex items-center justify-center mb-3">
                   <Icon className="w-4 h-4 text-brand-400" />
                 </div>
@@ -97,6 +111,23 @@ export default function LandingPage() {
             </StaggerItem>
           ))}
         </StaggerContainer>
+
+        {/* Mobile carousel */}
+        <div className="md:hidden">
+          <FadeIn>
+            <Carousel
+              items={RECURSOS.map(({ icon: Icon, title, description }) => (
+                <div key={title} className="bg-[#111111] border border-white/[0.06] rounded-xl p-6 mx-1">
+                  <div className="w-9 h-9 bg-brand-600/10 border border-brand-500/15 rounded-lg flex items-center justify-center mb-3">
+                    <Icon className="w-4 h-4 text-brand-400" />
+                  </div>
+                  <h3 className="font-semibold text-slate-100 text-sm mb-1">{title}</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">{description}</p>
+                </div>
+              ))}
+            />
+          </FadeIn>
+        </div>
       </section>
 
       {/* Como funciona */}
