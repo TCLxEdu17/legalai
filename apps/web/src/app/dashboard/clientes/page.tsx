@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Plus, Search, Trash2, Edit2, Loader2, X } from 'lucide-react';
+import { Users, Plus, Search, Trash2, Edit2, Loader2, X, MapPin, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
+import { fetchCep, fetchCnpj } from '@/lib/lookups';
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/ui/motion';
 
 interface Client {
   id: string;
@@ -26,6 +28,8 @@ export default function ClientesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [lookingUpCep, setLookingUpCep] = useState(false);
+  const [lookingUpCnpj, setLookingUpCnpj] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
@@ -74,98 +78,144 @@ export default function ClientesPage() {
     setForm(emptyForm);
   }
 
+  async function handleCepLookup() {
+    const cepDigits = form.address?.replace(/\D/g, '');
+    if (!cepDigits || cepDigits.length !== 8) return;
+    setLookingUpCep(true);
+    try {
+      const data = await fetchCep(cepDigits);
+      const addr = [data.logradouro, data.bairro, `${data.localidade}/${data.uf}`].filter(Boolean).join(', ');
+      setForm((f) => ({ ...f, address: addr }));
+      toast.success('Endereço preenchido via CEP');
+    } catch {
+      toast.error('CEP não encontrado');
+    } finally {
+      setLookingUpCep(false);
+    }
+  }
+
+  async function handleCnpjLookup() {
+    const cnpjDigits = form.cpfCnpj?.replace(/\D/g, '');
+    if (!cnpjDigits || cnpjDigits.length !== 14) return;
+    setLookingUpCnpj(true);
+    try {
+      const data = await fetchCnpj(cnpjDigits);
+      const addr = [data.logradouro, data.numero, data.bairro, `${data.municipio}/${data.uf}`].filter(Boolean).join(', ');
+      setForm((f) => ({
+        ...f,
+        name: f.name || data.razao_social,
+        email: f.email || data.email || '',
+        phone: f.phone || data.telefone1 || '',
+        address: f.address || addr,
+      }));
+      toast.success('Dados preenchidos via CNPJ');
+    } catch {
+      toast.error('CNPJ não encontrado');
+    } finally {
+      setLookingUpCnpj(false);
+    }
+  }
+
   const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const inputCls = "w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500";
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <Users className="w-6 h-6 text-brand-400" />
-            Clientes
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">{clients.length} cliente{clients.length !== 1 ? 's' : ''} cadastrado{clients.length !== 1 ? 's' : ''}</p>
+      <FadeIn>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+              <Users className="w-6 h-6 text-brand-400" />
+              Clientes
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">{clients.length} cliente{clients.length !== 1 ? 's' : ''} cadastrado{clients.length !== 1 ? 's' : ''}</p>
+          </div>
+          <button onClick={openCreate} className="flex items-center gap-2 px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm transition-colors">
+            <Plus className="w-4 h-4" />
+            Novo cliente
+          </button>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm transition-colors">
-          <Plus className="w-4 h-4" />
-          Novo cliente
-        </button>
-      </div>
+      </FadeIn>
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nome, CPF/CNPJ ou email..."
-          className="w-full pl-10 pr-4 py-2.5 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg
-                     placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500"
-        />
-      </div>
+      <FadeIn delay={0.1}>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nome, CPF/CNPJ ou email..."
+            className="w-full pl-10 pr-4 py-2.5 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg
+                       placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
+      </FadeIn>
 
       {/* Table */}
-      <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
-          </div>
-        ) : clients.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Users className="w-10 h-10 text-slate-600 mb-3" />
-            <p className="text-slate-400 font-medium">Nenhum cliente encontrado</p>
-            <p className="text-slate-500 text-sm mt-1">{search ? 'Tente outros termos' : 'Adicione o primeiro cliente'}</p>
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/[0.05] bg-white/[0.02]">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Nome</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Contato</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">CPF/CNPJ</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/[0.05]">
-              {clients.map((c) => (
-                <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="px-4 py-3.5">
-                    <p className="font-medium text-slate-200">{c.name}</p>
-                    {c.notes && <p className="text-slate-500 text-xs mt-0.5 truncate max-w-[200px]">{c.notes}</p>}
-                  </td>
-                  <td className="px-4 py-3.5 hidden md:table-cell">
-                    <p className="text-slate-400 text-xs">{c.email || '—'}</p>
-                    <p className="text-slate-500 text-xs">{c.phone || ''}</p>
-                  </td>
-                  <td className="px-4 py-3.5 hidden lg:table-cell">
-                    <span className="text-slate-400 text-xs font-mono">{c.cpfCnpj || '—'}</span>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <button
-                      onClick={() => toggleActiveMutation.mutate({ id: c.id, isActive: !c.isActive })}
-                      className={cn('text-xs font-medium px-2 py-0.5 rounded-full transition-colors', c.isActive ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25' : 'bg-white/5 text-slate-500 hover:bg-white/10')}
-                    >
-                      {c.isActive ? 'Ativo' : 'Inativo'}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => openEdit(c)} className="text-slate-500 hover:text-brand-400 transition-colors p-1 rounded" title="Editar">
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => { if (confirm(`Excluir ${c.name}?`)) deleteMutation.mutate(c.id); }} className="text-slate-500 hover:text-red-400 transition-colors p-1 rounded" title="Excluir">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
+      <FadeIn delay={0.15}>
+        <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
+            </div>
+          ) : clients.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Users className="w-10 h-10 text-slate-600 mb-3" />
+              <p className="text-slate-400 font-medium">Nenhum cliente encontrado</p>
+              <p className="text-slate-500 text-sm mt-1">{search ? 'Tente outros termos' : 'Adicione o primeiro cliente'}</p>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/[0.05] bg-white/[0.02]">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Nome</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Contato</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">CPF/CNPJ</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody className="divide-y divide-white/[0.05]">
+                {clients.map((c) => (
+                  <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-4 py-3.5">
+                      <p className="font-medium text-slate-200">{c.name}</p>
+                      {c.notes && <p className="text-slate-500 text-xs mt-0.5 truncate max-w-[200px]">{c.notes}</p>}
+                    </td>
+                    <td className="px-4 py-3.5 hidden md:table-cell">
+                      <p className="text-slate-400 text-xs">{c.email || '—'}</p>
+                      <p className="text-slate-500 text-xs">{c.phone || ''}</p>
+                    </td>
+                    <td className="px-4 py-3.5 hidden lg:table-cell">
+                      <span className="text-slate-400 text-xs font-mono">{c.cpfCnpj || '—'}</span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <button
+                        onClick={() => toggleActiveMutation.mutate({ id: c.id, isActive: !c.isActive })}
+                        className={cn('text-xs font-medium px-2 py-0.5 rounded-full transition-colors', c.isActive ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25' : 'bg-white/5 text-slate-500 hover:bg-white/10')}
+                      >
+                        {c.isActive ? 'Ativo' : 'Inativo'}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => openEdit(c)} className="text-slate-500 hover:text-brand-400 transition-colors p-1 rounded" title="Editar">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => { if (confirm(`Excluir ${c.name}?`)) deleteMutation.mutate(c.id); }} className="text-slate-500 hover:text-red-400 transition-colors p-1 rounded" title="Excluir">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </FadeIn>
 
       {/* Modal */}
       {showModal && (
@@ -176,24 +226,81 @@ export default function ClientesPage() {
               <button onClick={closeModal} className="text-slate-500 hover:text-slate-300 text-xl"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 space-y-3">
-              {[
-                { key: 'name', label: 'Nome *', placeholder: 'Nome completo' },
-                { key: 'email', label: 'Email', placeholder: 'email@exemplo.com' },
-                { key: 'phone', label: 'Telefone', placeholder: '(11) 99999-9999' },
-                { key: 'cpfCnpj', label: 'CPF / CNPJ', placeholder: '000.000.000-00' },
-                { key: 'address', label: 'Endereço', placeholder: 'Endereço completo' },
-              ].map(({ key, label, placeholder }) => (
-                <div key={key}>
-                  <label className="text-xs text-slate-500 mb-1 block">{label}</label>
+              {/* CPF/CNPJ com lookup */}
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">CPF / CNPJ</label>
+                <div className="flex gap-2">
                   <input
                     type="text"
-                    value={(form as any)[key]}
-                    onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                    placeholder={placeholder}
-                    className="w-full px-3 py-2 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    value={form.cpfCnpj}
+                    onChange={(e) => setForm({ ...form, cpfCnpj: e.target.value })}
+                    onBlur={() => {
+                      const digits = form.cpfCnpj.replace(/\D/g, '');
+                      if (digits.length === 14) handleCnpjLookup();
+                    }}
+                    placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                    className={inputCls}
                   />
+                  <button
+                    type="button"
+                    onClick={handleCnpjLookup}
+                    disabled={lookingUpCnpj || form.cpfCnpj.replace(/\D/g, '').length !== 14}
+                    className="shrink-0 px-2.5 py-2 bg-brand-600/15 border border-brand-500/20 text-brand-400 rounded-lg hover:bg-brand-600/25 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Buscar CNPJ"
+                  >
+                    {lookingUpCnpj ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
+                  </button>
                 </div>
-              ))}
+                <p className="text-[10px] text-slate-600 mt-1">Para CNPJ, clique no ícone ou saia do campo para preencher automaticamente</p>
+              </div>
+
+              {/* Nome */}
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Nome *</label>
+                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome completo ou Razão Social" className={inputCls} />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Email</label>
+                <input type="text" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" className={inputCls} />
+              </div>
+
+              {/* Telefone */}
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Telefone</label>
+                <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" className={inputCls} />
+              </div>
+
+              {/* Endereço com CEP lookup */}
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">Endereço</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={form.address}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    onBlur={() => {
+                      const digits = form.address.replace(/\D/g, '');
+                      if (digits.length === 8 && !form.address.includes(',')) handleCepLookup();
+                    }}
+                    placeholder="CEP ou endereço completo"
+                    className={inputCls}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCepLookup}
+                    disabled={lookingUpCep || form.address.replace(/\D/g, '').length !== 8}
+                    className="shrink-0 px-2.5 py-2 bg-brand-600/15 border border-brand-500/20 text-brand-400 rounded-lg hover:bg-brand-600/25 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Buscar CEP"
+                  >
+                    {lookingUpCep ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-600 mt-1">Digite apenas o CEP e clique no ícone para preencher o endereço</p>
+              </div>
+
+              {/* Observações */}
               <div>
                 <label className="text-xs text-slate-500 mb-1 block">Observações</label>
                 <textarea

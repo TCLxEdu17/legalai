@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
+import { FadeIn, StaggerContainer, StaggerItem, InteractiveCard } from '@/components/ui/motion';
 
 interface Case {
   id: string;
@@ -104,37 +105,41 @@ export default function CasosPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-brand-600/15 border border-brand-500/20 rounded-xl flex items-center justify-center">
-            <FolderOpen className="w-4.5 h-4.5 text-brand-400" />
+      <FadeIn>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-brand-600/15 border border-brand-500/20 rounded-xl flex items-center justify-center">
+              <FolderOpen className="w-4.5 h-4.5 text-brand-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-100">Meus Casos</h1>
+              <p className="text-slate-500 text-sm">
+                {cases.length} caso{cases.length !== 1 ? 's' : ''} cadastrado{cases.length !== 1 ? 's' : ''}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-100">Meus Casos</h1>
-            <p className="text-slate-500 text-sm">
-              {cases.length} caso{cases.length !== 1 ? 's' : ''} cadastrado{cases.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium rounded-xl transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Novo Caso
+          </button>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium rounded-xl transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Novo Caso
-        </button>
-      </div>
+      </FadeIn>
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por título, partes ou número do processo..."
-          className="w-full bg-[#141414] border border-white/[0.07] rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500/30 transition-all"
-        />
-      </div>
+      <FadeIn delay={0.1}>
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por título, partes ou número do processo..."
+            className="w-full bg-[#141414] border border-white/[0.07] rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500/30 transition-all"
+          />
+        </div>
+      </FadeIn>
 
       {/* Content */}
       {isLoading ? (
@@ -142,87 +147,90 @@ export default function CasosPage() {
           <Loader2 className="w-6 h-6 text-brand-400 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 bg-white/[0.03] border border-white/[0.06] rounded-2xl flex items-center justify-center mb-4">
-            <Scale className="w-8 h-8 text-slate-700" />
+        <FadeIn delay={0.15}>
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 bg-white/[0.03] border border-white/[0.06] rounded-2xl flex items-center justify-center mb-4">
+              <Scale className="w-8 h-8 text-slate-700" />
+            </div>
+            <p className="text-slate-300 font-medium">Nenhum caso encontrado</p>
+            <p className="text-slate-600 text-sm mt-1 max-w-xs">
+              {search ? 'Tente outros termos de busca.' : 'Crie seu primeiro caso jurídico para começar a usar o copiloto.'}
+            </p>
+            {!search && (
+              <button
+                onClick={() => setShowModal(true)}
+                className="mt-5 flex items-center gap-2 px-4 py-2.5 bg-brand-600/15 hover:bg-brand-600/25 border border-brand-500/20 text-brand-400 text-sm font-medium rounded-xl transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Criar primeiro caso
+              </button>
+            )}
           </div>
-          <p className="text-slate-300 font-medium">Nenhum caso encontrado</p>
-          <p className="text-slate-600 text-sm mt-1 max-w-xs">
-            {search ? 'Tente outros termos de busca.' : 'Crie seu primeiro caso jurídico para começar a usar o copiloto.'}
-          </p>
-          {!search && (
-            <button
-              onClick={() => setShowModal(true)}
-              className="mt-5 flex items-center gap-2 px-4 py-2.5 bg-brand-600/15 hover:bg-brand-600/25 border border-brand-500/20 text-brand-400 text-sm font-medium rounded-xl transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Criar primeiro caso
-            </button>
-          )}
-        </div>
+        </FadeIn>
       ) : (
-        <div className="space-y-3">
+        <StaggerContainer className="space-y-3">
           {filtered.map((c) => (
-            <div
-              key={c.id}
-              className="group bg-[#141414] border border-white/[0.07] rounded-xl p-5 hover:border-white/[0.14] hover:bg-[#161616] transition-all cursor-pointer"
-              onClick={() => router.push(`/dashboard/casos/${c.id}`)}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusColor[c.status])}>
-                      {statusLabel[c.status]}
-                    </span>
-                    {c.area && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-400">
-                        {c.area}
+            <StaggerItem key={c.id}>
+              <InteractiveCard
+                className="group bg-[#141414] border border-white/[0.07] rounded-xl p-5 hover:border-white/[0.14] hover:bg-[#161616] transition-all cursor-pointer"
+                onClick={() => router.push(`/dashboard/casos/${c.id}`)}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', statusColor[c.status])}>
+                        {statusLabel[c.status]}
                       </span>
+                      {c.area && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-400">
+                          {c.area}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-slate-100 font-semibold text-sm truncate">{c.title}</h3>
+                    {(c.plaintiff || c.defendant) && (
+                      <p className="text-slate-500 text-xs mt-1 truncate">
+                        {[c.plaintiff, c.defendant].filter(Boolean).join(' × ')}
+                      </p>
+                    )}
+                    {c.processNumber && (
+                      <p className="text-slate-600 text-xs mt-0.5 font-mono">Proc: {c.processNumber}</p>
                     )}
                   </div>
-                  <h3 className="text-slate-100 font-semibold text-sm truncate">{c.title}</h3>
-                  {(c.plaintiff || c.defendant) && (
-                    <p className="text-slate-500 text-xs mt-1 truncate">
-                      {[c.plaintiff, c.defendant].filter(Boolean).join(' × ')}
-                    </p>
-                  )}
-                  {c.processNumber && (
-                    <p className="text-slate-600 text-xs mt-0.5 font-mono">Proc: {c.processNumber}</p>
-                  )}
-                </div>
 
-                <div className="flex items-center gap-4 shrink-0">
-                  <div className="flex items-center gap-3 text-xs text-slate-600">
-                    <span className="flex items-center gap-1" title="Documentos">
-                      <FileText className="w-3.5 h-3.5" />
-                      {c._count.documents}
-                    </span>
-                    <span className="flex items-center gap-1" title="Mensagens">
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      {c._count.messages}
-                    </span>
-                    <span className="flex items-center gap-1" title="Peças">
-                      <Scale className="w-3.5 h-3.5" />
-                      {c._count.pieces}
-                    </span>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="flex items-center gap-3 text-xs text-slate-600">
+                      <span className="flex items-center gap-1" title="Documentos">
+                        <FileText className="w-3.5 h-3.5" />
+                        {c._count.documents}
+                      </span>
+                      <span className="flex items-center gap-1" title="Mensagens">
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        {c._count.messages}
+                      </span>
+                      <span className="flex items-center gap-1" title="Peças">
+                        <Scale className="w-3.5 h-3.5" />
+                        {c._count.pieces}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Excluir o caso "${c.title}"? Esta ação não pode ser desfeita.`)) {
+                          deleteMutation.mutate(c.id);
+                        }
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                    <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-slate-500 transition-colors" />
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm(`Excluir o caso "${c.title}"? Esta ação não pode ser desfeita.`)) {
-                        deleteMutation.mutate(c.id);
-                      }
-                    }}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                  <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-slate-500 transition-colors" />
                 </div>
-              </div>
-            </div>
+              </InteractiveCard>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       )}
 
       {/* Modal de criação */}
