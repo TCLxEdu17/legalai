@@ -24,6 +24,7 @@ import {
   FileEdit,
   CreditCard,
   FileBarChart,
+  GitCompare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
@@ -43,6 +44,7 @@ const navItems = [
   { href: '/dashboard/minutas', icon: FileEdit, label: 'Minutas Automáticas' },
   { href: '/dashboard/planos', icon: CreditCard, label: 'Planos e Uso' },
   { href: '/dashboard/relatorio', icon: FileBarChart, label: 'Relatório Mensal' },
+  { href: '/dashboard/comparador', icon: GitCompare, label: 'Comparador de Decisões' },
   { href: '/dashboard/upload', icon: Upload, label: 'Upload Manual', adminOnly: true },
   { href: '/dashboard/fontes', icon: Globe, label: 'Fontes Automáticas', adminOnly: true, trialVisible: true },
   { href: '/dashboard/ingestoes', icon: Activity, label: 'Histórico de Ingestões', adminOnly: true, trialVisible: true },
