@@ -230,8 +230,8 @@ model JurisprudenceChunk {
   content     String   @db.Text
   tokenCount  Int      @default(0) @map("token_count")
 
-  // Embedding armazenado como vetor (pgvector)
-  // Nota: gerenciado via Prisma.$queryRaw por limitação do provider
+  // Embedding armazenado como vetor (pgvector — Unsupported preserva a coluna no db push)
+  embedding      Unsupported("vector(1536)")?
   embeddingModel String @default("text-embedding-3-small") @map("embedding_model")
 
   // Metadados do chunk
@@ -634,7 +634,8 @@ model CaseChunk {
   content      String       @db.Text
   tokenCount   Int          @default(0) @map("token_count")
   pageNumber   Int?         @map("page_number")
-  // embedding armazenado via $executeRawUnsafe (pgvector)
+  // embedding armazenado via $executeRawUnsafe (pgvector — Unsupported preserva a coluna no db push)
+  embedding    Unsupported("vector(1536)")?
   metadata     Json         @default("{}")
   createdAt    DateTime     @default(now()) @map("created_at")
 
