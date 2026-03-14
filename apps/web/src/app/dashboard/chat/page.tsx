@@ -123,7 +123,8 @@ export default function ChatPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | undefined>();
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [showSidebar, setShowSidebar] = useState(true);
-  const [examples] = useState(() => getRandomExamples(4));
+  const [examples, setExamples] = useState<string[]>([]);
+  const [greeting, setGreeting] = useState('');
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [areaFilter, setAreaFilter] = useState<LegalArea | null>(null);
@@ -153,6 +154,12 @@ export default function ChatPage() {
     queryFn: () => apiClient.getSessionMessages(activeSessionId!),
     enabled: !!activeSessionId,
   });
+
+  // Client-only initialization — avoid hydration mismatch
+  useEffect(() => {
+    setExamples(getRandomExamples(4));
+    setGreeting(getGreeting());
+  }, []);
 
   useEffect(() => {
     if (sessionData) {
@@ -431,7 +438,7 @@ export default function ChatPage() {
               </div>
               {messages.length === 0 && !activeSessionId && (
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-slate-100">{getGreeting()}</h2>
+                  <h2 className="text-2xl font-bold text-slate-100">{greeting}</h2>
                   <p className="text-slate-500 text-sm mt-1">Como posso ajudar você hoje?</p>
                 </div>
               )}
