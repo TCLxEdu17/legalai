@@ -18,6 +18,7 @@ import {
   Calculator,
   CalendarDays,
   Heart,
+  Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/dashboard/calculadora', icon: Calculator, label: 'Calc. Honorários', badge: 'New!' },
   { href: '/dashboard/prazos', icon: CalendarDays, label: 'Prazos Processuais' },
   { href: '/dashboard/favoritos', icon: Heart, label: 'Favoritos' },
+  { href: '/dashboard/agenda', icon: Calendar, label: 'Agenda de Audiências' },
   { href: '/dashboard/upload', icon: Upload, label: 'Upload Manual', adminOnly: true },
   { href: '/dashboard/fontes', icon: Globe, label: 'Fontes Automáticas', adminOnly: true, trialVisible: true },
   { href: '/dashboard/ingestoes', icon: Activity, label: 'Histórico de Ingestões', adminOnly: true, trialVisible: true },

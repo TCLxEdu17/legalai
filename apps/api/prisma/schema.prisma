@@ -112,6 +112,7 @@ model User {
   apiKeys           ApiKey[]
   usageLogs         UsageLog[]
   favorites         Favorite[]
+  hearings          Hearing[]
 
   @@index([tenantId])
   @@map("users")
@@ -375,6 +376,30 @@ model UsageLog {
   @@index([userId])
   @@index([createdAt])
   @@map("usage_logs")
+}
+
+// ============================================================
+// AUDIÊNCIAS
+// ============================================================
+
+model Hearing {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  title         String
+  client        String?
+  processNumber String?  @map("process_number")
+  court         String?
+  date          DateTime
+  location      String?
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@map("hearings")
 }
 
 // ============================================================

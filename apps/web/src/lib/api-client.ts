@@ -263,6 +263,26 @@ class ApiClient {
     await this.client.delete(`/api-keys/${id}`);
   }
 
+  // ==================== HEARINGS ====================
+  async getHearings() {
+    const { data } = await this.client.get('/hearings');
+    return data;
+  }
+
+  async createHearing(hearing: { title: string; client?: string; processNumber?: string; court?: string; date: string; location?: string; notes?: string }) {
+    const { data } = await this.client.post('/hearings', hearing);
+    return data;
+  }
+
+  async updateHearing(id: string, hearing: Partial<{ title: string; client: string; processNumber: string; court: string; date: string; location: string; notes: string }>) {
+    const { data } = await this.client.patch(`/hearings/${id}`, hearing);
+    return data;
+  }
+
+  async deleteHearing(id: string) {
+    await this.client.delete(`/hearings/${id}`);
+  }
+
   // ==================== FAVORITES ====================
   async getFavorites() {
     const { data } = await this.client.get('/favorites');

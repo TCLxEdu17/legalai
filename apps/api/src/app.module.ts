@@ -22,6 +22,7 @@ import { TrialModule } from './modules/trial/trial.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
+import { HearingsModule } from './modules/hearings/hearings.module';
 
 @Module({
   imports: [
@@ -81,6 +82,9 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
 
     // Favoritos
     FavoritesModule,
+
+    // Audiências
+    HearingsModule,
   ],
   providers: [
     {
