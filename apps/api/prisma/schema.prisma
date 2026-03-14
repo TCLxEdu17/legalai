@@ -113,6 +113,7 @@ model User {
   usageLogs         UsageLog[]
   favorites         Favorite[]
   hearings          Hearing[]
+  clients           Client[]
 
   @@index([tenantId])
   @@map("users")
@@ -400,6 +401,29 @@ model Hearing {
   @@index([userId])
   @@index([date])
   @@map("hearings")
+}
+
+// ============================================================
+// CLIENTES
+// ============================================================
+
+model Client {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String
+  email     String?
+  phone     String?
+  cpfCnpj  String?  @map("cpf_cnpj")
+  address   String?
+  notes     String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("clients")
 }
 
 // ============================================================
