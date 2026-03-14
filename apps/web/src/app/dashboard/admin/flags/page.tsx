@@ -21,6 +21,12 @@ const FLAG_LABELS: Record<FeatureFlag, string> = {
   analise: 'Análise de Documento',
   jurisprudencias: 'Jurisprudências',
   api: 'API & Chaves',
+  atualizacao: 'Atualização Monetária',
+  contratos: 'Contratos de Honorários',
+  financeiro: 'Financeiro',
+  tarefas: 'Diligências e Tarefas',
+  predicao: 'Análise Preditiva',
+  procuracoes: 'Procurações',
 };
 
 const FLAG_DESCRIPTIONS: Record<FeatureFlag, string> = {
@@ -38,6 +44,12 @@ const FLAG_DESCRIPTIONS: Record<FeatureFlag, string> = {
   analise: 'Análise inteligente de documentos jurídicos',
   jurisprudencias: 'Busca e consulta de jurisprudências',
   api: 'Gerenciamento de chaves de API',
+  atualizacao: 'Correção monetária por IPCA, SELIC, TR e Tabela TJSP',
+  contratos: 'Gerador de contratos de prestação de serviços advocatícios',
+  financeiro: 'Controle de receitas, despesas e fluxo de caixa',
+  tarefas: 'Diligências e tarefas vinculadas a casos',
+  predicao: 'Análise preditiva de desfecho processual por IA',
+  procuracoes: 'Gerador de procurações Ad Judicia no formato OAB',
 };
 
 export default function FeatureFlagsPage() {

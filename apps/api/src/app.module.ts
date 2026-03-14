@@ -30,6 +30,13 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { ProcessosModule } from './modules/processos/processos.module';
 import { CasesModule } from './modules/cases/cases.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { ContratosModule } from './modules/contratos/contratos.module';
+import { FinanceiroModule } from './modules/financeiro/financeiro.module';
+import { TarefasModule } from './modules/tarefas/tarefas.module';
+import { PeticoesModule } from './modules/peticoes/peticoes.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { ProcuracoesModule } from './modules/procuracoes/procuracoes.module';
+import { NotificacoesClientesModule } from './modules/notificacoes-clientes/notificacoes-clientes.module';
 
 @Module({
   imports: [
@@ -113,6 +120,15 @@ import { BillingModule } from './modules/billing/billing.module';
 
     // Pagamentos / Stripe
     BillingModule,
+
+    // Novos módulos v1.8+
+    ContratosModule,
+    FinanceiroModule,
+    TarefasModule,
+    PeticoesModule,
+    AnalyticsModule,
+    ProcuracoesModule,
+    NotificacoesClientesModule,
   ],
   providers: [
     {

@@ -154,6 +154,8 @@ model User {
   webhooks               Webhook[]
   cases                  Case[]
   savedProcesses         SavedProcess[]
+  lancamentos            LancamentoFinanceiro[]
+  tarefas                Tarefa[]
 
   @@index([tenantId])
   @@map("users")
@@ -600,6 +602,7 @@ model Case {
   documents     CaseDocument[]
   messages      CaseMessage[]
   pieces        CasePiece[]
+  tarefas       Tarefa[]
 
   @@index([userId])
   @@index([status])
@@ -725,4 +728,83 @@ model SavedProcess {
   @@unique([userId, number])
   @@index([userId])
   @@map("saved_processes")
+}
+
+// ============================================================
+// FINANCEIRO
+// ============================================================
+
+enum TipoLancamento {
+  ENTRADA
+  SAIDA
+}
+
+enum StatusPagamento {
+  PENDENTE
+  PAGO
+  VENCIDO
+  CANCELADO
+}
+
+model LancamentoFinanceiro {
+  id          String          @id @default(cuid())
+  userId      String          @map("user_id")
+  tipo        TipoLancamento
+  valor       Float
+  descricao   String
+  clienteId   String?         @map("cliente_id")
+  caseId      String?         @map("case_id")
+  vencimento  DateTime?
+  pagoEm      DateTime?       @map("pago_em")
+  status      StatusPagamento @default(PENDENTE)
+  categoria   String?
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tipo])
+  @@index([status])
+  @@map("lancamentos_financeiros")
+}
+
+// ============================================================
+// TAREFAS
+// ============================================================
+
+enum Prioridade {
+  BAIXA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+enum StatusTarefa {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+model Tarefa {
+  id          String       @id @default(cuid())
+  userId      String       @map("user_id")
+  caseId      String?      @map("case_id")
+  titulo      String
+  descricao   String?
+  prazo       DateTime?
+  prioridade  Prioridade   @default(MEDIA)
+  status      StatusTarefa @default(PENDENTE)
+  concluidaEm DateTime?    @map("concluida_em")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  case        Case?        @relation(fields: [caseId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([prazo])
+  @@map("tarefas")
 }

@@ -551,6 +551,88 @@ class ApiClient {
     await this.client.delete(`/cases/${caseId}/pieces/${pieceId}`);
   }
 
+  // ==================== CONTRATOS ====================
+  async gerarContrato(payload: {
+    tipo: 'fixo' | 'exito' | 'misto';
+    clienteNome?: string;
+    advogadoNome?: string;
+    objeto?: string;
+    valor?: number;
+    percentual?: number;
+    prazo?: string;
+    oabAdvogado?: string;
+  }): Promise<{ contrato: string }> {
+    const { data } = await this.client.post('/contratos/gerar', payload);
+    return data;
+  }
+
+  // ==================== FINANCEIRO ====================
+  async getFinanceiroResumo() {
+    const { data } = await this.client.get('/financeiro/resumo');
+    return data;
+  }
+
+  async getFinanceiroLancamentos(params?: { tipo?: string; status?: string; page?: number; limit?: number }) {
+    const { data } = await this.client.get('/financeiro/lancamentos', { params });
+    return data;
+  }
+
+  async createLancamento(payload: { tipo: string; valor: number; descricao: string; clienteId?: string; caseId?: string; vencimento?: string; categoria?: string }) {
+    const { data } = await this.client.post('/financeiro/lancamentos', payload);
+    return data;
+  }
+
+  async updateLancamento(id: string, payload: Partial<{ status: string; pagoEm: string; descricao: string; valor: number }>) {
+    const { data } = await this.client.patch(`/financeiro/lancamentos/${id}`, payload);
+    return data;
+  }
+
+  async deleteLancamento(id: string) {
+    await this.client.delete(`/financeiro/lancamentos/${id}`);
+  }
+
+  // ==================== TAREFAS ====================
+  async getTarefas(params?: { caseId?: string; status?: string; prioridade?: string; page?: number; limit?: number }) {
+    const { data } = await this.client.get('/tarefas', { params });
+    return data;
+  }
+
+  async getTarefasVencendo() {
+    const { data } = await this.client.get('/tarefas/vencendo');
+    return data;
+  }
+
+  async createTarefa(payload: { titulo: string; descricao?: string; caseId?: string; prazo?: string; prioridade?: string }) {
+    const { data } = await this.client.post('/tarefas', payload);
+    return data;
+  }
+
+  async updateTarefa(id: string, payload: Partial<{ titulo: string; descricao: string; prazo: string; prioridade: string; status: string; concluidaEm: string }>) {
+    const { data } = await this.client.patch(`/tarefas/${id}`, payload);
+    return data;
+  }
+
+  async deleteTarefa(id: string) {
+    await this.client.delete(`/tarefas/${id}`);
+  }
+
+  // ==================== ANALYTICS / PREDICAO ====================
+  async getPredicao(payload: { area: string; pedido: string; tribunal: string; resumoFatos?: string }): Promise<{ probabilidade: number; prazoMedio: number; fundamento?: string; pontosFavoraveis?: string[]; pontosContrarios?: string[]; jurisprudenciasRelevantes?: string[] }> {
+    const { data } = await this.client.post('/analytics/predicao', payload, { timeout: 120000 });
+    return data;
+  }
+
+  // ==================== PROCURACOES ====================
+  async gerarProcuracao(payload: { outorgante: string; cpf?: string; rg?: string; advogado: string; oab: string; poderes: string; processoNumero?: string; foro?: string }): Promise<{ procuracao: string }> {
+    const { data } = await this.client.post('/procuracoes/gerar', payload);
+    return data;
+  }
+
+  async enviarProcuracaoAssinatura(payload: { email: string; conteudo: string; nomeCliente?: string }) {
+    const { data } = await this.client.post('/procuracoes/enviar-assinatura', payload);
+    return data;
+  }
+
   // ==================== METRICS ====================
   async getTrialMetrics() {
     const { data } = await this.client.get('/trial/admin/metrics');

@@ -32,6 +32,11 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Search,
+  TrendingUp,
+  FileSignature,
+  DollarSign,
+  CheckSquare,
+  Scroll,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
@@ -58,6 +63,12 @@ const navItems: NavItem[] = [
   { href: '/dashboard/processos', icon: Gavel, label: 'Processos', flag: 'processos' },
   { href: '/dashboard/consultas', icon: Search, label: 'Consultas (CEP/CNPJ)', flag: 'processos' },
   { href: '/dashboard/calculadora', icon: Calculator, label: 'Calc. Honorários', badge: 'New!', flag: 'calculadora' },
+  { href: '/dashboard/atualizacao', icon: TrendingUp, label: 'Atualização Monetária', flag: 'atualizacao' },
+  { href: '/dashboard/contratos', icon: FileSignature, label: 'Contratos de Honorários', flag: 'contratos' },
+  { href: '/dashboard/financeiro', icon: DollarSign, label: 'Financeiro', flag: 'financeiro' },
+  { href: '/dashboard/tarefas', icon: CheckSquare, label: 'Diligências e Tarefas', flag: 'tarefas' },
+  { href: '/dashboard/predicao', icon: TrendingUp, label: 'Análise Preditiva', flag: 'predicao' },
+  { href: '/dashboard/procuracoes', icon: Scroll, label: 'Procurações', flag: 'procuracoes' },
   { href: '/dashboard/prazos', icon: CalendarDays, label: 'Prazos Processuais', flag: 'prazos' },
   { href: '/dashboard/favoritos', icon: Heart, label: 'Favoritos' },
   { href: '/dashboard/agenda', icon: Calendar, label: 'Agenda de Audiências', flag: 'agenda' },
@@ -98,6 +109,7 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen?: boolean; onClose
       'calculadora', 'prazos', 'agenda', 'clientes', 'minutas',
       'revisor', 'comparador', 'processos', 'relatorio', 'webhooks',
       'planos', 'analise', 'jurisprudencias', 'api',
+      'atualizacao', 'contratos', 'financeiro', 'tarefas', 'predicao', 'procuracoes',
     ] as FeatureFlag[];
     featureFlags.forEach((f) => { flagMap[f] = isEnabled(f); });
     setFlags(flagMap);
