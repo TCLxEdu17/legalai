@@ -14,6 +14,8 @@ import {
   BookOpen,
   Scale,
   Activity,
+  Settings2,
+  X,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { getStoredUser } from '@/lib/auth';
@@ -129,14 +131,46 @@ function ThemeBar({ theme, count, max }: { theme: string; count: number; max: nu
   );
 }
 
+const DEFAULT_WIDGETS = { stats: true, quickActions: true, themes: true, tribunais: true, recentSessions: true };
+
+function useWidgetPrefs() {
+  const [prefs, setPrefs] = useState(DEFAULT_WIDGETS);
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('dashboard-widgets') || '{}');
+      setPrefs({ ...DEFAULT_WIDGETS, ...stored });
+    } catch {}
+  }, []);
+  const toggle = (key: keyof typeof DEFAULT_WIDGETS) => {
+    setPrefs((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem('dashboard-widgets', JSON.stringify(next));
+      return next;
+    });
+  };
+  return { prefs, toggle };
+}
+
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [showCustomize, setShowCustomize] = useState(false);
+  const { prefs, toggle } = useWidgetPrefs();
   useEffect(() => { setUser(getStoredUser()); }, []);
 
   const { data: stats } = useQuery<DocumentStats>({
     queryKey: ['document-stats'],
     queryFn: () => apiClient.getDocumentStats(),
     refetchInterval: 30_000,
+  });
+
+  const { data: sessions = [] } = useQuery<any[]>({
+    queryKey: ['chat-sessions'],
+    queryFn: () => apiClient.getChatSessions(),
+  });
+
+  const { data: favorites = [] } = useQuery({
+    queryKey: ['favorites'],
+    queryFn: () => apiClient.getFavorites(),
   });
 
   // Extraídos no topo para respeitar regras dos hooks
@@ -194,11 +228,51 @@ export default function DashboardPage() {
             Assistente jurídico com IA — base de jurisprudências crescendo diariamente.
           </p>
         </div>
-        <LiveBadge />
+        <div className="flex items-center gap-2">
+          <LiveBadge />
+          <button
+            onClick={() => setShowCustomize(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-400 rounded-lg text-xs transition-colors"
+          >
+            <Settings2 className="w-3.5 h-3.5" />
+            Personalizar
+          </button>
+        </div>
       </div>
 
+      {/* Customize modal */}
+      {showCustomize && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#141414] border border-white/10 rounded-2xl w-full max-w-sm">
+            <div className="flex items-center justify-between p-5 border-b border-white/[0.07]">
+              <h3 className="font-semibold text-slate-100">Personalizar painel</h3>
+              <button onClick={() => setShowCustomize(false)} className="text-slate-500 hover:text-slate-300"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="p-5 space-y-3">
+              {([
+                { key: 'stats', label: 'Estatísticas' },
+                { key: 'quickActions', label: 'Ações rápidas' },
+                { key: 'themes', label: 'Temas jurídicos' },
+                { key: 'tribunais', label: 'Tribunais na base' },
+                { key: 'recentSessions', label: 'Últimas pesquisas' },
+              ] as { key: keyof typeof DEFAULT_WIDGETS; label: string }[]).map(({ key, label }) => (
+                <label key={key} className="flex items-center justify-between cursor-pointer">
+                  <span className="text-sm text-slate-300">{label}</span>
+                  <button
+                    onClick={() => toggle(key)}
+                    className={`w-10 h-5 rounded-full transition-colors relative ${prefs[key] ? 'bg-brand-600' : 'bg-white/10'}`}
+                  >
+                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${prefs[key] ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats principais animados */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {prefs.stats && <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           label="Documentos"
           value={totalDocs}
@@ -231,7 +305,7 @@ export default function DashboardPage() {
           iconColor="text-amber-400"
           sub="novos documentos"
         />
-      </div>
+      </div>}
 
       {/* Banner de crescimento */}
       <div className="bg-gradient-to-r from-brand-600/10 via-[#141414] to-violet-600/10 border border-brand-500/20 rounded-xl p-5">
@@ -267,7 +341,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Vertentes jurídicas */}
-      {topThemes.length > 0 && (
+      {prefs.themes && topThemes.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
             <BookOpen className="w-4 h-4 text-slate-500" />
@@ -289,7 +363,7 @@ export default function DashboardPage() {
       )}
 
       {/* Ações rápidas */}
-      <div>
+      {prefs.quickActions && <div>
         <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
           Ações rápidas
         </h2>
@@ -315,10 +389,29 @@ export default function DashboardPage() {
             </Link>
           ))}
         </div>
-      </div>
+      </div>}
+
+      {/* Últimas pesquisas widget */}
+      {prefs.recentSessions && sessions.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Últimas pesquisas</h2>
+            <Link href="/dashboard/chat" className="text-xs text-brand-400 hover:text-brand-300">Ver todas →</Link>
+          </div>
+          <div className="bg-[#141414] border border-white/[0.07] rounded-xl divide-y divide-white/[0.05]">
+            {sessions.slice(0, 5).map((s: any) => (
+              <div key={s.id} className="flex items-center gap-3 px-4 py-3">
+                <MessageSquare className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                <p className="text-slate-300 text-sm flex-1 truncate">{s.title}</p>
+                <p className="text-slate-600 text-xs">{new Date(s.updatedAt).toLocaleDateString('pt-BR')}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tribunais */}
-      {stats?.topTribunais && stats.topTribunais.length > 0 && (
+      {prefs.tribunais && stats?.topTribunais && stats.topTribunais.length > 0 && (
         <div>
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
             Tribunais na base
