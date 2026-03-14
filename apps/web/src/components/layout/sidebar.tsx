@@ -105,7 +105,7 @@ export function Sidebar() {
 
       {/* Version */}
       <div className="p-4 border-t border-white/[0.06]">
-        <p className="text-slate-700 text-xs text-center">v1.0.0</p>
+        <p className="text-slate-700 text-xs text-center">v1.5.0</p>
       </div>
     </aside>
   );
