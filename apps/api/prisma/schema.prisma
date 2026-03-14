@@ -62,6 +62,35 @@ enum TrialFeedback {
   NO
 }
 
+enum CaseStatus {
+  ACTIVE
+  ARCHIVED
+  CLOSED
+}
+
+enum CaseDocType {
+  PETICAO_INICIAL
+  CONTESTACAO
+  REPLICA
+  SENTENCA
+  ACORDAO
+  LAUDO_PERICIAL
+  CONTRATO
+  OUTROS
+}
+
+enum PieceType {
+  CONTESTACAO
+  PETICAO_INICIAL
+  RECURSO
+  APELACAO
+  AGRAVO
+  EMBARGOS
+  REPLICA
+  ALEGACOES_FINAIS
+  OUTROS
+}
+
 enum IngestionItemStatus {
   PENDING
   PROCESSING
@@ -118,6 +147,7 @@ model User {
   notifications          Notification[]
   documentComments       DocumentComment[]
   webhooks               Webhook[]
+  cases                  Case[]
 
   @@index([tenantId])
   @@map("users")
@@ -532,6 +562,117 @@ model TrialUser {
 
   @@index([expiresAt])
   @@map("trial_users")
+}
+
+// ============================================================
+// CASOS JURÍDICOS (copiloto por processo)
+// ============================================================
+
+model Case {
+  id            String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId        String     @map("user_id") @db.Uuid
+  title         String
+  area          String?    // "Cível", "Trabalhista", "Penal", etc.
+  status        CaseStatus @default(ACTIVE)
+
+  // Dados do processo
+  processNumber String?    @map("process_number")
+  court         String?    // Tribunal / vara
+  judge         String?    // Juiz responsável
+  plaintiff     String?    // Requerente / Autor
+  defendant     String?    // Requerido / Réu
+  caseValue     Decimal?   @map("case_value") @db.Decimal(15, 2)
+
+  // Memória do caso
+  strategy      String?    @db.Text // Estratégia definida pelo advogado
+  notes         String?    @db.Text // Notas internas
+
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents     CaseDocument[]
+  messages      CaseMessage[]
+  pieces        CasePiece[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("cases")
+}
+
+model CaseDocument {
+  id               String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  caseId           String           @map("case_id") @db.Uuid
+  title            String
+  docType          CaseDocType      @default(OUTROS) @map("doc_type")
+  fileName         String           @map("file_name")
+  fileSize         Int              @map("file_size")
+  mimeType         String           @map("mime_type")
+  originalText     String?          @map("original_text") @db.Text
+  pageCount        Int?             @map("page_count")
+
+  uploadStatus     UploadStatus     @default(PENDING) @map("upload_status")
+  processingStatus ProcessingStatus @default(NOT_STARTED) @map("processing_status")
+  processingError  String?          @map("processing_error") @db.Text
+  chunkCount       Int              @default(0) @map("chunk_count")
+
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  case             Case             @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  chunks           CaseChunk[]
+
+  @@index([caseId])
+  @@index([processingStatus])
+  @@map("case_documents")
+}
+
+model CaseChunk {
+  id           String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  documentId   String       @map("document_id") @db.Uuid
+  chunkIndex   Int          @map("chunk_index")
+  content      String       @db.Text
+  tokenCount   Int          @default(0) @map("token_count")
+  pageNumber   Int?         @map("page_number")
+  // embedding armazenado via $executeRawUnsafe (pgvector)
+  metadata     Json         @default("{}")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  document     CaseDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("case_chunks")
+}
+
+model CaseMessage {
+  id        String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  caseId    String      @map("case_id") @db.Uuid
+  role      MessageRole
+  content   String      @db.Text
+  sources   Json?       @default("[]") // Referências: documentId + página + trecho
+  metadata  Json?       @default("{}")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  case      Case        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@map("case_messages")
+}
+
+model CasePiece {
+  id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  caseId    String    @map("case_id") @db.Uuid
+  title     String
+  pieceType PieceType @map("piece_type")
+  content   String    @db.Text
+  prompt    String?   @db.Text // Instrução usada para gerar
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  case      Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@map("case_pieces")
 }
 
 model TrialMetric {

@@ -56,7 +56,7 @@ export class ChatService {
     let ragFailed = false;
 
     try {
-      ragResult = await this.ragService.query(dto.message, history);
+      ragResult = await this.ragService.query(dto.message, history, dto.legalArea);
       const ragElapsed = Date.now() - ragStart;
       this.logger.log(
         `[RAG] Concluído | ${ragElapsed}ms | chunks=${ragResult.retrievedChunks} | confiança=${ragResult.confidence} | modelo=${ragResult.model} | tokens=in:${ragResult.tokensUsed.input} out:${ragResult.tokensUsed.output}`,

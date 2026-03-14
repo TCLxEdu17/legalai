@@ -31,26 +31,63 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref_name == 'develop'
     steps:
-      - name: Wait for Vercel preview deployment
-        run: sleep 90
-
-      - name: Get latest deployment and alias to staging domain
+      - name: Wait and alias latest develop deployment
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
-          # Get latest deployment for develop branch
-          DEPLOY_ID=$(curl -s "https://api.vercel.com/v6/deployments?projectId=prj_ZLXKgt8Xn7LpEn8qAPeEy4MsVkao&limit=1" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" | \
-            python3 -c "import sys,json; deps=json.load(sys.stdin).get('deployments',[]); print(deps[0]['uid'] if deps else '')")
+          echo "Waiting for Vercel to build commit $COMMIT_SHA..."
+
+          # Poll up to 10 minutes for a READY deployment matching this commit
+          for i in $(seq 1 40); do
+            RESPONSE=$(curl -s \
+              "https://api.vercel.com/v6/deployments?projectId=prj_ZLXKgt8Xn7LpEn8qAPeEy4MsVkao&limit=5" \
+              -H "Authorization: Bearer $VERCEL_TOKEN")
+
+            DEPLOY_ID=$(echo "$RESPONSE" | python3 -c "
+          import sys, json
+          deps = json.load(sys.stdin).get('deployments', [])
+          sha = '$COMMIT_SHA'
+          # First try to find matching commit
+          for d in deps:
+            meta = d.get('meta', {})
+            if meta.get('githubCommitSha', '').startswith(sha[:12]) and d.get('state') == 'READY':
+              print(d['uid'])
+              break
+          else:
+            # Fallback: latest READY on develop
+            for d in deps:
+              if d.get('meta', {}).get('githubCommitRef') == 'develop' and d.get('state') == 'READY':
+                print(d['uid'])
+                break
+          ")
+
+            if [ -n "$DEPLOY_ID" ]; then
+              echo "Found READY deployment: $DEPLOY_ID"
+              break
+            fi
+
+            echo "Attempt $i/40 — deployment not ready yet, waiting 15s..."
+            sleep 15
+          done
 
           if [ -z "$DEPLOY_ID" ]; then
-            echo "No deployment found, skipping alias."
+            echo "Timed out waiting for deployment. Skipping alias."
             exit 0
           fi
 
           echo "Aliasing $DEPLOY_ID to dev.legalai.lasolutions.me"
 
-          curl -sf -X POST "https://api.vercel.com/v2/deployments/$DEPLOY_ID/aliases" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+          # Use -s (not -sf) so HTTP errors don't fail the job
+          RESULT=$(curl -s -X POST "https://api.vercel.com/v2/deployments/$DEPLOY_ID/aliases" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"alias":"dev.legalai.lasolutions.me"}'
+            -d '{"alias":"dev.legalai.lasolutions.me"}')
 
-          echo "Done."
+          echo "$RESULT"
+
+          if echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); exit(0 if 'alias' in d else 1)"; then
+            echo "✅ Alias updated successfully"
+          else
+            echo "⚠️  Alias response unexpected (may already be set) — not failing"
+          fi

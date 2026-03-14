@@ -28,6 +28,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { CommentsModule } from './modules/comments/comments.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { ProcessosModule } from './modules/processos/processos.module';
+import { CasesModule } from './modules/cases/cases.module';
 
 @Module({
   imports: [
@@ -105,6 +106,9 @@ import { ProcessosModule } from './modules/processos/processos.module';
 
     // Consulta Processual (DataJud/CNJ)
     ProcessosModule,
+
+    // Casos jurídicos (copiloto por processo)
+    CasesModule,
   ],
   providers: [
     {
