@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CollectorsFactory } from '../collectors/collectors.factory';
 import { ChunkingService } from '../rag/chunking.service';
@@ -6,6 +6,7 @@ import { EmbeddingsService } from '../rag/embeddings.service';
 import { RagService } from '../rag/rag.service';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 export interface AutoIngestionResult {
   jobId: string;
@@ -28,6 +29,7 @@ export class IngestionService {
     private readonly embeddingsService: EmbeddingsService,
     private readonly ragService: RagService,
     private readonly configService: ConfigService,
+    @Optional() private readonly notificationsService?: NotificationsService,
   ) {
     this.embeddingModel = configService.get('app.ai.openai.embeddingModel', 'text-embedding-3-small');
   }
@@ -264,6 +266,15 @@ export class IngestionService {
       });
 
       addLog(`Job ${job.id} concluído: ${itemsIndexed} indexados, ${errors.length} erros`);
+
+      // Notificar usuários quando indexações forem realizadas
+      if (finalStatus === 'COMPLETED' && itemsIndexed > 0 && this.notificationsService) {
+        await this.notificationsService.createForAllUsers(
+          'Nova ingestão concluída',
+          `${itemsIndexed} documento${itemsIndexed !== 1 ? 's' : ''} indexado${itemsIndexed !== 1 ? 's' : ''} de "${source.name}"`,
+          '/dashboard/ingestoes',
+        ).catch(() => {});
+      }
     } catch (fatalErr) {
       this.logger.error(`Erro fatal no job ${job.id}: ${fatalErr.message}`);
 

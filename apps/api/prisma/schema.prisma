@@ -115,6 +115,7 @@ model User {
   favorites         Favorite[]
   hearings          Hearing[]
   clients           Client[]
+  notifications     Notification[]
 
   @@index([tenantId])
   @@map("users")
@@ -402,6 +403,26 @@ model Hearing {
   @@index([userId])
   @@index([date])
   @@map("hearings")
+}
+
+// ============================================================
+// NOTIFICAÇÕES
+// ============================================================
+
+model Notification {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@map("notifications")
 }
 
 // ============================================================

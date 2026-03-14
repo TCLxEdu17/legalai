@@ -352,6 +352,20 @@ class ApiClient {
     return data;
   }
 
+  // ==================== NOTIFICATIONS ====================
+  async getNotifications() {
+    const { data } = await this.client.get('/notifications');
+    return data as Array<{ id: string; title: string; body: string; read: boolean; link?: string; createdAt: string }>;
+  }
+
+  async markNotificationRead(id: string) {
+    await this.client.patch(`/notifications/${id}/read`);
+  }
+
+  async markAllNotificationsRead() {
+    await this.client.patch('/notifications/read-all');
+  }
+
   // ==================== RAG TOOLS ====================
   async reviewPeca(text: string): Promise<{ review: string }> {
     const { data } = await this.client.post('/rag/review', { text }, { timeout: 120000 });
