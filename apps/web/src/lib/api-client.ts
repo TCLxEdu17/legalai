@@ -401,6 +401,17 @@ class ApiClient {
     await this.client.patch('/notifications/read-all');
   }
 
+  // ==================== BILLING ====================
+  async createCheckoutSession(planId: string): Promise<{ url: string }> {
+    const { data } = await this.client.post('/billing/checkout', { planId });
+    return data;
+  }
+
+  async createPortalSession(): Promise<{ url: string }> {
+    const { data } = await this.client.post('/billing/portal');
+    return data;
+  }
+
   // ==================== RAG TOOLS ====================
   async reviewPeca(text: string): Promise<{ review: string }> {
     const { data } = await this.client.post('/rag/review', { text }, { timeout: 120000 });

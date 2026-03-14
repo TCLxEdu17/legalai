@@ -45,6 +45,18 @@ export default registerAs('app', () => ({
     publicUrl: process.env.R2_PUBLIC_URL || '',
   },
 
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY || '',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    prices: {
+      basic: process.env.STRIPE_BASIC_PRICE_ID || '',
+      pro: process.env.STRIPE_PRO_PRICE_ID || '',
+      unlimited: process.env.STRIPE_UNLIMITED_PRICE_ID || '',
+    },
+  },
+
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+
   rag: {
     chunkSize: parseInt(process.env.CHUNK_SIZE || '1000', 10),
     chunkOverlap: parseInt(process.env.CHUNK_OVERLAP || '200', 10),

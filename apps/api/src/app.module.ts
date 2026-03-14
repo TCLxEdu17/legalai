@@ -29,6 +29,7 @@ import { CommentsModule } from './modules/comments/comments.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { ProcessosModule } from './modules/processos/processos.module';
 import { CasesModule } from './modules/cases/cases.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -109,6 +110,9 @@ import { CasesModule } from './modules/cases/cases.module';
 
     // Casos jurídicos (copiloto por processo)
     CasesModule,
+
+    // Pagamentos / Stripe
+    BillingModule,
   ],
   providers: [
     {

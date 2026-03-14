@@ -129,11 +129,15 @@ model User {
   role         UserRole  @default(USER)
   plan         String    @default("trial")
   isActive     Boolean   @default(true) @map("is_active")
-  prefix       String?   /// "Dr." ou "Dra."
-  oabNumber    String?   @map("oab_number")
-  tenantId     String?   @map("tenant_id") @db.Uuid
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  prefix               String?   /// "Dr." ou "Dra."
+  oabNumber            String?   @map("oab_number")
+  stripeCustomerId     String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?   @map("stripe_subscription_id")
+  stripePriceId        String?   @map("stripe_price_id")
+  planExpiresAt        DateTime? @map("plan_expires_at")
+  tenantId             String?   @map("tenant_id") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
 
   // Relations
   tenant            Tenant?                 @relation(fields: [tenantId], references: [id], onDelete: SetNull)
