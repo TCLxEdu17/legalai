@@ -15,8 +15,8 @@ export class BillingService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
   ) {
-    const secretKey = this.configService.get<string>('app.stripe.secretKey', '');
-    this.stripe = secretKey ? new Stripe(secretKey) : null;
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    this.stripe = secretKey && secretKey.length > 0 ? new Stripe(secretKey) : null;
     this.prices = {
       basic: this.configService.get<string>('app.stripe.prices.basic', ''),
       pro: this.configService.get<string>('app.stripe.prices.pro', ''),
