@@ -21,6 +21,7 @@ import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { TrialModule } from './modules/trial/trial.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { FavoritesModule } from './modules/favorites/favorites.module';
 
 @Module({
   imports: [
@@ -77,6 +78,9 @@ import { StorageModule } from './modules/storage/storage.module';
     // Trial & Metrics
     TrialModule,
     MetricsModule,
+
+    // Favoritos
+    FavoritesModule,
   ],
   providers: [
     {

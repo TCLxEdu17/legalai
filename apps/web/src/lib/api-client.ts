@@ -263,6 +263,26 @@ class ApiClient {
     await this.client.delete(`/api-keys/${id}`);
   }
 
+  // ==================== FAVORITES ====================
+  async getFavorites() {
+    const { data } = await this.client.get('/favorites');
+    return data;
+  }
+
+  async getFavoriteIds(): Promise<string[]> {
+    const { data } = await this.client.get('/favorites/ids');
+    return data;
+  }
+
+  async addFavorite(documentId: string, collection?: string, note?: string) {
+    const { data } = await this.client.post('/favorites', { documentId, collection, note });
+    return data;
+  }
+
+  async removeFavorite(documentId: string) {
+    await this.client.delete(`/favorites/${documentId}`);
+  }
+
   // ==================== TRIAL ====================
   async createTrial(data: { prefix: string; name: string }) {
     const { data: res } = await this.client.post('/trial', data);

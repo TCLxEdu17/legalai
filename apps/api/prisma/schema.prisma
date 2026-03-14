@@ -111,6 +111,7 @@ model User {
   refreshTokens     RefreshToken[]
   apiKeys           ApiKey[]
   usageLogs         UsageLog[]
+  favorites         Favorite[]
 
   @@index([tenantId])
   @@map("users")
@@ -174,6 +175,7 @@ model JurisprudenceDocument {
   // Relations
   createdBy        User             @relation(fields: [createdById], references: [id])
   chunks           JurisprudenceChunk[]
+  favorites        Favorite[]
 
   @@index([tribunal])
   @@index([theme])
@@ -373,6 +375,25 @@ model UsageLog {
   @@index([userId])
   @@index([createdAt])
   @@map("usage_logs")
+}
+
+// ============================================================
+// FAVORITOS
+// ============================================================
+
+model Favorite {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  documentId String   @map("document_id") @db.Uuid
+  collection String   @default("Favoritos")
+  note       String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document JurisprudenceDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, documentId])
+  @@map("favorites")
 }
 
 // ============================================================

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, RefreshCw, Trash2, Eye, FileText, Filter, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, RefreshCw, Trash2, Eye, FileText, Filter, Sparkles, ChevronDown, ChevronUp, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import {
@@ -60,6 +60,18 @@ export default function JurisprudenciasPage() {
 
   const documents = data?.data || [];
   const pagination = data?.pagination;
+
+  const { data: favoriteIds = [] } = useQuery<string[]>({
+    queryKey: ['favorite-ids'],
+    queryFn: () => apiClient.getFavoriteIds(),
+  });
+
+  const favoriteMutation = useMutation({
+    mutationFn: ({ id, isFav }: { id: string; isFav: boolean }) =>
+      isFav ? apiClient.removeFavorite(id) : apiClient.addFavorite(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['favorite-ids'] }),
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -163,6 +175,13 @@ export default function JurisprudenciasPage() {
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => favoriteMutation.mutate({ id: doc.id, isFav: favoriteIds.includes(doc.id) })}
+                        className={cn('transition-colors p-1 rounded', favoriteIds.includes(doc.id) ? 'text-red-400 hover:text-red-300' : 'text-slate-500 hover:text-red-400')}
+                        title={favoriteIds.includes(doc.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                      >
+                        <Heart className={cn('w-4 h-4', favoriteIds.includes(doc.id) && 'fill-current')} />
+                      </button>
                       <button
                         onClick={() => setSelected(doc)}
                         className="text-slate-500 hover:text-brand-400 transition-colors p-1 rounded"
