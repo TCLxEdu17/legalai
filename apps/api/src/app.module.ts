@@ -27,6 +27,7 @@ import { ClientsModule } from './modules/clients/clients.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { ProcessosModule } from './modules/processos/processos.module';
 
 @Module({
   imports: [
@@ -101,6 +102,9 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
 
     // Webhooks
     WebhooksModule,
+
+    // Consulta Processual (DataJud/CNJ)
+    ProcessosModule,
   ],
   providers: [
     {

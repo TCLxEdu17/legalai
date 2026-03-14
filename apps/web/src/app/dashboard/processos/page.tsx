@@ -1,83 +1,111 @@
 'use client';
 
 import { useState } from 'react';
-import { Gavel, Search, Loader2, AlertCircle, User, Building2, Clock } from 'lucide-react';
+import { Gavel, Search, Loader2, AlertCircle, User, Building2, Clock, Scale, ExternalLink } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+
 
 const CNJ_REGEX = /^\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2}\.\d{4}$/;
 
-interface MockProcess {
-  number: string;
-  court: string;
-  subject: string;
-  status: string;
-  parties: Array<{ name: string; type: 'Autor' | 'Réu' | 'Advogado' }>;
-  movements: Array<{ date: string; description: string }>;
+interface Party {
+  name: string;
+  type: string;
+  lawyers: string[];
 }
 
-function generateMock(number: string): MockProcess {
-  return {
-    number,
-    court: '2ª Vara Cível da Comarca de São Paulo',
-    subject: 'Responsabilidade Civil / Indenização por Dano Material e Moral',
-    status: 'Em andamento — aguardando julgamento',
-    parties: [
-      { name: 'João da Silva Santos', type: 'Autor' },
-      { name: 'Empresa XYZ Ltda.', type: 'Réu' },
-      { name: 'Dra. Maria Oliveira — OAB/SP 123.456', type: 'Advogado' },
-      { name: 'Dr. Carlos Ferreira — OAB/SP 789.012', type: 'Advogado' },
-    ],
-    movements: [
-      { date: '2026-03-10', description: 'Conclusão para sentença' },
-      { date: '2026-02-28', description: 'Juntada de memoriais pelas partes' },
-      { date: '2026-02-15', description: 'Audiência de instrução e julgamento realizada' },
-      { date: '2026-01-20', description: 'Decisão: deferida produção de prova testemunhal' },
-      { date: '2025-12-05', description: 'Contestação apresentada pelo réu' },
-      { date: '2025-11-10', description: 'Despacho: citação do réu efetivada' },
-      { date: '2025-10-15', description: 'Petição inicial distribuída — processo autuado' },
-    ],
-  };
+interface Movement {
+  date: string;
+  code: number;
+  name: string;
+  complemento?: string;
+}
+
+interface ProcessoResult {
+  number: string;
+  tribunal: string;
+  classe: string;
+  assuntos: string[];
+  dataAjuizamento: string | null;
+  orgaoJulgador: string | null;
+  grau: string;
+  status: string;
+  parties: Party[];
+  movements: Movement[];
+  source: 'datajud';
 }
 
 const PARTY_COLORS: Record<string, string> = {
-  'Autor': 'bg-brand-600/10 text-brand-400',
-  'Réu': 'bg-red-500/10 text-red-400',
-  'Advogado': 'bg-emerald-500/10 text-emerald-400',
+  'Autor': 'bg-brand-600/10 text-brand-400 border-brand-500/20',
+  'Réu': 'bg-red-500/10 text-red-400 border-red-500/20',
+  'Advogado': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  'Advogado do Autor': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  'Advogado do Réu': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  'Requerente': 'bg-brand-600/10 text-brand-400 border-brand-500/20',
+  'Requerido': 'bg-red-500/10 text-red-400 border-red-500/20',
+  'Reclamante': 'bg-brand-600/10 text-brand-400 border-brand-500/20',
+  'Reclamado': 'bg-red-500/10 text-red-400 border-red-500/20',
+  'Terceiro': 'bg-slate-500/10 text-slate-400 border-slate-500/20',
 };
 
+function partyColor(type: string) {
+  return PARTY_COLORS[type] ?? 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+}
+
 function formatDate(d: string) {
-  return new Date(d + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  try {
+    return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  } catch {
+    return d;
+  }
+}
+
+function formatDateTime(d: string) {
+  try {
+    return new Date(d).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return d;
+  }
+}
+
+function formatInput(v: string) {
+  const digits = v.replace(/\D/g, '');
+  let out = digits;
+  if (digits.length > 7) out = digits.slice(0, 7) + '-' + digits.slice(7);
+  if (digits.length > 9) out = out.slice(0, 10) + '.' + out.slice(10);
+  if (digits.length > 13) out = out.slice(0, 15) + '.' + out.slice(15);
+  if (digits.length > 14) out = out.slice(0, 17) + '.' + out.slice(17);
+  if (digits.length > 16) out = out.slice(0, 20) + '.' + out.slice(20);
+  return out.slice(0, 25);
 }
 
 export default function ProcessosPage() {
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [process, setProcess] = useState<MockProcess | null>(null);
+  const [processo, setProcesso] = useState<ProcessoResult | null>(null);
 
-  const formatInput = (v: string) => {
-    // Auto-format CNJ: NNNNNNN-DD.AAAA.J.TT.OOOO
-    const digits = v.replace(/\D/g, '');
-    let out = digits;
-    if (digits.length > 7) out = digits.slice(0, 7) + '-' + digits.slice(7);
-    if (digits.length > 9) out = out.slice(0, 10) + '.' + out.slice(10);
-    if (digits.length > 13) out = out.slice(0, 15) + '.' + out.slice(15);
-    if (digits.length > 14) out = out.slice(0, 17) + '.' + out.slice(17);
-    if (digits.length > 16) out = out.slice(0, 20) + '.' + out.slice(20);
-    return out.slice(0, 25);
-  };
-
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!CNJ_REGEX.test(input)) {
       setError('Formato inválido. Use: NNNNNNN-DD.AAAA.J.TT.OOOO');
       return;
     }
     setError('');
     setLoading(true);
-    setProcess(null);
-    setTimeout(() => {
-      setProcess(generateMock(input));
+    setProcesso(null);
+
+    try {
+      const data = await apiClient.getProcesso(input) as ProcessoResult;
+      setProcesso(data);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.message ?? 'Erro ao consultar processo';
+      setError(msg);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
+  };
+
+  const grauLabel: Record<string, string> = {
+    G1: '1º Grau', G2: '2º Grau', GR: 'Recursal', SU: 'Superior', JE: 'Juizado Especial',
   };
 
   return (
@@ -87,14 +115,10 @@ export default function ProcessosPage() {
           <Gavel className="w-6 h-6 text-brand-400" />
           Consulta Processual
         </h1>
-        <p className="text-slate-500 text-sm mt-1">Busque informações sobre processos pelo número CNJ</p>
-      </div>
-
-      {/* Mock notice */}
-      <div className="flex items-start gap-2.5 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-        <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-        <p className="text-amber-300 text-xs">
-          Integração com PJe/CNJ em desenvolvimento — dados simulados para fins de demonstração.
+        <p className="text-slate-500 text-sm mt-1">
+          Dados oficiais via{' '}
+          <span className="text-brand-400 font-medium">DataJud — CNJ</span>
+          {' '}· Todos os tribunais brasileiros
         </p>
       </div>
 
@@ -112,7 +136,12 @@ export default function ProcessosPage() {
               className="w-full px-4 py-2.5 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg font-mono
                          placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
-            {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+            {error && (
+              <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3 shrink-0" />
+                {error}
+              </p>
+            )}
           </div>
           <button
             onClick={handleSearch}
@@ -123,80 +152,147 @@ export default function ProcessosPage() {
             Buscar
           </button>
         </div>
+        <p className="text-xs text-slate-600">
+          Ex.: TJSP → J=8, TT=26 · TJRJ → J=8, TT=19 · TRF1 → J=5, TT=01 · TRT2 → J=4, TT=02
+        </p>
       </div>
 
+      {/* Loading state */}
+      {loading && (
+        <div className="flex items-center justify-center py-16 gap-3 text-slate-500">
+          <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
+          <span className="text-sm">Consultando DataJud...</span>
+        </div>
+      )}
+
       {/* Result */}
-      {process && (
+      {processo && (
         <div className="space-y-4">
           {/* Header card */}
-          <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
+          <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5 space-y-4">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs text-slate-500 mb-1">Número do processo</p>
-                <p className="text-slate-100 font-mono font-semibold">{process.number}</p>
+                <p className="text-slate-100 font-mono font-semibold text-lg">{processo.number}</p>
               </div>
-              <span className="text-xs px-2.5 py-1 bg-amber-500/15 text-amber-400 rounded-full font-medium shrink-0">
-                Em andamento
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                {processo.grau && (
+                  <span className="text-xs px-2.5 py-1 bg-slate-500/15 text-slate-400 rounded-full font-medium">
+                    {grauLabel[processo.grau] ?? processo.grau}
+                  </span>
+                )}
+                <span className="text-xs px-2.5 py-1 bg-emerald-500/15 text-emerald-400 rounded-full font-medium flex items-center gap-1">
+                  <Scale className="w-3 h-3" />
+                  DataJud
+                </span>
+              </div>
             </div>
-            <div className="grid md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-white/[0.05]">
+
+            <div className="grid md:grid-cols-2 gap-4 pt-4 border-t border-white/[0.05]">
               <div>
-                <p className="text-xs text-slate-500 mb-1 flex items-center gap-1"><Building2 className="w-3 h-3" />Tribunal</p>
-                <p className="text-slate-300 text-sm">{process.court}</p>
+                <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+                  <Building2 className="w-3 h-3" />Tribunal
+                </p>
+                <p className="text-slate-300 text-sm font-medium">{processo.tribunal}</p>
               </div>
-              <div className="md:col-span-2">
-                <p className="text-xs text-slate-500 mb-1">Assunto</p>
-                <p className="text-slate-300 text-sm">{process.subject}</p>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Classe</p>
+                <p className="text-slate-300 text-sm">{processo.classe || '—'}</p>
               </div>
+              {processo.orgaoJulgador && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Órgão Julgador</p>
+                  <p className="text-slate-300 text-sm">{processo.orgaoJulgador}</p>
+                </div>
+              )}
+              {processo.dataAjuizamento && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Data de Ajuizamento</p>
+                  <p className="text-slate-300 text-sm">{formatDate(processo.dataAjuizamento)}</p>
+                </div>
+              )}
             </div>
+
+            {processo.assuntos.length > 0 && (
+              <div className="pt-3 border-t border-white/[0.05]">
+                <p className="text-xs text-slate-500 mb-2">Assuntos</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {processo.assuntos.map((a, i) => (
+                    <span key={i} className="text-xs px-2.5 py-1 bg-brand-600/10 text-brand-400 rounded-full border border-brand-500/20">
+                      {a}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Parties */}
-          <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-white/[0.05] bg-white/[0.02]">
-              <p className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                <User className="w-4 h-4 text-slate-400" />
-                Partes
-              </p>
-            </div>
-            <table className="w-full text-sm">
-              <tbody className="divide-y divide-white/[0.05]">
-                {process.parties.map((p, i) => (
-                  <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3">
-                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${PARTY_COLORS[p.type] || 'bg-white/5 text-slate-400'}`}>
+          {processo.parties.length > 0 && (
+            <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/[0.05] bg-white/[0.02]">
+                <p className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                  <User className="w-4 h-4 text-slate-400" />
+                  Partes ({processo.parties.length})
+                </p>
+              </div>
+              <div className="divide-y divide-white/[0.05]">
+                {processo.parties.map((p, i) => (
+                  <div key={i} className="px-4 py-3 hover:bg-white/[0.02] transition-colors">
+                    <div className="flex items-start gap-3">
+                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border shrink-0 mt-0.5 ${partyColor(p.type)}`}>
                         {p.type}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-300">{p.name}</td>
-                  </tr>
+                      <div>
+                        <p className="text-slate-300 text-sm">{p.name}</p>
+                        {p.lawyers.length > 0 && (
+                          <p className="text-slate-600 text-xs mt-0.5">
+                            Adv.: {p.lawyers.join(', ')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
+          )}
 
           {/* Movements timeline */}
-          <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-white/[0.05] bg-white/[0.02]">
-              <p className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-slate-400" />
-                Movimentações
-              </p>
-            </div>
-            <div className="p-4 space-y-3">
-              {process.movements.map((m, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${i === 0 ? 'bg-brand-500' : 'bg-slate-600'}`} />
-                    {i < process.movements.length - 1 && <div className="w-px flex-1 bg-white/[0.06] mt-1" />}
+          {processo.movements.length > 0 && (
+            <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/[0.05] bg-white/[0.02]">
+                <p className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-slate-400" />
+                  Movimentações ({processo.movements.length})
+                </p>
+              </div>
+              <div className="p-4 space-y-0">
+                {processo.movements.map((m, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${i === 0 ? 'bg-brand-500' : 'bg-slate-700'}`} />
+                      {i < processo.movements.length - 1 && (
+                        <div className="w-px flex-1 bg-white/[0.06] mt-1" />
+                      )}
+                    </div>
+                    <div className="pb-4">
+                      <p className="text-xs text-slate-500">{formatDateTime(m.date)}</p>
+                      <p className="text-slate-300 text-sm">{m.name}</p>
+                      {m.complemento && (
+                        <p className="text-slate-500 text-xs mt-0.5">{m.complemento}</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="pb-3">
-                    <p className="text-xs text-slate-500">{formatDate(m.date)}</p>
-                    <p className="text-slate-300 text-sm">{m.description}</p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+          )}
+
+          {/* Source badge */}
+          <div className="flex items-center justify-end gap-2 text-xs text-slate-600">
+            <ExternalLink className="w-3 h-3" />
+            Dados obtidos via DataJud · Conselho Nacional de Justiça
           </div>
         </div>
       )}

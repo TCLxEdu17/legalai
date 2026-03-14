@@ -166,6 +166,11 @@ class ApiClient {
     return data as { plan: string; limits: { chatMessages: number | null; uploads: number | null; apiCalls: number | null }; usage: { chatMessages: number; uploads: number; apiCalls: number } };
   }
 
+  async getProcesso(numero: string) {
+    const { data } = await this.client.get(`/processos/${encodeURIComponent(numero)}`);
+    return data;
+  }
+
   async updateProfile(payload: { name?: string; oabNumber?: string }) {
     const { data } = await this.client.patch('/users/profile', payload);
     return data;
