@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Calculator, Info, Copy, Check } from 'lucide-react';
 
 // ─── Tabela OAB ────────────────────────────────────────────────────────────
@@ -170,18 +170,50 @@ export default function CalculadoraPage() {
   const [exitoPct, setExitoPct] = useState(20);
   const [copied, setCopied] = useState(false);
 
-  const result = useMemo(
-    () => calculate(fase, valorRaw, complexidade),
-    [fase, valorRaw, complexidade],
-  );
+  // Resultado confirmado (só atualiza ao clicar em Calcular)
+  const [calcFase, setCalcFase] = useState<FaseKey>('primeira');
+  const [calcValor, setCalcValor] = useState(0);
+  const [calcComplexidade, setCalcComplexidade] = useState<Complexidade>('simples');
+  const [calcModelo, setCalcModelo] = useState<Modelo>('fixo');
+  const [calcExitoPct, setCalcExitoPct] = useState(20);
+  const [hasResult, setHasResult] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [btnPulse, setBtnPulse] = useState(false);
+  const pulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCriminal = FASES[fase].minPct === null;
   const canCalc = isCriminal || valorRaw > 0;
 
-  const proposta = useMemo(
-    () => (canCalc ? gerarProposta(fase, modelo, result, valorRaw, complexidade, exitoPct) : ''),
-    [fase, modelo, result, valorRaw, complexidade, exitoPct, canCalc],
+  // Marca dirty e dispara animação no botão a cada mudança
+  useEffect(() => {
+    if (!hasResult) return; // antes do primeiro cálculo, não pisca
+    setDirty(true);
+    setBtnPulse(true);
+    if (pulseTimer.current) clearTimeout(pulseTimer.current);
+    pulseTimer.current = setTimeout(() => setBtnPulse(false), 600);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fase, valorRaw, complexidade, modelo, exitoPct]);
+
+  const result = useMemo(
+    () => calculate(calcFase, calcValor, calcComplexidade),
+    [calcFase, calcValor, calcComplexidade],
   );
+
+  const proposta = useMemo(
+    () => (hasResult ? gerarProposta(calcFase, calcModelo, result, calcValor, calcComplexidade, calcExitoPct) : ''),
+    [hasResult, calcFase, calcModelo, result, calcValor, calcComplexidade, calcExitoPct],
+  );
+
+  function handleCalc() {
+    setCalcFase(fase);
+    setCalcValor(valorRaw);
+    setCalcComplexidade(complexidade);
+    setCalcModelo(modelo);
+    setCalcExitoPct(exitoPct);
+    setHasResult(true);
+    setDirty(false);
+    setBtnPulse(false);
+  }
 
   function copyProposta() {
     navigator.clipboard.writeText(proposta);
@@ -318,19 +350,37 @@ export default function CalculadoraPage() {
               </div>
             </div>
           )}
+
+          {/* Botão calcular */}
+          <button
+            onClick={handleCalc}
+            disabled={!canCalc}
+            className={[
+              'w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150',
+              'flex items-center justify-center gap-2',
+              canCalc
+                ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                : 'bg-white/[0.04] text-slate-600 cursor-not-allowed',
+              btnPulse ? 'scale-[1.02] brightness-125' : '',
+              dirty && hasResult ? 'ring-2 ring-indigo-400/40' : '',
+            ].join(' ')}
+          >
+            <Calculator className="w-4 h-4" />
+            {dirty && hasResult ? 'Recalcular honorários' : 'Calcular honorários'}
+          </button>
         </div>
 
         {/* ── Resultado ─────────────────────────────────────────────── */}
         <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 flex flex-col gap-4">
           <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Resultado</p>
 
-          {!canCalc ? (
+          {!hasResult ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-10">
               <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/[0.07] flex items-center justify-center mb-3">
                 <Calculator className="w-5 h-5 text-slate-700" />
               </div>
-              <p className="text-sm text-slate-500">Informe o valor da causa</p>
-              <p className="text-xs text-slate-700 mt-1">para ver o resultado em tempo real</p>
+              <p className="text-sm text-slate-500">Preencha os dados e clique em</p>
+              <p className="text-xs text-slate-600 mt-1 font-medium">Calcular honorários</p>
             </div>
           ) : (
             <>
@@ -371,9 +421,9 @@ export default function CalculadoraPage() {
                   <p className="text-2xl font-bold text-indigo-300">{formatBRL(result.suggested)}</p>
                 </div>
                 <div className="text-right">
-                  {!result.isCriminal && valorRaw > 0 && !result.pisoDomainsMax && (
+                  {!result.isCriminal && calcValor > 0 && !result.pisoDomainsMax && (
                     <p className="text-xs text-slate-600">
-                      {((result.suggested / valorRaw) * 100).toFixed(1)}% da causa
+                      {((result.suggested / calcValor) * 100).toFixed(1)}% da causa
                     </p>
                   )}
                   <p className="text-xs text-slate-600 mt-0.5">{MULT_LABEL[complexidade]}</p>
@@ -387,11 +437,11 @@ export default function CalculadoraPage() {
               </div>
 
               {/* Modelo êxito */}
-              {(modelo === 'exito' || modelo === 'misto') && valorRaw > 0 && (
+              {(calcModelo === 'exito' || calcModelo === 'misto') && calcValor > 0 && (
                 <div className="bg-[#0d0d0d] rounded-lg border border-white/[0.06] px-4 py-3 flex justify-between items-center">
-                  <p className="text-xs text-slate-500">Estimativa de êxito ({exitoPct}%)</p>
+                  <p className="text-xs text-slate-500">Estimativa de êxito ({calcExitoPct}%)</p>
                   <p className="text-sm font-semibold text-emerald-400">
-                    {formatBRL((valorRaw * exitoPct) / 100)}
+                    {formatBRL((calcValor * calcExitoPct) / 100)}
                   </p>
                 </div>
               )}
@@ -406,7 +456,7 @@ export default function CalculadoraPage() {
       </div>
 
       {/* ── Proposta ────────────────────────────────────────────────────── */}
-      {canCalc && (
+      {hasResult && (
         <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Rascunho de proposta</p>
