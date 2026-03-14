@@ -28,6 +28,7 @@ import {
   Gavel,
   Flag,
   FolderOpen,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
@@ -71,7 +72,7 @@ const navItems: NavItem[] = [
   { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações', adminOnly: true },
 ];
 
-export function Sidebar() {
+export function Sidebar({ mobileOpen, onClose }: { mobileOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const [admin, setAdmin] = useState(false);
   const [isTrial, setIsTrial] = useState(false);
@@ -83,7 +84,6 @@ export function Sidebar() {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       setIsTrial(user?.email?.endsWith('@trial.legalai.com.br') ?? false);
     } catch {}
-    // Load feature flags
     const flagMap: Record<string, boolean> = {};
     const featureFlags = [
       'calculadora', 'prazos', 'agenda', 'clientes', 'minutas',
@@ -93,6 +93,12 @@ export function Sidebar() {
     featureFlags.forEach((f) => { flagMap[f] = isEnabled(f); });
     setFlags(flagMap);
   }, []);
+
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    if (mobileOpen && onClose) onClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const isActive = (item: NavItem) => {
     if (item.exact) return pathname === item.href;
@@ -105,13 +111,13 @@ export function Sidebar() {
     return true;
   };
 
-  return (
-    <aside className="w-60 bg-[#0a0a0a] border-r border-white/[0.06] flex flex-col shrink-0 relative">
+  const sidebarContent = (
+    <>
       {/* Subtle glow at top */}
       <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-brand-600/5 to-transparent pointer-events-none" />
 
       {/* Logo */}
-      <div className="p-5 border-b border-white/[0.06] relative">
+      <div className="p-5 border-b border-white/[0.06] relative flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-3">
           <div className="w-8 h-8 bg-brand-600/20 border border-brand-500/30 rounded-lg flex items-center justify-center shrink-0">
             <Scale className="w-4 h-4 text-brand-400" />
@@ -121,6 +127,11 @@ export function Sidebar() {
             <p className="text-slate-600 text-xs">Assistente Jurídico</p>
           </div>
         </Link>
+        {onClose && (
+          <button onClick={onClose} className="lg:hidden p-1.5 text-slate-500 hover:text-slate-300 rounded-lg hover:bg-white/5">
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -162,6 +173,25 @@ export function Sidebar() {
       <div className="p-4 border-t border-white/[0.06]">
         <p className="text-slate-700 text-xs text-center">v1.6.19</p>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-60 bg-[#0a0a0a] border-r border-white/[0.06] flex-col shrink-0 relative">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-[#0a0a0a] flex flex-col relative z-10 shadow-2xl">
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

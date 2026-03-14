@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LogOut, User as UserIcon, ChevronDown, Sun, Moon, Bell, CheckCheck } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { LogOut, User as UserIcon, ChevronDown, Sun, Moon, Bell, CheckCheck, Menu } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { logout, getStoredUser } from '@/lib/auth';
@@ -10,11 +10,10 @@ import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types';
-import Link from 'next/link';
 
-export function Header() {
+export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const router = useRouter();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -54,9 +53,21 @@ export function Header() {
   };
 
   return (
-    <header className="h-14 bg-[#101010]/80 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between px-6 shrink-0 relative z-20">
-      <div />
+    <header className="h-14 bg-[#101010]/80 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between px-4 sm:px-6 shrink-0 relative z-20">
+      {/* Left: hamburger on mobile */}
       <div className="flex items-center gap-2">
+        {onMenuToggle && (
+          <button
+            onClick={onMenuToggle}
+            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors text-slate-400 hover:text-slate-200"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Right: actions */}
+      <div className="flex items-center gap-1 sm:gap-2">
         {/* Theme toggle */}
         {mounted && (
           <button
@@ -85,7 +96,7 @@ export function Header() {
             {notifOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setNotifOpen(false)} />
-                <div className="absolute right-0 top-full mt-1 w-80 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-20 max-h-96 overflow-y-auto">
+                <div className="absolute right-0 top-full mt-1 w-80 max-w-[calc(100vw-2rem)] bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-20 max-h-96 overflow-y-auto">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
                     <p className="text-sm font-semibold text-slate-200">Notificações</p>
                     {unreadCount > 0 && (
@@ -126,41 +137,42 @@ export function Header() {
           </div>
         )}
 
-      <div className="relative">
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
-        >
-          <div className="w-7 h-7 bg-brand-600/20 border border-brand-500/30 rounded-full flex items-center justify-center">
-            <UserIcon className="w-3.5 h-3.5 text-brand-400" />
-          </div>
-          <div className="text-left hidden sm:block">
-            <p className="text-slate-200 text-sm font-medium leading-tight">{user?.name || 'Usuário'}</p>
-            <p className="text-slate-500 text-xs capitalize">
-              {user?.role === 'ADMIN' ? 'Administrador' : 'Usuário'}
-            </p>
-          </div>
-          <ChevronDown className={cn('w-3.5 h-3.5 text-slate-500 transition-transform', open && 'rotate-180')} />
-        </button>
-
-        {open && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <div className="absolute right-0 top-full mt-1 w-44 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-20 py-1">
-              <div className="px-3 py-2 border-b border-white/[0.06]">
-                <p className="text-slate-500 text-xs truncate">{user?.email}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-red-400 hover:bg-red-500/10 text-sm transition-colors"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                Sair
-              </button>
+        {/* User menu */}
+        <div className="relative">
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
+          >
+            <div className="w-7 h-7 bg-brand-600/20 border border-brand-500/30 rounded-full flex items-center justify-center">
+              <UserIcon className="w-3.5 h-3.5 text-brand-400" />
             </div>
-          </>
-        )}
-      </div>
+            <div className="text-left hidden sm:block">
+              <p className="text-slate-200 text-sm font-medium leading-tight">{user?.name || 'Usuário'}</p>
+              <p className="text-slate-500 text-xs capitalize">
+                {user?.role === 'ADMIN' ? 'Administrador' : 'Usuário'}
+              </p>
+            </div>
+            <ChevronDown className={cn('w-3.5 h-3.5 text-slate-500 transition-transform hidden sm:block', open && 'rotate-180')} />
+          </button>
+
+          {open && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+              <div className="absolute right-0 top-full mt-1 w-44 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-20 py-1">
+                <div className="px-3 py-2 border-b border-white/[0.06]">
+                  <p className="text-slate-500 text-xs truncate">{user?.email}</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-red-400 hover:bg-red-500/10 text-sm transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Sair
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

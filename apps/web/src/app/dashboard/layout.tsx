@@ -19,13 +19,12 @@ function updateActivity() {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isOffline, setIsOffline] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // Register service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
-    // Offline detection
     const handleOffline = () => setIsOffline(true);
     const handleOnline = () => setIsOffline(false);
     setIsOffline(!navigator.onLine);
@@ -68,9 +67,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] overflow-hidden">
-      <Sidebar />
+      <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <Header />
+        <Header onMenuToggle={() => setSidebarOpen((v) => !v)} />
         <TrialCountdown />
         {isOffline && (
           <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/15 border-b border-amber-500/20 text-amber-400 text-xs shrink-0">
@@ -78,7 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Você está offline — algumas funcionalidades podem estar indisponíveis
           </div>
         )}
-        <main className="flex-1 overflow-y-auto p-6 relative z-10">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 relative z-10">{children}</main>
       </div>
       <CookieBanner />
     </div>
