@@ -20,6 +20,7 @@ export interface AuthTokens {
     name: string;
     email: string;
     role: string;
+    prefix?: string | null;
     trialId?: string;
     trialExpiresAt?: string;
   };

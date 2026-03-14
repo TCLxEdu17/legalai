@@ -12,7 +12,7 @@ RUN npm install --workspace=apps/api
 FROM deps AS builder
 COPY apps/api ./apps/api
 RUN cd apps/api && npx prisma generate
-RUN cd apps/api && ./node_modules/.bin/nest build || ../../node_modules/.bin/nest build
+RUN cd apps/api && npx nest build
 
 # ── Runner ─────────────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner

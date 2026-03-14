@@ -66,7 +66,7 @@ const navItems: NavItem[] = [
   { href: '/dashboard/fontes', icon: Globe, label: 'Fontes Automáticas', adminOnly: true, trialVisible: true },
   { href: '/dashboard/ingestoes', icon: Activity, label: 'Histórico de Ingestões', adminOnly: true, trialVisible: true },
   { href: '/dashboard/metricas', icon: BarChart2, label: 'Métricas', adminOnly: true },
-  { href: '/dashboard/api', icon: Key, label: 'API & Chaves', badge: 'New!', flag: 'api' },
+  { href: '/dashboard/api', icon: Key, label: 'API & Chaves', adminOnly: true, flag: 'api' },
   { href: '/dashboard/admin/flags', icon: Flag, label: 'Feature Flags', adminOnly: true },
   { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações', adminOnly: true },
 ];
