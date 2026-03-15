@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -119,9 +119,18 @@ const processingStatusLabel: Record<string, string> = {
 export default function CaseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
-  const [tab, setTab] = useState<Tab>('chat');
+  const validTabs: Tab[] = ['chat', 'documentos', 'pecas', 'analise', 'audiencia', 'acordo'];
+  const initialTab = (searchParams.get('tab') as Tab) ?? 'chat';
+  const [tab, setTab] = useState<Tab>(validTabs.includes(initialTab) ? initialTab : 'chat');
+
+  function changeTab(t: Tab) {
+    setTab(t);
+    router.replace(`/dashboard/casos/${id}?tab=${t}`, { scroll: false });
+  }
+
   const [message, setMessage] = useState('');
   const [showPieceModal, setShowPieceModal] = useState(false);
   const [pieceForm, setPieceForm] = useState({ pieceType: 'CONTESTACAO', title: '', instructions: '', style: '', customStyle: '' });
@@ -213,7 +222,7 @@ export default function CaseDetailPage() {
       setPieceForm({ pieceType: 'CONTESTACAO', title: '', instructions: '', style: '', customStyle: '' });
       toast.success('Peça gerada com sucesso');
       setSelectedPiece(piece);
-      setTab('pecas');
+      changeTab('pecas');
     },
     onError: (e) => toast.error(extractApiErrorMessage(e)),
   });
@@ -329,7 +338,7 @@ export default function CaseDetailPage() {
           ] as const).map((t) => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id as Tab)}
+              onClick={() => changeTab(t.id as Tab)}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
                 tab === t.id
