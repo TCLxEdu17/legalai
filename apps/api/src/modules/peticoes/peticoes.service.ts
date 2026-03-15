@@ -87,9 +87,6 @@ export interface PeticaoContext {
 
 @Injectable()
 export class PeticoesService {
-  // rest params emitem zero metadata — NestJS não tenta injetar nada
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(..._args: any[]) {}
 
   getChecklistPeticao(tipo: string): string[] {
     return CHECKLISTS[tipo] || CHECKLISTS.default;

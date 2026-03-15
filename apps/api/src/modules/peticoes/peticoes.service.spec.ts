@@ -4,7 +4,7 @@ describe('PeticoesService', () => {
   let service: PeticoesService;
 
   beforeEach(() => {
-    service = new PeticoesService(null as any);
+    service = new PeticoesService();
   });
 
   describe('getChecklistPeticao', () => {
