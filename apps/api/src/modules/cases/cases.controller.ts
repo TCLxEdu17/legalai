@@ -25,6 +25,7 @@ import { UpdateCaseDto } from './dto/update-case.dto';
 import { ChatCaseDto } from './dto/chat-case.dto';
 import { GeneratePieceDto } from './dto/generate-piece.dto';
 import { GenerateHearingDto } from './dto/generate-hearing.dto';
+import { PredictCompensationDto } from './dto/predict-compensation.dto';
 import { CaseDocType } from '@prisma/client';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -56,6 +57,11 @@ export class CasesController {
   @Get('copilot')
   getOfficeCopilot(@Request() req: any) {
     return this.casesService.getOfficeCopilot(req.user.id);
+  }
+
+  @Post('predict-compensation')
+  predictCompensation(@Body() dto: PredictCompensationDto) {
+    return this.casesService.predictCompensation(dto);
   }
 
   @Get(':id')

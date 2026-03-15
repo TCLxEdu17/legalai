@@ -315,6 +315,88 @@ describe('CasesService — Advanced AI Features', () => {
     });
   });
 
+  // ─── predictCompensation ─────────────────────────────────────────────────
+
+  describe('predictCompensation', () => {
+    it('retorna faixa de indenização para entrada válida', async () => {
+      setupAI({
+        faixa: { minimo: 5200, maximo: 9000, texto: 'R$ 5.200 – R$ 9.000' },
+        valorMedio: 7100,
+        fundamentacao: 'Baseado em decisões do TJSP sobre negativação indevida',
+        precedentes: [
+          { tribunal: 'TJSP', ano: 2023, valorMinimo: 5000, valorMaximo: 8000, observacao: 'Negativação sem aviso' },
+        ],
+        fatoresQueAumentam: ['Duração prolongada', 'Múltiplas negativações'],
+        fatoresQueReduzem: ['Ausência de comprovação de dano efetivo'],
+        observacoes: 'Valores variam conforme provas e posição processual.',
+      });
+
+      const result = await service.predictCompensation({ tipo: 'negativação indevida', estado: 'SP', duracao: '3 meses' });
+
+      expect(result.faixa.minimo).toBe(5200);
+      expect(result.faixa.maximo).toBe(9000);
+      expect(result.faixa.texto).toBe('R$ 5.200 – R$ 9.000');
+      expect(result.precedentes).toHaveLength(1);
+      expect(result.fatoresQueAumentam.length).toBeGreaterThan(0);
+      expect(mockAIProvider.generateChatCompletion).toHaveBeenCalledTimes(1);
+    });
+
+    it('funciona sem campos opcionais (sem duração e detalhes)', async () => {
+      setupAI({
+        faixa: { minimo: 3000, maximo: 8000, texto: 'R$ 3.000 – R$ 8.000' },
+        valorMedio: 5500,
+        fundamentacao: 'Jurisprudência do TJRJ',
+        precedentes: [],
+        fatoresQueAumentam: [],
+        fatoresQueReduzem: [],
+        observacoes: '',
+      });
+
+      const result = await service.predictCompensation({ tipo: 'acidente de trânsito', estado: 'RJ' });
+
+      expect(result.faixa.minimo).toBe(3000);
+      expect(result.faixa.maximo).toBe(8000);
+      expect(result.precedentes).toEqual([]);
+    });
+
+    it('retorna fallback quando AI retorna JSON inválido', async () => {
+      mockAIProvider.generateChatCompletion.mockResolvedValue({
+        content: 'não é um JSON',
+        inputTokens: 50,
+        outputTokens: 50,
+        model: 'gpt-4o',
+      });
+
+      const result = await service.predictCompensation({ tipo: 'dano moral', estado: 'MG' });
+
+      expect(result.faixa.minimo).toBe(0);
+      expect(result.faixa.maximo).toBe(0);
+      expect(result.fundamentacao).toBe('não é um JSON');
+      expect(result.precedentes).toEqual([]);
+    });
+
+    it('inclui tipo, estado e duração no prompt enviado à AI', async () => {
+      setupAI({
+        faixa: { minimo: 1000, maximo: 5000, texto: 'R$ 1.000 – R$ 5.000' },
+        valorMedio: 3000,
+        fundamentacao: 'test',
+        precedentes: [],
+        fatoresQueAumentam: [],
+        fatoresQueReduzem: [],
+        observacoes: '',
+      });
+
+      await service.predictCompensation({ tipo: 'cobrança indevida', estado: 'RS', duracao: '6 meses', detalhes: 'Cartão de crédito cancelado' });
+
+      const callArgs = mockAIProvider.generateChatCompletion.mock.calls[0][0];
+      const userMessage = callArgs[1].content as string;
+      expect(userMessage).toContain('cobrança indevida');
+      expect(userMessage).toContain('RS');
+      expect(userMessage).toContain('6 meses');
+      expect(userMessage).toContain('Cartão de crédito cancelado');
+    });
+  });
+
   // ─── generatePiece com estilo ─────────────────────────────────────────────
 
   describe('generatePiece — estilo de redação', () => {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Bot,
   AlertTriangle,
@@ -14,14 +14,46 @@ import {
   Zap,
   BarChart3,
   FolderOpen,
+  Calculator,
+  ArrowUp,
+  ArrowDown,
+  Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
 
+const ESTADOS_BR = [
+  'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG',
+  'PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO',
+];
+
+const TIPOS_COMUNS = [
+  'Negativação indevida',
+  'Cobrança indevida',
+  'Acidente de trânsito',
+  'Erro médico',
+  'Dano ao consumidor',
+  'Assédio moral no trabalho',
+  'Demissão sem justa causa',
+  'Acidente de trabalho',
+  'Atraso de voo / cancelamento',
+  'Falha na prestação de serviço',
+  'Invasão de privacidade',
+  'Dano estético',
+];
+
+function formatBRL(value: number) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 }).format(value);
+}
+
 export default function CopilotoPage() {
   const router = useRouter();
   const [radarEnabled, setRadarEnabled] = useState(false);
+
+  // Calculadora de indenização
+  const [calcForm, setCalcForm] = useState({ tipo: '', estado: 'SP', duracao: '', detalhes: '' });
+  const [calcResult, setCalcResult] = useState<any>(null);
 
   const { data: copilot, isLoading: copilotLoading, refetch: refetchCopilot, isFetching } = useQuery({
     queryKey: ['office-copilot'],
@@ -38,6 +70,17 @@ export default function CopilotoPage() {
     staleTime: 5 * 60 * 1000,
     retry: 1,
     meta: { onError: (e: unknown) => toast.error(extractApiErrorMessage(e)) },
+  });
+
+  const compensationMutation = useMutation({
+    mutationFn: () => apiClient.predictCompensation({
+      tipo: calcForm.tipo,
+      estado: calcForm.estado,
+      duracao: calcForm.duracao || undefined,
+      detalhes: calcForm.detalhes || undefined,
+    }),
+    onSuccess: (data) => setCalcResult(data),
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
   });
 
   return (
@@ -270,6 +313,182 @@ export default function CopilotoPage() {
 
               {radar && radar.oportunidades?.length === 0 && (
                 <p className="text-slate-500 text-sm">Nenhum padrão identificado no portfólio atual.</p>
+              )}
+            </div>
+
+            {/* Calculadora de Indenização */}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-5">
+                <Calculator className="w-4 h-4 text-violet-400" />
+                <h2 className="text-slate-200 text-sm font-medium">Previsão de Valor de Indenização</h2>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {/* Tipo */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs text-slate-500 mb-1.5">Tipo de caso</label>
+                  <input
+                    type="text"
+                    list="tipos-comuns"
+                    placeholder="Ex: negativação indevida"
+                    value={calcForm.tipo}
+                    onChange={(e) => setCalcForm(f => ({ ...f, tipo: e.target.value }))}
+                    className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] text-slate-200 placeholder-slate-600 rounded-lg text-sm focus:outline-none focus:border-violet-500/40 focus:bg-white/[0.06] transition-all"
+                  />
+                  <datalist id="tipos-comuns">
+                    {TIPOS_COMUNS.map(t => <option key={t} value={t} />)}
+                  </datalist>
+                </div>
+
+                {/* Estado */}
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1.5">Estado</label>
+                  <select
+                    value={calcForm.estado}
+                    onChange={(e) => setCalcForm(f => ({ ...f, estado: e.target.value }))}
+                    className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] text-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500/40 focus:bg-white/[0.06] transition-all appearance-none"
+                  >
+                    {ESTADOS_BR.map(uf => <option key={uf} value={uf} className="bg-[#1a1a1a]">{uf}</option>)}
+                  </select>
+                </div>
+
+                {/* Duração */}
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1.5">Duração (opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 3 meses, 1 ano"
+                    value={calcForm.duracao}
+                    onChange={(e) => setCalcForm(f => ({ ...f, duracao: e.target.value }))}
+                    className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] text-slate-200 placeholder-slate-600 rounded-lg text-sm focus:outline-none focus:border-violet-500/40 focus:bg-white/[0.06] transition-all"
+                  />
+                </div>
+
+                {/* Detalhes */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs text-slate-500 mb-1.5">Detalhes adicionais (opcional)</label>
+                  <textarea
+                    placeholder="Contexto relevante para afinar a estimativa..."
+                    value={calcForm.detalhes}
+                    onChange={(e) => setCalcForm(f => ({ ...f, detalhes: e.target.value }))}
+                    rows={2}
+                    className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] text-slate-200 placeholder-slate-600 rounded-lg text-sm focus:outline-none focus:border-violet-500/40 focus:bg-white/[0.06] transition-all resize-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={() => compensationMutation.mutate()}
+                disabled={!calcForm.tipo.trim() || compensationMutation.isPending}
+                className="mt-4 flex items-center gap-2 px-4 py-2 bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 text-violet-300 text-sm rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {compensationMutation.isPending ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" />Calculando...</>
+                ) : (
+                  <><Calculator className="w-4 h-4" />Calcular Previsão</>
+                )}
+              </button>
+
+              {/* Resultado */}
+              {calcResult && (
+                <div className="mt-5 space-y-4">
+                  {/* Faixa principal */}
+                  <div className="p-5 bg-violet-600/8 border border-violet-500/20 rounded-xl text-center">
+                    <p className="text-xs text-violet-400/70 mb-2 uppercase tracking-wider">Valor médio da indenização</p>
+                    <p className="text-3xl font-bold text-violet-300">
+                      {calcResult.faixa?.texto ?? `${formatBRL(calcResult.faixa?.minimo ?? 0)} – ${formatBRL(calcResult.faixa?.maximo ?? 0)}`}
+                    </p>
+                    {calcResult.valorMedio > 0 && (
+                      <p className="text-xs text-slate-500 mt-1">Média: {formatBRL(calcResult.valorMedio)}</p>
+                    )}
+                    <p className="text-[11px] text-slate-600 mt-2 flex items-center justify-center gap-1">
+                      <Info className="w-3 h-3" />
+                      Baseado em jurisprudência real dos tribunais brasileiros
+                    </p>
+                  </div>
+
+                  {/* Fundamentação */}
+                  {calcResult.fundamentacao && (
+                    <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                      <p className="text-xs text-slate-500 mb-1.5">Fundamentação</p>
+                      <p className="text-slate-300 text-sm leading-relaxed">{calcResult.fundamentacao}</p>
+                    </div>
+                  )}
+
+                  {/* Fatores */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {calcResult.fatoresQueAumentam?.length > 0 && (
+                      <div className="p-4 bg-emerald-500/5 border border-emerald-500/15 rounded-xl">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />
+                          <p className="text-xs text-emerald-400 font-medium">Aumentam o valor</p>
+                        </div>
+                        <ul className="space-y-1">
+                          {calcResult.fatoresQueAumentam.map((f: string, i: number) => (
+                            <li key={i} className="text-xs text-slate-400 flex items-start gap-1.5">
+                              <span className="text-emerald-500/50 mt-0.5">•</span>{f}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {calcResult.fatoresQueReduzem?.length > 0 && (
+                      <div className="p-4 bg-red-500/5 border border-red-500/15 rounded-xl">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <ArrowDown className="w-3.5 h-3.5 text-red-400" />
+                          <p className="text-xs text-red-400 font-medium">Reduzem o valor</p>
+                        </div>
+                        <ul className="space-y-1">
+                          {calcResult.fatoresQueReduzem.map((f: string, i: number) => (
+                            <li key={i} className="text-xs text-slate-400 flex items-start gap-1.5">
+                              <span className="text-red-500/50 mt-0.5">•</span>{f}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Precedentes */}
+                  {calcResult.precedentes?.length > 0 && (
+                    <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                      <p className="text-xs text-slate-500 mb-3">Precedentes relevantes</p>
+                      <div className="space-y-2">
+                        {calcResult.precedentes.map((p: any, i: number) => (
+                          <div key={i} className="flex items-start justify-between gap-2 p-2.5 bg-white/[0.02] border border-white/[0.04] rounded-lg">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-slate-400 leading-relaxed">{p.observacao}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-xs font-medium text-slate-300">
+                                {p.valorMinimo === p.valorMaximo
+                                  ? formatBRL(p.valorMinimo)
+                                  : `${formatBRL(p.valorMinimo)} – ${formatBRL(p.valorMaximo)}`}
+                              </p>
+                              <p className="text-[10px] text-slate-600">{p.tribunal} · {p.ano}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Observações */}
+                  {calcResult.observacoes && (
+                    <p className="text-xs text-slate-600 flex items-start gap-1.5">
+                      <Info className="w-3 h-3 mt-0.5 shrink-0" />
+                      {calcResult.observacoes}
+                    </p>
+                  )}
+
+                  {/* Recalcular */}
+                  <button
+                    onClick={() => setCalcResult(null)}
+                    className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+                  >
+                    Limpar resultado
+                  </button>
+                </div>
               )}
             </div>
           </>

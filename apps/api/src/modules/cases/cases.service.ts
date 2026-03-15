@@ -17,6 +17,7 @@ import { UpdateCaseDto } from './dto/update-case.dto';
 import { ChatCaseDto } from './dto/chat-case.dto';
 import { GeneratePieceDto } from './dto/generate-piece.dto';
 import { GenerateHearingDto } from './dto/generate-hearing.dto';
+import { PredictCompensationDto } from './dto/predict-compensation.dto';
 import {
   CaseStatus,
   CaseDocType,
@@ -1082,6 +1083,55 @@ Retorne APENAS um JSON válido com esta estrutura:
         cenarios: [],
         fatoresRisco: [],
         pontosFavoraveis: [],
+      };
+    }
+  }
+
+  // ─── PREVISÃO DE INDENIZAÇÃO ──────────────────────────────────────────────
+
+  async predictCompensation(dto: PredictCompensationDto) {
+    const { tipo, estado, duracao, detalhes } = dto;
+
+    const result = await this.aiProvider.generateChatCompletion(
+      [
+        {
+          role: 'system',
+          content: `Você é um especialista em jurisprudência brasileira de dano moral e indenizações.
+Com base no seu conhecimento de milhares de decisões reais dos tribunais brasileiros, estime a faixa de indenização para o caso descrito.
+Retorne APENAS um JSON válido com esta estrutura:
+{
+  "faixa": { "minimo": 0, "maximo": 0, "texto": "R$ X.XXX – R$ Y.YYY" },
+  "valorMedio": 0,
+  "fundamentacao": "explicação baseada em jurisprudência do tribunal indicado",
+  "precedentes": [
+    { "tribunal": "TJSP", "ano": 2023, "valorMinimo": 0, "valorMaximo": 0, "observacao": "breve descrição do caso" }
+  ],
+  "fatoresQueAumentam": ["fator 1", "fator 2"],
+  "fatoresQueReduzem": ["fator 1", "fator 2"],
+  "observacoes": "considerações adicionais"
+}
+Use valores realistas baseados na jurisprudência brasileira atual. Considere o tribunal do estado informado.`,
+        },
+        {
+          role: 'user',
+          content: `Tipo de caso: ${tipo}\nEstado: ${estado}${duracao ? `\nDuração: ${duracao}` : ''}${detalhes ? `\nDetalhes adicionais: ${detalhes}` : ''}`,
+        },
+      ],
+      { temperature: 0.1, maxTokens: 2000 },
+    );
+
+    try {
+      const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+      return JSON.parse(jsonMatch ? jsonMatch[0] : result.content);
+    } catch {
+      return {
+        faixa: { minimo: 0, maximo: 0, texto: 'Não foi possível calcular' },
+        valorMedio: 0,
+        fundamentacao: result.content,
+        precedentes: [],
+        fatoresQueAumentam: [],
+        fatoresQueReduzem: [],
+        observacoes: '',
       };
     }
   }

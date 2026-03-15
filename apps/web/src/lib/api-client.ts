@@ -588,6 +588,11 @@ class ApiClient {
     return data;
   }
 
+  async predictCompensation(payload: { tipo: string; estado: string; duracao?: string; detalhes?: string }) {
+    const { data } = await this.client.post('/cases/predict-compensation', payload, { timeout: 60000 });
+    return data;
+  }
+
   // ==================== CONTRATOS ====================
   async gerarContrato(payload: {
     tipo: 'fixo' | 'exito' | 'misto';
