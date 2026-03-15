@@ -36,6 +36,7 @@ import { TarefasModule } from './modules/tarefas/tarefas.module';
 import { PeticoesModule } from './modules/peticoes/peticoes.module';
 import { ProcuracoesModule } from './modules/procuracoes/procuracoes.module';
 import { NotificacoesClientesModule } from './modules/notificacoes-clientes/notificacoes-clientes.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -127,6 +128,7 @@ import { NotificacoesClientesModule } from './modules/notificacoes-clientes/noti
     PeticoesModule,
     ProcuracoesModule,
     NotificacoesClientesModule,
+    AnalyticsModule,
   ],
   providers: [
     {
