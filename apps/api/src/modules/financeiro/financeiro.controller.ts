@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { FinanceiroService } from './financeiro.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { GetUser } from '../auth/decorators/get-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '@prisma/client';
 
 @Controller('financeiro')
@@ -22,13 +22,13 @@ export class FinanceiroController {
   constructor(private readonly financeiroService: FinanceiroService) {}
 
   @Get('resumo')
-  getResumo(@GetUser() user: User) {
+  getResumo(@CurrentUser() user: User) {
     return this.financeiroService.getResumoMes(user.id);
   }
 
   @Get('lancamentos')
   getLancamentos(
-    @GetUser() user: User,
+    @CurrentUser() user: User,
     @Query('tipo') tipo?: 'ENTRADA' | 'SAIDA',
     @Query('status') status?: string,
     @Query('page') page?: string,
@@ -44,7 +44,7 @@ export class FinanceiroController {
 
   @Post('lancamentos')
   createLancamento(
-    @GetUser() user: User,
+    @CurrentUser() user: User,
     @Body() dto: {
       tipo: 'ENTRADA' | 'SAIDA';
       valor: number;
@@ -60,7 +60,7 @@ export class FinanceiroController {
 
   @Patch('lancamentos/:id')
   updateLancamento(
-    @GetUser() user: User,
+    @CurrentUser() user: User,
     @Param('id') id: string,
     @Body() dto: Partial<{ status: string; pagoEm: string; descricao: string; valor: number }>,
   ) {
@@ -69,7 +69,7 @@ export class FinanceiroController {
 
   @Delete('lancamentos/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteLancamento(@GetUser() user: User, @Param('id') id: string) {
+  deleteLancamento(@CurrentUser() user: User, @Param('id') id: string) {
     return this.financeiroService.deleteLancamento(id, user.id);
   }
 }

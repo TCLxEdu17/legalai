@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { TarefasService, CreateTarefaDto } from './tarefas.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { GetUser } from '../auth/decorators/get-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '@prisma/client';
 
 @Controller('tarefas')
@@ -23,7 +23,7 @@ export class TarefasController {
 
   @Get()
   getTarefas(
-    @GetUser() user: User,
+    @CurrentUser() user: User,
     @Query('caseId') caseId?: string,
     @Query('status') status?: any,
     @Query('prioridade') prioridade?: any,
@@ -40,18 +40,18 @@ export class TarefasController {
   }
 
   @Get('vencendo')
-  getVencendo(@GetUser() user: User) {
+  getVencendo(@CurrentUser() user: User) {
     return this.tarefasService.getVencendo(user.id);
   }
 
   @Post()
-  createTarefa(@GetUser() user: User, @Body() dto: CreateTarefaDto) {
+  createTarefa(@CurrentUser() user: User, @Body() dto: CreateTarefaDto) {
     return this.tarefasService.createTarefa(user.id, dto);
   }
 
   @Patch(':id')
   updateTarefa(
-    @GetUser() user: User,
+    @CurrentUser() user: User,
     @Param('id') id: string,
     @Body() dto: Partial<{
       titulo: string;
@@ -67,7 +67,7 @@ export class TarefasController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteTarefa(@GetUser() user: User, @Param('id') id: string) {
+  deleteTarefa(@CurrentUser() user: User, @Param('id') id: string) {
     return this.tarefasService.deleteTarefa(id, user.id);
   }
 }
