@@ -12,11 +12,15 @@ import {
   AlertTriangle,
   Zap,
   Activity,
+  Clock,
+  UserPlus,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { isAdmin } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { formatDateTime } from '@/lib/utils';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -135,6 +139,87 @@ function FeedbackBadge({ feedback }: { feedback: 'YES' | 'NO' | null }) {
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
+
+function TrialActions({ trialId, isExpired }: { trialId: string; isExpired: boolean }) {
+  const qc = useQueryClient();
+  const [convertEmail, setConvertEmail] = useState('');
+  const [showConvert, setShowConvert] = useState(false);
+
+  const extendMutation = useMutation({
+    mutationFn: () => apiClient.extendTrial(trialId),
+    onSuccess: (data) => {
+      toast.success(`Trial estendido até ${new Date(data.expiresAt).toLocaleString('pt-BR')}`);
+      qc.invalidateQueries({ queryKey: ['trial-metrics'] });
+    },
+    onError: () => toast.error('Erro ao estender trial'),
+  });
+
+  const convertMutation = useMutation({
+    mutationFn: () => apiClient.convertTrial(trialId, convertEmail),
+    onSuccess: (data) => {
+      toast.success(`Convertido! E-mail: ${data.email} · Plano: ${data.plan}`);
+      setShowConvert(false);
+      setConvertEmail('');
+      qc.invalidateQueries({ queryKey: ['trial-metrics'] });
+    },
+    onError: () => toast.error('Erro ao converter trial'),
+  });
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <button
+        onClick={() => extendMutation.mutate()}
+        disabled={extendMutation.isPending}
+        className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
+          bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors
+          disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+      >
+        {extendMutation.isPending ? (
+          <Loader2 className="w-3 h-3 animate-spin" />
+        ) : (
+          <Clock className="w-3 h-3" />
+        )}
+        +24h
+      </button>
+
+      {showConvert ? (
+        <div className="flex items-center gap-1">
+          <input
+            type="email"
+            placeholder="novo@email.com"
+            value={convertEmail}
+            onChange={(e) => setConvertEmail(e.target.value)}
+            className="text-xs bg-[#1a1a1a] border border-white/10 rounded-md px-2 py-1 text-slate-300 w-36 outline-none focus:border-emerald-500/40"
+          />
+          <button
+            onClick={() => convertMutation.mutate()}
+            disabled={!convertEmail || convertMutation.isPending}
+            className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
+              bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors
+              disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {convertMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'OK'}
+          </button>
+          <button
+            onClick={() => setShowConvert(false)}
+            className="text-xs text-slate-600 hover:text-slate-400 px-1"
+          >
+            ×
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowConvert(true)}
+          className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
+            bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors whitespace-nowrap"
+        >
+          <UserPlus className="w-3 h-3" />
+          Converter
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function MetricasPage() {
   const [admin, setAdmin] = useState(false);
@@ -279,6 +364,7 @@ export default function MetricasPage() {
                       'Criado em',
                       'Expira em',
                       'Feedback',
+                      'Ações',
                     ].map((col) => (
                       <th
                         key={col}
@@ -327,6 +413,9 @@ export default function MetricasPage() {
                         </td>
                         <td className="px-4 py-3">
                           <FeedbackBadge feedback={t.feedback} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <TrialActions trialId={t.id} isExpired={expired} />
                         </td>
                       </tr>
                     );

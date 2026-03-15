@@ -38,6 +38,8 @@ import {
   DollarSign,
   CheckSquare,
   Scroll,
+  BookOpen,
+  StickyNote,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
@@ -55,38 +57,79 @@ type NavItem = {
   flag?: FeatureFlag;
 };
 
-const navItems: NavItem[] = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Painel', exact: true },
-  { href: '/dashboard/casos', icon: FolderOpen, label: 'Meus Casos', badge: 'New!' },
-  { href: '/dashboard/copiloto', icon: Bot, label: 'Copiloto IA', badge: 'New!' },
-  { href: '/dashboard/chat', icon: MessageSquare, label: 'Assistente Jurídico' },
-  { href: '/dashboard/analise', icon: ScanSearch, label: 'Análise de Documento', badge: 'New!', flag: 'analise' },
-  { href: '/dashboard/jurisprudencias', icon: FileText, label: 'Jurisprudências', flag: 'jurisprudencias' },
-  { href: '/dashboard/processos', icon: Gavel, label: 'Processos', flag: 'processos' },
-  { href: '/dashboard/consultas', icon: Search, label: 'Consultas (CEP/CNPJ)', flag: 'processos' },
-  { href: '/dashboard/calculadora', icon: Calculator, label: 'Calc. Honorários', badge: 'New!', flag: 'calculadora' },
-  { href: '/dashboard/atualizacao', icon: TrendingUp, label: 'Atualização Monetária', flag: 'atualizacao' },
-  { href: '/dashboard/contratos', icon: FileSignature, label: 'Contratos de Honorários', flag: 'contratos' },
-  { href: '/dashboard/financeiro', icon: DollarSign, label: 'Financeiro', flag: 'financeiro' },
-  { href: '/dashboard/tarefas', icon: CheckSquare, label: 'Diligências e Tarefas', flag: 'tarefas' },
-  { href: '/dashboard/predicao', icon: TrendingUp, label: 'Análise Preditiva', flag: 'predicao' },
-  { href: '/dashboard/procuracoes', icon: Scroll, label: 'Procurações', flag: 'procuracoes' },
-  { href: '/dashboard/prazos', icon: CalendarDays, label: 'Prazos Processuais', flag: 'prazos' },
-  { href: '/dashboard/favoritos', icon: Heart, label: 'Favoritos' },
-  { href: '/dashboard/agenda', icon: Calendar, label: 'Agenda de Audiências', flag: 'agenda' },
-  { href: '/dashboard/clientes', icon: Users, label: 'Clientes', flag: 'clientes' },
-  { href: '/dashboard/revisor', icon: ClipboardCheck, label: 'Revisor de Peças', flag: 'revisor' },
-  { href: '/dashboard/minutas', icon: FileEdit, label: 'Minutas Automáticas', flag: 'minutas' },
-  { href: '/dashboard/planos', icon: CreditCard, label: 'Planos e Uso', flag: 'planos' },
-  { href: '/dashboard/relatorio', icon: FileBarChart, label: 'Relatório Mensal', flag: 'relatorio' },
-  { href: '/dashboard/comparador', icon: GitCompare, label: 'Comparador de Decisões', flag: 'comparador' },
-  { href: '/dashboard/upload', icon: Upload, label: 'Upload Manual', adminOnly: true },
-  { href: '/dashboard/fontes', icon: Globe, label: 'Fontes Automáticas', adminOnly: true, trialVisible: true },
-  { href: '/dashboard/ingestoes', icon: Activity, label: 'Histórico de Ingestões', adminOnly: true, trialVisible: true },
-  { href: '/dashboard/metricas', icon: BarChart2, label: 'Métricas', adminOnly: true },
-  { href: '/dashboard/api', icon: Key, label: 'API & Chaves', adminOnly: true, flag: 'api' },
-  { href: '/dashboard/admin/flags', icon: Flag, label: 'Feature Flags', adminOnly: true },
-  { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações', adminOnly: true },
+type NavGroup = {
+  label?: string;
+  items: NavItem[];
+};
+
+const navGroups: NavGroup[] = [
+  {
+    items: [
+      { href: '/dashboard', icon: LayoutDashboard, label: 'Painel', exact: true },
+    ],
+  },
+  {
+    label: 'IA & Casos',
+    items: [
+      { href: '/dashboard/casos', icon: FolderOpen, label: 'Meus Casos', badge: 'New!' },
+      { href: '/dashboard/copiloto', icon: Bot, label: 'Copiloto IA', badge: 'New!' },
+      { href: '/dashboard/chat', icon: MessageSquare, label: 'Assistente Jurídico' },
+      { href: '/dashboard/analise', icon: ScanSearch, label: 'Análise de Documento', flag: 'analise' },
+      { href: '/dashboard/predicao', icon: TrendingUp, label: 'Análise Preditiva', flag: 'predicao' },
+      { href: '/dashboard/revisor', icon: ClipboardCheck, label: 'Revisor de Peças', flag: 'revisor' },
+      { href: '/dashboard/minutas', icon: FileEdit, label: 'Minutas Automáticas', flag: 'minutas' },
+    ],
+  },
+  {
+    label: 'Pesquisa',
+    items: [
+      { href: '/dashboard/jurisprudencias', icon: FileText, label: 'Jurisprudências', flag: 'jurisprudencias' },
+      { href: '/dashboard/processos', icon: Gavel, label: 'Processos', flag: 'processos' },
+      { href: '/dashboard/consultas', icon: Search, label: 'Consultas (CEP/CNPJ)', flag: 'processos' },
+      { href: '/dashboard/comparador', icon: GitCompare, label: 'Comparador de Decisões', flag: 'comparador' },
+    ],
+  },
+  {
+    label: 'Ferramentas',
+    items: [
+      { href: '/dashboard/calculadora', icon: Calculator, label: 'Calc. Honorários', flag: 'calculadora' },
+      { href: '/dashboard/atualizacao', icon: TrendingUp, label: 'Atualização Monetária', flag: 'atualizacao' },
+      { href: '/dashboard/prazos', icon: CalendarDays, label: 'Prazos Processuais', flag: 'prazos' },
+      { href: '/dashboard/dicionario', icon: BookOpen, label: 'Dicionário Jurídico' },
+      { href: '/dashboard/notas', icon: StickyNote, label: 'Bloco de Notas' },
+    ],
+  },
+  {
+    label: 'Gestão',
+    items: [
+      { href: '/dashboard/contratos', icon: FileSignature, label: 'Contratos de Honorários', flag: 'contratos' },
+      { href: '/dashboard/financeiro', icon: DollarSign, label: 'Financeiro', flag: 'financeiro' },
+      { href: '/dashboard/tarefas', icon: CheckSquare, label: 'Diligências e Tarefas', flag: 'tarefas' },
+      { href: '/dashboard/procuracoes', icon: Scroll, label: 'Procurações', flag: 'procuracoes' },
+      { href: '/dashboard/agenda', icon: Calendar, label: 'Agenda de Audiências', flag: 'agenda' },
+      { href: '/dashboard/clientes', icon: Users, label: 'Clientes', flag: 'clientes' },
+      { href: '/dashboard/relatorio', icon: FileBarChart, label: 'Relatório Mensal', flag: 'relatorio' },
+    ],
+  },
+  {
+    label: 'Conta',
+    items: [
+      { href: '/dashboard/favoritos', icon: Heart, label: 'Favoritos' },
+      { href: '/dashboard/planos', icon: CreditCard, label: 'Planos e Uso', flag: 'planos' },
+    ],
+  },
+  {
+    label: 'Admin',
+    items: [
+      { href: '/dashboard/upload', icon: Upload, label: 'Upload Manual', adminOnly: true },
+      { href: '/dashboard/fontes', icon: Globe, label: 'Fontes Automáticas', adminOnly: true, trialVisible: true },
+      { href: '/dashboard/ingestoes', icon: Activity, label: 'Histórico de Ingestões', adminOnly: true, trialVisible: true },
+      { href: '/dashboard/metricas', icon: BarChart2, label: 'Métricas', adminOnly: true },
+      { href: '/dashboard/api', icon: Key, label: 'API & Chaves', adminOnly: true, flag: 'api' },
+      { href: '/dashboard/admin/flags', icon: Flag, label: 'Feature Flags', adminOnly: true },
+      { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações', adminOnly: true },
+    ],
+  },
 ];
 
 const COLLAPSED_KEY = 'sidebar_collapsed';
@@ -139,7 +182,9 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen?: boolean; onClose
     return true;
   };
 
-  const visibleItems = navItems.filter(isVisible);
+  const visibleGroups = navGroups
+    .map((g) => ({ ...g, items: g.items.filter(isVisible) }))
+    .filter((g) => g.items.length > 0);
 
   const sidebarContent = (collapsed: boolean) => (
     <>
@@ -186,8 +231,19 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen?: boolean; onClose
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto relative z-10">
-        {visibleItems.map((item) => {
+      <nav className="flex-1 p-2 overflow-y-auto relative z-10 space-y-1">
+        {visibleGroups.map((group, gi) => (
+          <div key={gi} className={gi > 0 ? 'pt-1' : ''}>
+            {group.label && !collapsed && (
+              <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-700 select-none">
+                {group.label}
+              </p>
+            )}
+            {group.label && collapsed && gi > 0 && (
+              <div className="mx-auto w-6 border-t border-white/[0.06] my-1.5" />
+            )}
+            <div className="space-y-0.5">
+            {group.items.map((item) => {
           const active = isActive(item);
           if (collapsed) {
             return (
@@ -228,6 +284,9 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen?: boolean; onClose
             </Link>
           );
         })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Version */}

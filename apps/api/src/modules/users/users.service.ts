@@ -161,6 +161,24 @@ export class UsersService {
     };
   }
 
+  async getNotes(userId: string): Promise<{ notes: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { notes: true },
+    });
+    if (!user) throw new NotFoundException(`Usuário ${userId} não encontrado`);
+    return { notes: user.notes ?? '' };
+  }
+
+  async saveNotes(userId: string, notes: string): Promise<{ notes: string }> {
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { notes },
+      select: { notes: true },
+    });
+    return { notes: updated.notes ?? '' };
+  }
+
   async deleteAccount(id: string) {
     await this.findById(id);
 

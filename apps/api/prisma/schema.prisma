@@ -136,6 +136,7 @@ model User {
   stripePriceId        String?   @map("stripe_price_id")
   planExpiresAt        DateTime? @map("plan_expires_at")
   tenantId             String?   @map("tenant_id") @db.Uuid
+  notes                String?   @db.Text
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 

@@ -670,7 +670,28 @@ class ApiClient {
     return data;
   }
 
+  // ==================== NOTES ====================
+  async getNotes(): Promise<{ notes: string }> {
+    const { data } = await this.client.get('/users/me/notes');
+    return data;
+  }
+
+  async saveNotes(notes: string): Promise<{ notes: string }> {
+    const { data } = await this.client.patch('/users/me/notes', { notes });
+    return data;
+  }
+
   // ==================== METRICS ====================
+  async extendTrial(id: string, hours = 24) {
+    const { data } = await this.client.post(`/trial/${id}/extend`, { hours });
+    return data;
+  }
+
+  async convertTrial(id: string, email: string) {
+    const { data } = await this.client.post(`/trial/${id}/convert`, { email });
+    return data;
+  }
+
   async getTrialMetrics() {
     const { data } = await this.client.get('/trial/admin/metrics');
     return data;

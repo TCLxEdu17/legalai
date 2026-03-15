@@ -147,6 +147,40 @@ export class TrialService {
     return metric;
   }
 
+  async extendTrial(id: string, hours = 24) {
+    const trialUser = await this.prisma.trialUser.findUnique({ where: { id } });
+    if (!trialUser) throw new NotFoundException(`Trial user ${id} not found`);
+
+    const base = trialUser.expiresAt < new Date() ? new Date() : trialUser.expiresAt;
+    const newExpiresAt = new Date(base.getTime() + hours * 60 * 60 * 1000);
+
+    const updated = await this.prisma.trialUser.update({
+      where: { id },
+      data: { expiresAt: newExpiresAt },
+    });
+
+    this.logger.log(`Trial extended: ${id} → ${newExpiresAt.toISOString()} (+${hours}h)`);
+    return { id: updated.id, expiresAt: updated.expiresAt };
+  }
+
+  async convertTrial(id: string, newEmail: string) {
+    const trialUser = await this.prisma.trialUser.findUnique({ where: { id } });
+    if (!trialUser) throw new NotFoundException(`Trial user ${id} not found`);
+    if (!trialUser.systemUserId) throw new NotFoundException('Trial user has no linked system user');
+
+    const updated = await this.prisma.user.update({
+      where: { id: trialUser.systemUserId },
+      data: {
+        email: newEmail.toLowerCase().trim(),
+        plan: 'basic',
+      },
+      select: { id: true, email: true, plan: true },
+    });
+
+    this.logger.log(`Trial converted: ${id} → ${updated.email} (plan: basic)`);
+    return { userId: updated.id, email: updated.email, plan: updated.plan };
+  }
+
   async getAdminMetrics() {
     const [total, allUsers] = await Promise.all([
       this.prisma.trialUser.count(),

@@ -81,6 +81,19 @@ export class UsersController {
     return this.usersService.update(id, dto);
   }
 
+  @Get('me/notes')
+  @ApiOperation({ summary: 'Obter bloco de notas do usuário autenticado' })
+  getNotes(@CurrentUser('id') id: string) {
+    return this.usersService.getNotes(id);
+  }
+
+  @Patch('me/notes')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Salvar bloco de notas do usuário autenticado' })
+  saveNotes(@CurrentUser('id') id: string, @Body() body: { notes: string }) {
+    return this.usersService.saveNotes(id, body.notes ?? '');
+  }
+
   @Delete('me')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Excluir própria conta e todos os dados (LGPD)' })
