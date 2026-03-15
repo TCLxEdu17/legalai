@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional, Inject } from '@nestjs/common';
 
 const CHECKLISTS: Record<string, string[]> = {
   recurso_apelacao: [
@@ -87,8 +87,7 @@ export interface PeticaoContext {
 
 @Injectable()
 export class PeticoesService {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(_casesService?: unknown) {}
+  constructor(@Optional() @Inject('CASES_SERVICE') private readonly casesService?: any) {}
 
   getChecklistPeticao(tipo: string): string[] {
     return CHECKLISTS[tipo] || CHECKLISTS.default;
