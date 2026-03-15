@@ -1,5 +1,5 @@
-import { Injectable, Logger, Optional, Inject } from '@nestjs/common';
-import { RagService } from '../rag/rag.service';
+import { Injectable, Logger, Inject } from '@nestjs/common';
+import { AI_PROVIDER_TOKEN, IAIProvider } from '../rag/providers/ai-provider.interface';
 
 export interface PredictionPromptParams {
   area: string;
@@ -22,7 +22,9 @@ export interface PredictionResult {
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
 
-  constructor(@Optional() @Inject(RagService) private readonly ragService: RagService | null) {}
+  constructor(
+    @Inject(AI_PROVIDER_TOKEN) private readonly aiProvider: IAIProvider,
+  ) {}
 
   buildPredictionPrompt(params: PredictionPromptParams): string {
     const { area, pedido, tribunal, resumoFatos, jurisprudencias } = params;
@@ -45,14 +47,14 @@ Analise a seguinte demanda e forneça uma estimativa de desfecho:
 
     prompt += `
 
-Com base na jurisprudência consolidada do ${tribunal} e nos dados fornecidos, responda APENAS com um JSON no formato:
+Com base na jurisprudência consolidada do ${tribunal} e nos dados fornecidos, responda APENAS com um JSON válido, sem texto adicional, sem markdown, sem explicações:
 {
-  "probabilidade": <0-100>,
-  "prazoMedio": <estimativa em meses>,
-  "fundamento": "<breve fundamento>",
+  "probabilidade": <número inteiro de 0 a 100>,
+  "prazoMedio": <número inteiro de meses>,
+  "fundamento": "<fundamento jurídico em 1-2 frases>",
   "pontosFavoraveis": ["<ponto1>", "<ponto2>"],
   "pontosContrarios": ["<ponto1>", "<ponto2>"],
-  "jurisprudenciasRelevantes": ["<ementa1>", "<ementa2>"]
+  "jurisprudenciasRelevantes": ["<ementa resumida 1>", "<ementa resumida 2>"]
 }`;
 
     return prompt;
@@ -89,17 +91,13 @@ Com base na jurisprudência consolidada do ${tribunal} e nos dados fornecidos, r
   }
 
   async getPrediction(params: PredictionPromptParams): Promise<PredictionResult> {
-    if (!this.ragService) {
-      return this.parsePredictionResult('{}');
-    }
-
     try {
       const prompt = this.buildPredictionPrompt(params);
-      // Uses the RAG service to get AI response
-      const response = await (this.ragService as any).aiProvider.chat([
-        { role: 'user', content: prompt },
-      ]);
-      return this.parsePredictionResult(response);
+      const result = await this.aiProvider.generateChatCompletion(
+        [{ role: 'user', content: prompt }],
+        { temperature: 0.3, maxTokens: 1024 },
+      );
+      return this.parsePredictionResult(result.content);
     } catch (err) {
       this.logger.error('Failed to get AI prediction', err);
       return {
