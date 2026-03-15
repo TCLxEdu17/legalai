@@ -34,7 +34,8 @@ const mockJwtService = {
 const mockConfig = {
   get: (key: string, def?: any) => {
     const map: Record<string, any> = {
-      'app.jwt.secret': 'test-secret',
+      'app.jwt': { secret: 'test-secret-min-32-chars-padding!', expiresIn: '15m' },
+      'app.jwt.secret': 'test-secret-min-32-chars-padding!',
       'app.jwt.expiresIn': '15m',
     };
     return map[key] ?? def;
