@@ -34,7 +34,6 @@ import { ContratosModule } from './modules/contratos/contratos.module';
 import { FinanceiroModule } from './modules/financeiro/financeiro.module';
 import { TarefasModule } from './modules/tarefas/tarefas.module';
 import { PeticoesModule } from './modules/peticoes/peticoes.module';
-import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ProcuracoesModule } from './modules/procuracoes/procuracoes.module';
 import { NotificacoesClientesModule } from './modules/notificacoes-clientes/notificacoes-clientes.module';
 
@@ -126,7 +125,6 @@ import { NotificacoesClientesModule } from './modules/notificacoes-clientes/noti
     FinanceiroModule,
     TarefasModule,
     PeticoesModule,
-    AnalyticsModule,
     ProcuracoesModule,
     NotificacoesClientesModule,
   ],
