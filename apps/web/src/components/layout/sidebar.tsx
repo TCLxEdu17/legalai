@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Scale,
+  Bot,
   MessageSquare,
   FileText,
   Upload,
@@ -57,6 +58,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Painel', exact: true },
   { href: '/dashboard/casos', icon: FolderOpen, label: 'Meus Casos', badge: 'New!' },
+  { href: '/dashboard/copiloto', icon: Bot, label: 'Copiloto IA', badge: 'New!' },
   { href: '/dashboard/chat', icon: MessageSquare, label: 'Assistente Jurídico' },
   { href: '/dashboard/analise', icon: ScanSearch, label: 'Análise de Documento', badge: 'New!', flag: 'analise' },
   { href: '/dashboard/jurisprudencias', icon: FileText, label: 'Jurisprudências', flag: 'jurisprudencias' },

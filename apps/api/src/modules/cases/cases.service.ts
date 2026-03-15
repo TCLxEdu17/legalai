@@ -16,6 +16,7 @@ import { CreateCaseDto } from './dto/create-case.dto';
 import { UpdateCaseDto } from './dto/update-case.dto';
 import { ChatCaseDto } from './dto/chat-case.dto';
 import { GeneratePieceDto } from './dto/generate-piece.dto';
+import { GenerateHearingDto } from './dto/generate-hearing.dto';
 import {
   CaseStatus,
   CaseDocType,
@@ -529,7 +530,16 @@ ${dto.instructions ? `- Instruções específicas para esta peça: ${dto.instruc
 
     const piecePrompt = PIECE_PROMPTS[dto.pieceType];
 
-    const systemPrompt = `${piecePrompt}
+    const STYLE_INSTRUCTIONS: Record<string, string> = {
+      formal_classico: 'Use linguagem jurídica clássica e formal, com vocábulos técnicos tradicionais do direito brasileiro.',
+      moderno: 'Use linguagem jurídica moderna e direta, clara para leitores não especializados sem perder a precisão técnica.',
+      agressivo: 'Adote tom firme e incisivo, destacando fortemente os pontos favoráveis e rebatendo energicamente os contrários.',
+      tecnico: 'Priorize a argumentação técnica e doutrinária, com amplas citações de artigos de lei, doutrina e jurisprudência.',
+      custom: dto.customStyle ? `Siga este estilo específico: ${dto.customStyle}` : '',
+    };
+    const styleNote = dto.style ? `\nESTILO DE REDAÇÃO: ${STYLE_INSTRUCTIONS[dto.style] ?? ''}` : '';
+
+    const systemPrompt = `${piecePrompt}${styleNote}
 
 REGRAS:
 1. Use APENAS os fatos presentes nos autos abaixo. Não invente fatos.
@@ -636,6 +646,444 @@ ${contextText}`;
       indexedDocuments: indexedDocs,
       aiSummary,
     };
+  }
+
+  // ─── NARRATIVA JURÍDICA ───────────────────────────────────────────────────
+
+  async buildLegalNarrative(caseId: string, userId: string) {
+    await this.assertOwnership(caseId, userId);
+
+    const caseData = await this.prisma.case.findUnique({
+      where: { id: caseId },
+      select: { title: true, area: true, plaintiff: true, defendant: true, court: true, processNumber: true },
+    });
+
+    const chunks = await this.prisma.$queryRawUnsafe<Array<{ content: string }>>(
+      `SELECT cc.content FROM case_chunks cc
+       INNER JOIN case_documents cd ON cd.id = cc.document_id
+       WHERE cd.case_id = '${caseId}'::uuid AND cd.processing_status = 'INDEXED'
+       ORDER BY cd.created_at ASC, cc.chunk_index ASC
+       LIMIT 40`,
+    );
+
+    if (chunks.length === 0) {
+      throw new BadRequestException('Nenhum documento indexado. Faça upload dos autos primeiro.');
+    }
+
+    const context = chunks.map((c) => c.content).join('\n\n---\n\n');
+
+    const result = await this.aiProvider.generateChatCompletion(
+      [
+        {
+          role: 'system',
+          content: `Você é um advogado experiente. Com base nos documentos dos autos, construa uma narrativa jurídica cronológica e estruturada do caso.
+Retorne APENAS um JSON válido com esta estrutura:
+{
+  "narrativa": "texto completo da narrativa cronológica dos fatos",
+  "enquadramentoJuridico": "artigos do CC/CDC/CLT/etc. aplicáveis com justificativa",
+  "pontosChave": ["ponto 1", "ponto 2", ...],
+  "recomendacaoEstrategica": "recomendação estratégica resumida"
+}`,
+        },
+        {
+          role: 'user',
+          content: `Caso: ${caseData?.title}\nPartes: ${caseData?.plaintiff} vs ${caseData?.defendant}\nÁrea: ${caseData?.area}\n\nAutos:\n${context}`,
+        },
+      ],
+      { temperature: 0.15, maxTokens: 2500 },
+    );
+
+    try {
+      const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+      return JSON.parse(jsonMatch ? jsonMatch[0] : result.content);
+    } catch {
+      return { narrativa: result.content, enquadramentoJuridico: '', pontosChave: [], recomendacaoEstrategica: '' };
+    }
+  }
+
+  // ─── ANÁLISE DE PROVAS ────────────────────────────────────────────────────
+
+  async analyzeEvidence(caseId: string, userId: string) {
+    await this.assertOwnership(caseId, userId);
+
+    const caseData = await this.prisma.case.findUnique({
+      where: { id: caseId },
+      select: { title: true, area: true, plaintiff: true, defendant: true },
+    });
+
+    const chunks = await this.prisma.$queryRawUnsafe<Array<{ content: string; doc_title: string; doc_type: string }>>(
+      `SELECT cc.content, cd.title AS doc_title, cd.doc_type AS doc_type
+       FROM case_chunks cc
+       INNER JOIN case_documents cd ON cd.id = cc.document_id
+       WHERE cd.case_id = '${caseId}'::uuid AND cd.processing_status = 'INDEXED'
+       ORDER BY cd.created_at ASC, cc.chunk_index ASC
+       LIMIT 40`,
+    );
+
+    if (chunks.length === 0) {
+      throw new BadRequestException('Nenhum documento indexado. Faça upload dos autos primeiro.');
+    }
+
+    const context = chunks.map((c) => `[${c.doc_title} — ${c.doc_type}]\n${c.content}`).join('\n\n---\n\n');
+
+    const result = await this.aiProvider.generateChatCompletion(
+      [
+        {
+          role: 'system',
+          content: `Você é um especialista em direito processual. Analise os documentos dos autos e avalie o quadro probatório.
+Retorne APENAS um JSON válido com esta estrutura:
+{
+  "provasNecessarias": ["prova 1", "prova 2", ...],
+  "provasPresentes": [{"descricao": "...", "documento": "...", "forca": "forte|media|fraca"}],
+  "provasFaltando": [{"descricao": "...", "urgencia": "alta|media|baixa", "sugestao": "..."}],
+  "alertas": ["alerta 1", "alerta 2", ...],
+  "avaliacaoGeral": "forte|adequada|fraca|critica"
+}`,
+        },
+        {
+          role: 'user',
+          content: `Caso: ${caseData?.title}\nPartes: ${caseData?.plaintiff} vs ${caseData?.defendant}\nÁrea: ${caseData?.area}\n\nDocumentos:\n${context}`,
+        },
+      ],
+      { temperature: 0.1, maxTokens: 2000 },
+    );
+
+    try {
+      const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+      return JSON.parse(jsonMatch ? jsonMatch[0] : result.content);
+    } catch {
+      return { provasNecessarias: [], provasPresentes: [], provasFaltando: [], alertas: [result.content], avaliacaoGeral: 'fraca' };
+    }
+  }
+
+  // ─── DETECÇÃO DE TESES ────────────────────────────────────────────────────
+
+  async detectLegalTheses(caseId: string, userId: string) {
+    await this.assertOwnership(caseId, userId);
+
+    const caseData = await this.prisma.case.findUnique({
+      where: { id: caseId },
+      select: { title: true, area: true, plaintiff: true, defendant: true, strategy: true },
+    });
+
+    const chunks = await this.prisma.$queryRawUnsafe<Array<{ content: string }>>(
+      `SELECT cc.content FROM case_chunks cc
+       INNER JOIN case_documents cd ON cd.id = cc.document_id
+       WHERE cd.case_id = '${caseId}'::uuid AND cd.processing_status = 'INDEXED'
+       ORDER BY cd.created_at ASC, cc.chunk_index ASC
+       LIMIT 35`,
+    );
+
+    if (chunks.length === 0) {
+      throw new BadRequestException('Nenhum documento indexado. Faça upload dos autos primeiro.');
+    }
+
+    const context = chunks.map((c) => c.content).join('\n\n---\n\n');
+
+    const result = await this.aiProvider.generateChatCompletion(
+      [
+        {
+          role: 'system',
+          content: `Você é um advogado sênior especialista em teses jurídicas. Identifique as teses aplicáveis ao caso.
+Retorne APENAS um JSON válido com esta estrutura:
+{
+  "teses": [
+    {
+      "nome": "nome da tese",
+      "descricao": "descrição detalhada e como se aplica ao caso",
+      "leis": ["Art. X da Lei Y", "Súmula Z do STJ", ...],
+      "confianca": 0.0 a 1.0,
+      "favorabilidade": "autor|reu|neutra"
+    }
+  ]
+}`,
+        },
+        {
+          role: 'user',
+          content: `Caso: ${caseData?.title}\nÁrea: ${caseData?.area}\nPartes: ${caseData?.plaintiff} vs ${caseData?.defendant}\n${caseData?.strategy ? `Estratégia: ${caseData.strategy}` : ''}\n\nAutos:\n${context}`,
+        },
+      ],
+      { temperature: 0.15, maxTokens: 2500 },
+    );
+
+    try {
+      const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+      return JSON.parse(jsonMatch ? jsonMatch[0] : result.content);
+    } catch {
+      return { teses: [] };
+    }
+  }
+
+  // ─── GERADOR DE PERGUNTAS PARA AUDIÊNCIA ──────────────────────────────────
+
+  async generateHearingQuestions(caseId: string, dto: GenerateHearingDto, userId: string) {
+    await this.assertOwnership(caseId, userId);
+
+    const caseData = await this.prisma.case.findUnique({
+      where: { id: caseId },
+      select: { title: true, area: true, plaintiff: true, defendant: true, strategy: true },
+    });
+
+    const chunks = await this.prisma.$queryRawUnsafe<Array<{ content: string }>>(
+      `SELECT cc.content FROM case_chunks cc
+       INNER JOIN case_documents cd ON cd.id = cc.document_id
+       WHERE cd.case_id = '${caseId}'::uuid AND cd.processing_status = 'INDEXED'
+       ORDER BY cd.created_at ASC, cc.chunk_index ASC
+       LIMIT 30`,
+    );
+
+    if (chunks.length === 0) {
+      throw new BadRequestException('Nenhum documento indexado. Faça upload dos autos primeiro.');
+    }
+
+    const context = chunks.map((c) => c.content).join('\n\n---\n\n');
+    const witnessInfo = dto.witnessName
+      ? `Testemunha: ${dto.witnessName}${dto.witnessRole ? ` (${dto.witnessRole})` : ''}`
+      : 'Testemunha não identificada';
+
+    const result = await this.aiProvider.generateChatCompletion(
+      [
+        {
+          role: 'system',
+          content: `Você é um advogado experiente se preparando para audiência. Gere perguntas estratégicas para a oitiva.
+Retorne APENAS um JSON válido com esta estrutura:
+{
+  "perguntas": [
+    {"pergunta": "texto da pergunta", "objetivo": "o que se busca provar/extrair", "tipo": "direta|provocativa|esclarecedora"}
+  ],
+  "estrategia": "descrição da estratégia geral para a audiência",
+  "pontosCriticos": ["ponto crítico 1", "ponto crítico 2", ...],
+  "alertas": ["alerta sobre a testemunha ou o depoimento esperado"]
+}`,
+        },
+        {
+          role: 'user',
+          content: `Caso: ${caseData?.title}\nÁrea: ${caseData?.area}\nPartes: ${caseData?.plaintiff} vs ${caseData?.defendant}\n${witnessInfo}\n${caseData?.strategy ? `Estratégia do caso: ${caseData.strategy}` : ''}\n\nAutos:\n${context}`,
+        },
+      ],
+      { temperature: 0.2, maxTokens: 2000 },
+    );
+
+    try {
+      const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+      return JSON.parse(jsonMatch ? jsonMatch[0] : result.content);
+    } catch {
+      return { perguntas: [], estrategia: result.content, pontosCriticos: [], alertas: [] };
+    }
+  }
+
+  // ─── RADAR DE OPORTUNIDADES (CROSS-CASE) ──────────────────────────────────
+
+  async detectOpportunities(userId: string) {
+    const cases = await this.prisma.case.findMany({
+      where: { userId, status: { not: CaseStatus.ARCHIVED } },
+      select: {
+        id: true,
+        title: true,
+        area: true,
+        plaintiff: true,
+        defendant: true,
+        status: true,
+        caseValue: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+    });
+
+    if (cases.length === 0) {
+      return { oportunidades: [] };
+    }
+
+    const caseSummaries = cases
+      .map((c) => `ID:${c.id} | ${c.title} | Área:${c.area ?? 'N/A'} | Status:${c.status} | Criado:${c.createdAt.toISOString().slice(0, 10)}`)
+      .join('\n');
+
+    const result = await this.aiProvider.generateChatCompletion(
+      [
+        {
+          role: 'system',
+          content: `Você é um consultor estratégico para um escritório de advocacia. Analise o portfólio de casos e identifique padrões e oportunidades.
+Retorne APENAS um JSON válido com esta estrutura:
+{
+  "oportunidades": [
+    {
+      "tipo": "recurso|acordo|diligencia|prescricao|outros",
+      "padrao": "descrição do padrão identificado",
+      "recomendacao": "ação recomendada",
+      "caseIds": ["id1", "id2"],
+      "afetados": 0,
+      "prioridade": "alta|media|baixa"
+    }
+  ]
+}`,
+        },
+        {
+          role: 'user',
+          content: `Portfólio de casos do escritório:\n${caseSummaries}`,
+        },
+      ],
+      { temperature: 0.2, maxTokens: 2000 },
+    );
+
+    try {
+      const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+      return JSON.parse(jsonMatch ? jsonMatch[0] : result.content);
+    } catch {
+      return { oportunidades: [] };
+    }
+  }
+
+  // ─── COPILOTO DO ESCRITÓRIO ───────────────────────────────────────────────
+
+  async getOfficeCopilot(userId: string) {
+    const cases = await this.prisma.case.findMany({
+      where: { userId, status: { not: CaseStatus.ARCHIVED } },
+      select: {
+        id: true,
+        title: true,
+        area: true,
+        status: true,
+        caseValue: true,
+        plaintiff: true,
+        defendant: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: { select: { documents: true, messages: true, pieces: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 30,
+    });
+
+    const stats = {
+      total: cases.length,
+      porStatus: cases.reduce<Record<string, number>>((acc, c) => {
+        acc[c.status] = (acc[c.status] ?? 0) + 1;
+        return acc;
+      }, {}),
+      semDocumentos: cases.filter((c) => c._count.documents === 0).length,
+    };
+
+    if (cases.length === 0) {
+      return {
+        prazosUrgentes: [],
+        casosAltoRisco: [],
+        acoesRecomendadas: [],
+        stats,
+      };
+    }
+
+    const caseSummaries = cases
+      .map(
+        (c) =>
+          `ID:${c.id} | ${c.title} | Status:${c.status} | Docs:${c._count.documents} | Msgs:${c._count.messages} | Atualizado:${c.updatedAt.toISOString().slice(0, 10)}`,
+      )
+      .join('\n');
+
+    const result = await this.aiProvider.generateChatCompletion(
+      [
+        {
+          role: 'system',
+          content: `Você é o copiloto de um escritório de advocacia. Analise o portfólio e gere um briefing executivo.
+Retorne APENAS um JSON válido com esta estrutura:
+{
+  "prazosUrgentes": [{"caseId": "...", "titulo": "...", "prazo": "descrição do prazo identificado", "urgencia": "critica|alta|media"}],
+  "casosAltoRisco": [{"caseId": "...", "titulo": "...", "risco": "descrição do risco identificado", "nivel": "critico|alto|medio"}],
+  "acoesRecomendadas": [{"caseId": "...", "titulo": "...", "acao": "ação específica recomendada", "prioridade": "alta|media|baixa"}]
+}`,
+        },
+        {
+          role: 'user',
+          content: `Data atual: ${new Date().toISOString().slice(0, 10)}\n\nCasos do escritório:\n${caseSummaries}`,
+        },
+      ],
+      { temperature: 0.15, maxTokens: 2500 },
+    );
+
+    try {
+      const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : result.content);
+      return { ...parsed, stats };
+    } catch {
+      return { prazosUrgentes: [], casosAltoRisco: [], acoesRecomendadas: [], stats };
+    }
+  }
+
+  // ─── ANÁLISE DE ACORDO ────────────────────────────────────────────────────
+
+  async analyzeSettlement(caseId: string, userId: string) {
+    await this.assertOwnership(caseId, userId);
+
+    const caseData = await this.prisma.case.findUnique({
+      where: { id: caseId },
+      select: {
+        title: true,
+        area: true,
+        plaintiff: true,
+        defendant: true,
+        caseValue: true,
+        strategy: true,
+        notes: true,
+      },
+    });
+
+    const chunks = await this.prisma.$queryRawUnsafe<Array<{ content: string }>>(
+      `SELECT cc.content FROM case_chunks cc
+       INNER JOIN case_documents cd ON cd.id = cc.document_id
+       WHERE cd.case_id = '${caseId}'::uuid AND cd.processing_status = 'INDEXED'
+       ORDER BY cd.created_at ASC, cc.chunk_index ASC
+       LIMIT 35`,
+    );
+
+    if (chunks.length === 0) {
+      throw new BadRequestException('Nenhum documento indexado. Faça upload dos autos primeiro.');
+    }
+
+    const context = chunks.map((c) => c.content).join('\n\n---\n\n');
+    const valorCausa = caseData?.caseValue
+      ? `R$ ${Number(caseData.caseValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      : 'não informado';
+
+    const result = await this.aiProvider.generateChatCompletion(
+      [
+        {
+          role: 'system',
+          content: `Você é um advogado especialista em negociações e acordos judiciais/extrajudiciais no Brasil.
+Retorne APENAS um JSON válido com esta estrutura:
+{
+  "recomendacao": "acordo|litigio|depende",
+  "valorSugerido": {"minimo": 0, "ideal": 0, "maximo": 0},
+  "racional": "justificativa detalhada para a recomendação e valores sugeridos",
+  "cenarios": [
+    {"nome": "Acordo imediato", "probabilidade": "alta|media|baixa", "descricao": "...", "valorEstimado": 0},
+    {"nome": "Sentença favorável", "probabilidade": "alta|media|baixa", "descricao": "...", "valorEstimado": 0},
+    {"nome": "Sentença desfavorável", "probabilidade": "alta|media|baixa", "descricao": "...", "valorEstimado": 0}
+  ],
+  "fatoresRisco": ["fator 1", "fator 2", ...],
+  "pontosFavoraveis": ["ponto 1", "ponto 2", ...]
+}`,
+        },
+        {
+          role: 'user',
+          content: `Caso: ${caseData?.title}\nÁrea: ${caseData?.area}\nPartes: ${caseData?.plaintiff} vs ${caseData?.defendant}\nValor da causa: ${valorCausa}\n${caseData?.strategy ? `Estratégia: ${caseData.strategy}` : ''}\n\nAutos:\n${context}`,
+        },
+      ],
+      { temperature: 0.15, maxTokens: 2500 },
+    );
+
+    try {
+      const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+      return JSON.parse(jsonMatch ? jsonMatch[0] : result.content);
+    } catch {
+      return {
+        recomendacao: 'depende',
+        valorSugerido: { minimo: 0, ideal: 0, maximo: 0 },
+        racional: result.content,
+        cenarios: [],
+        fatoresRisco: [],
+        pontosFavoraveis: [],
+      };
+    }
   }
 
   // ─── PRIVADOS ─────────────────────────────────────────────────────────────

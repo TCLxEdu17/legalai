@@ -20,12 +20,28 @@ import {
   Clock,
   RefreshCw,
   BookOpen,
+  Brain,
+  Mic,
+  Handshake,
+  ChevronRight,
+  ShieldAlert,
+  Lightbulb,
+  TrendingUp,
+  BarChart3,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
 
-type Tab = 'chat' | 'documentos' | 'pecas';
+type Tab = 'chat' | 'documentos' | 'pecas' | 'analise' | 'audiencia' | 'acordo';
+
+const STYLE_OPTIONS = [
+  { value: 'formal_classico', label: 'Formal Clássico', desc: 'Linguagem jurídica tradicional' },
+  { value: 'moderno', label: 'Moderno', desc: 'Claro e direto, sem rebuscamento' },
+  { value: 'agressivo', label: 'Agressivo', desc: 'Tom firme e incisivo' },
+  { value: 'tecnico', label: 'Técnico', desc: 'Foco em doutrina e jurisprudência' },
+  { value: 'custom', label: 'Personalizado', desc: 'Defina seu próprio estilo' },
+];
 
 interface CaseDocument {
   id: string;
@@ -108,7 +124,8 @@ export default function CaseDetailPage() {
   const [tab, setTab] = useState<Tab>('chat');
   const [message, setMessage] = useState('');
   const [showPieceModal, setShowPieceModal] = useState(false);
-  const [pieceForm, setPieceForm] = useState({ pieceType: 'CONTESTACAO', title: '', instructions: '' });
+  const [pieceForm, setPieceForm] = useState({ pieceType: 'CONTESTACAO', title: '', instructions: '', style: '', customStyle: '' });
+  const [witnessForm, setWitnessForm] = useState({ name: '', role: '' });
   const [selectedPiece, setSelectedPiece] = useState<{ id: string; title: string; content: string } | null>(null);
   const [uploadDocType, setUploadDocType] = useState('OUTROS');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -156,17 +173,44 @@ export default function CaseDetailPage() {
     onError: (e) => toast.error(extractApiErrorMessage(e)),
   });
 
+  const narrativeMutation = useMutation({
+    mutationFn: () => apiClient.buildCaseNarrative(id),
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
+
+  const evidenceMutation = useMutation({
+    mutationFn: () => apiClient.analyzeCaseEvidence(id),
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
+
+  const thesesMutation = useMutation({
+    mutationFn: () => apiClient.detectCaseTheses(id),
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
+
+  const hearingMutation = useMutation({
+    mutationFn: () => apiClient.generateHearingQuestions(id, witnessForm.name || undefined, witnessForm.role || undefined),
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
+
+  const settlementMutation = useMutation({
+    mutationFn: () => apiClient.analyzeCaseSettlement(id),
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
+
   const generatePieceMutation = useMutation({
     mutationFn: () =>
       apiClient.generateCasePiece(id, {
         pieceType: pieceForm.pieceType,
         title: pieceForm.title,
         instructions: pieceForm.instructions || undefined,
+        style: (pieceForm.style as any) || undefined,
+        customStyle: pieceForm.customStyle || undefined,
       }),
     onSuccess: (piece) => {
       queryClient.invalidateQueries({ queryKey: ['case', id] });
       setShowPieceModal(false);
-      setPieceForm({ pieceType: 'CONTESTACAO', title: '', instructions: '' });
+      setPieceForm({ pieceType: 'CONTESTACAO', title: '', instructions: '', style: '', customStyle: '' });
       toast.success('Peça gerada com sucesso');
       setSelectedPiece(piece);
       setTab('pecas');
@@ -274,11 +318,14 @@ export default function CaseDetailPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mt-3">
+        <div className="flex gap-1 mt-3 flex-wrap">
           {([
             { id: 'chat', icon: MessageSquare, label: 'Chat com Autos' },
             { id: 'documentos', icon: FileText, label: `Documentos (${caseData.documents?.length ?? 0})` },
             { id: 'pecas', icon: Scale, label: `Peças (${caseData.pieces?.length ?? 0})` },
+            { id: 'analise', icon: Brain, label: 'Análise IA' },
+            { id: 'audiencia', icon: Mic, label: 'Audiência' },
+            { id: 'acordo', icon: Handshake, label: 'Acordo' },
           ] as const).map((t) => (
             <button
               key={t.id}
@@ -582,6 +629,434 @@ export default function CaseDetailPage() {
         </div>
       )}
 
+      {/* ─── TAB: ANÁLISE IA ────────────────────────────────────────────── */}
+      {tab === 'analise' && (
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {indexedDocs === 0 && (
+            <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+              <p className="text-yellow-300/80 text-xs">Faça upload e indexe documentos para usar as análises de IA.</p>
+            </div>
+          )}
+
+          {/* Narrativa */}
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-brand-400" />
+                <h3 className="text-slate-200 text-sm font-medium">Narrativa Jurídica</h3>
+              </div>
+              <button
+                onClick={() => narrativeMutation.mutate()}
+                disabled={narrativeMutation.isPending || indexedDocs === 0}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 border border-brand-500/30 text-brand-400 text-xs rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {narrativeMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Brain className="w-3.5 h-3.5" />}
+                Gerar Narrativa
+              </button>
+            </div>
+            {narrativeMutation.data ? (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs text-slate-500 mb-2 font-medium">Narrativa</p>
+                  <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{narrativeMutation.data.narrativa}</p>
+                </div>
+                {narrativeMutation.data.enquadramentoJuridico && (
+                  <div>
+                    <p className="text-xs text-slate-500 mb-2 font-medium">Enquadramento Jurídico</p>
+                    <p className="text-slate-400 text-sm">{narrativeMutation.data.enquadramentoJuridico}</p>
+                  </div>
+                )}
+                {narrativeMutation.data.pontosChave?.length > 0 && (
+                  <div>
+                    <p className="text-xs text-slate-500 mb-2 font-medium">Pontos-Chave</p>
+                    <ul className="space-y-1">
+                      {narrativeMutation.data.pontosChave.map((p: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-slate-400">
+                          <ChevronRight className="w-3.5 h-3.5 text-brand-400 shrink-0 mt-0.5" />
+                          {p}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {narrativeMutation.data.recomendacaoEstrategica && (
+                  <div className="p-3 bg-brand-600/10 border border-brand-500/20 rounded-lg">
+                    <p className="text-xs text-brand-400 font-medium mb-1">Recomendação Estratégica</p>
+                    <p className="text-slate-300 text-sm">{narrativeMutation.data.recomendacaoEstrategica}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-slate-600 text-sm">Gere a narrativa jurídica cronológica do caso com base nos documentos indexados.</p>
+            )}
+          </div>
+
+          {/* Análise de Provas */}
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-amber-400" />
+                <h3 className="text-slate-200 text-sm font-medium">Análise Probatória</h3>
+              </div>
+              <button
+                onClick={() => evidenceMutation.mutate()}
+                disabled={evidenceMutation.isPending || indexedDocs === 0}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 border border-brand-500/30 text-brand-400 text-xs rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {evidenceMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldAlert className="w-3.5 h-3.5" />}
+                Analisar Provas
+              </button>
+            </div>
+            {evidenceMutation.data ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500">Avaliação geral:</span>
+                  <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', {
+                    'bg-emerald-500/10 text-emerald-400': evidenceMutation.data.avaliacaoGeral === 'forte',
+                    'bg-blue-500/10 text-blue-400': evidenceMutation.data.avaliacaoGeral === 'adequada',
+                    'bg-yellow-500/10 text-yellow-400': evidenceMutation.data.avaliacaoGeral === 'fraca',
+                    'bg-red-500/10 text-red-400': evidenceMutation.data.avaliacaoGeral === 'critica',
+                  })}>
+                    {evidenceMutation.data.avaliacaoGeral}
+                  </span>
+                </div>
+                {evidenceMutation.data.alertas?.length > 0 && (
+                  <div className="space-y-1">
+                    {evidenceMutation.data.alertas.map((a: string, i: number) => (
+                      <div key={i} className="flex items-start gap-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                        <AlertCircle className="w-3.5 h-3.5 text-yellow-400 shrink-0 mt-0.5" />
+                        <p className="text-yellow-300/80 text-xs">{a}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {evidenceMutation.data.provasFaltando?.length > 0 && (
+                  <div>
+                    <p className="text-xs text-slate-500 mb-2 font-medium">Provas Faltando</p>
+                    <div className="space-y-2">
+                      {evidenceMutation.data.provasFaltando.map((p: any, i: number) => (
+                        <div key={i} className="flex items-start gap-3 p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+                          <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded mt-0.5', {
+                            'bg-red-500/10 text-red-400': p.urgencia === 'alta',
+                            'bg-yellow-500/10 text-yellow-400': p.urgencia === 'media',
+                            'bg-slate-500/10 text-slate-400': p.urgencia === 'baixa',
+                          })}>{p.urgencia}</span>
+                          <div>
+                            <p className="text-slate-300 text-xs font-medium">{p.descricao}</p>
+                            {p.sugestao && <p className="text-slate-500 text-xs mt-0.5">{p.sugestao}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {evidenceMutation.data.provasPresentes?.length > 0 && (
+                  <div>
+                    <p className="text-xs text-slate-500 mb-2 font-medium">Provas Presentes</p>
+                    <div className="space-y-1">
+                      {evidenceMutation.data.provasPresentes.map((p: any, i: number) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span className="text-slate-300">{p.descricao}</span>
+                          <span className={cn('ml-auto text-[10px] px-1.5 py-0.5 rounded', {
+                            'bg-emerald-500/10 text-emerald-400': p.forca === 'forte',
+                            'bg-yellow-500/10 text-yellow-400': p.forca === 'media',
+                            'bg-slate-500/10 text-slate-500': p.forca === 'fraca',
+                          })}>{p.forca}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-slate-600 text-sm">Analise o quadro probatório: provas presentes, faltando e alertas críticos.</p>
+            )}
+          </div>
+
+          {/* Teses Jurídicas */}
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-yellow-400" />
+                <h3 className="text-slate-200 text-sm font-medium">Teses Jurídicas</h3>
+              </div>
+              <button
+                onClick={() => thesesMutation.mutate()}
+                disabled={thesesMutation.isPending || indexedDocs === 0}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 border border-brand-500/30 text-brand-400 text-xs rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {thesesMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Lightbulb className="w-3.5 h-3.5" />}
+                Detectar Teses
+              </button>
+            </div>
+            {thesesMutation.data?.teses?.length > 0 ? (
+              <div className="space-y-3">
+                {thesesMutation.data.teses.map((t: any, i: number) => (
+                  <div key={i} className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="text-slate-200 text-sm font-medium">{t.nome}</p>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className={cn('text-[10px] px-1.5 py-0.5 rounded', {
+                          'bg-blue-500/10 text-blue-400': t.favorabilidade === 'autor',
+                          'bg-red-500/10 text-red-400': t.favorabilidade === 'reu',
+                          'bg-slate-500/10 text-slate-400': t.favorabilidade === 'neutra',
+                        })}>{t.favorabilidade}</span>
+                        <span className="text-xs text-slate-500">{Math.round((t.confianca ?? 0) * 100)}%</span>
+                      </div>
+                    </div>
+                    <p className="text-slate-400 text-xs mb-2">{t.descricao}</p>
+                    {t.leis?.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {t.leis.map((lei: string, j: number) => (
+                          <span key={j} className="text-[10px] px-2 py-0.5 bg-brand-600/10 border border-brand-500/20 text-brand-400 rounded-full">{lei}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : thesesMutation.data ? (
+              <p className="text-slate-500 text-sm">Nenhuma tese identificada nos documentos.</p>
+            ) : (
+              <p className="text-slate-600 text-sm">Identifique automaticamente as teses jurídicas aplicáveis ao caso.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB: AUDIÊNCIA ──────────────────────────────────────────────── */}
+      {tab === 'audiencia' && (
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {indexedDocs === 0 && (
+            <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+              <p className="text-yellow-300/80 text-xs">Indexe documentos para gerar perguntas de audiência.</p>
+            </div>
+          )}
+
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Mic className="w-4 h-4 text-brand-400" />
+              <h3 className="text-slate-200 text-sm font-medium">Preparação para Audiência</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="text-slate-400 text-xs font-medium block mb-1">Nome da Testemunha</label>
+                <input
+                  value={witnessForm.name}
+                  onChange={(e) => setWitnessForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Ex: José da Silva"
+                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-brand-500/50"
+                />
+              </div>
+              <div>
+                <label className="text-slate-400 text-xs font-medium block mb-1">Papel / Função</label>
+                <input
+                  value={witnessForm.role}
+                  onChange={(e) => setWitnessForm((f) => ({ ...f, role: e.target.value }))}
+                  placeholder="Ex: Sócio da empresa"
+                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-brand-500/50"
+                />
+              </div>
+            </div>
+            <button
+              onClick={() => hearingMutation.mutate()}
+              disabled={hearingMutation.isPending || indexedDocs === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
+            >
+              {hearingMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mic className="w-4 h-4" />}
+              Gerar Perguntas
+            </button>
+          </div>
+
+          {hearingMutation.data && (
+            <>
+              {hearingMutation.data.estrategia && (
+                <div className="p-4 bg-brand-600/10 border border-brand-500/20 rounded-xl">
+                  <p className="text-xs text-brand-400 font-medium mb-1">Estratégia para a Audiência</p>
+                  <p className="text-slate-300 text-sm">{hearingMutation.data.estrategia}</p>
+                </div>
+              )}
+
+              {hearingMutation.data.alertas?.length > 0 && (
+                <div className="space-y-1">
+                  {hearingMutation.data.alertas.map((a: string, i: number) => (
+                    <div key={i} className="flex items-start gap-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                      <AlertCircle className="w-3.5 h-3.5 text-yellow-400 shrink-0 mt-0.5" />
+                      <p className="text-yellow-300/80 text-xs">{a}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {hearingMutation.data.perguntas?.length > 0 && (
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5">
+                  <p className="text-slate-300 text-sm font-medium mb-3">Perguntas Geradas ({hearingMutation.data.perguntas.length})</p>
+                  <div className="space-y-3">
+                    {hearingMutation.data.perguntas.map((p: any, i: number) => (
+                      <div key={i} className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <p className="text-slate-200 text-sm">{i + 1}. {p.pergunta}</p>
+                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded shrink-0', {
+                            'bg-blue-500/10 text-blue-400': p.tipo === 'direta',
+                            'bg-red-500/10 text-red-400': p.tipo === 'provocativa',
+                            'bg-emerald-500/10 text-emerald-400': p.tipo === 'esclarecedora',
+                          })}>{p.tipo}</span>
+                        </div>
+                        {p.objetivo && <p className="text-slate-500 text-xs">→ {p.objetivo}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {hearingMutation.data.pontosCriticos?.length > 0 && (
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
+                  <p className="text-xs text-slate-500 mb-2 font-medium">Pontos Críticos</p>
+                  <ul className="space-y-1">
+                    {hearingMutation.data.pontosCriticos.map((p: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-slate-400">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ─── TAB: ACORDO ─────────────────────────────────────────────────── */}
+      {tab === 'acordo' && (
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {indexedDocs === 0 && (
+            <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+              <p className="text-yellow-300/80 text-xs">Indexe documentos para a análise de acordo.</p>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center">
+            <h3 className="text-slate-200 text-sm font-medium flex items-center gap-2">
+              <Handshake className="w-4 h-4 text-brand-400" />
+              Análise de Acordo
+            </h3>
+            <button
+              onClick={() => settlementMutation.mutate()}
+              disabled={settlementMutation.isPending || indexedDocs === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
+            >
+              {settlementMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <BarChart3 className="w-4 h-4" />}
+              Analisar Acordo
+            </button>
+          </div>
+
+          {!settlementMutation.data && (
+            <p className="text-slate-600 text-sm">Analise a viabilidade de acordo: valor sugerido, cenários e fatores de risco.</p>
+          )}
+
+          {settlementMutation.data && (
+            <>
+              {/* Recomendação + valores */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                  <p className="text-xs text-slate-500 mb-2">Recomendação</p>
+                  <span className={cn('text-lg font-bold', {
+                    'text-emerald-400': settlementMutation.data.recomendacao === 'acordo',
+                    'text-red-400': settlementMutation.data.recomendacao === 'litigio',
+                    'text-yellow-400': settlementMutation.data.recomendacao === 'depende',
+                  })}>
+                    {settlementMutation.data.recomendacao === 'acordo' ? 'Acordo Recomendado' :
+                     settlementMutation.data.recomendacao === 'litigio' ? 'Litigar' : 'Avaliar Caso a Caso'}
+                  </span>
+                </div>
+                {settlementMutation.data.valorSugerido?.ideal > 0 && (
+                  <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                    <p className="text-xs text-slate-500 mb-1">Valor Ideal de Acordo</p>
+                    <p className="text-lg font-bold text-brand-400">
+                      {settlementMutation.data.valorSugerido.ideal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </p>
+                    <p className="text-xs text-slate-600 mt-1">
+                      {settlementMutation.data.valorSugerido.minimo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} — {settlementMutation.data.valorSugerido.maximo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {settlementMutation.data.racional && (
+                <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                  <p className="text-xs text-slate-500 mb-2 font-medium">Racional</p>
+                  <p className="text-slate-300 text-sm leading-relaxed">{settlementMutation.data.racional}</p>
+                </div>
+              )}
+
+              {/* Cenários */}
+              {settlementMutation.data.cenarios?.length > 0 && (
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
+                  <p className="text-xs text-slate-500 mb-3 font-medium">Cenários</p>
+                  <div className="space-y-2">
+                    {settlementMutation.data.cenarios.map((c: any, i: number) => (
+                      <div key={i} className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-lg">
+                        <div className="flex-1">
+                          <p className="text-slate-300 text-sm font-medium">{c.nome}</p>
+                          <p className="text-slate-500 text-xs">{c.descricao}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {c.valorEstimado > 0 && (
+                            <p className="text-slate-200 text-sm font-medium">
+                              {c.valorEstimado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </p>
+                          )}
+                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded', {
+                            'bg-emerald-500/10 text-emerald-400': c.probabilidade === 'alta',
+                            'bg-yellow-500/10 text-yellow-400': c.probabilidade === 'media',
+                            'bg-red-500/10 text-red-400': c.probabilidade === 'baixa',
+                          })}>{c.probabilidade}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pontos e riscos */}
+              <div className="grid grid-cols-2 gap-4">
+                {settlementMutation.data.pontosFavoraveis?.length > 0 && (
+                  <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+                    <p className="text-xs text-emerald-400 font-medium mb-2">Pontos Favoráveis</p>
+                    <ul className="space-y-1">
+                      {settlementMutation.data.pontosFavoraveis.map((p: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
+                          {p}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {settlementMutation.data.fatoresRisco?.length > 0 && (
+                  <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-xl">
+                    <p className="text-xs text-red-400 font-medium mb-2">Fatores de Risco</p>
+                    <ul className="space-y-1">
+                      {settlementMutation.data.fatoresRisco.map((r: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                          <AlertCircle className="w-3 h-3 text-red-400 shrink-0 mt-0.5" />
+                          {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {/* ─── MODAL: GERAR PEÇA ─────────────────────────────────────────── */}
       {showPieceModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -619,6 +1094,36 @@ export default function CaseDetailPage() {
                   placeholder="Ex: Contestação — João Silva vs. Banco Itaú"
                   className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-brand-500/50"
                 />
+              </div>
+              <div>
+                <label className="text-slate-400 text-xs font-medium block mb-1">Estilo de redação (opcional)</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {STYLE_OPTIONS.map((s) => (
+                    <button
+                      key={s.value}
+                      type="button"
+                      onClick={() => setPieceForm((f) => ({ ...f, style: f.style === s.value ? '' : s.value }))}
+                      className={cn(
+                        'text-left px-3 py-2 rounded-lg border text-xs transition-all',
+                        pieceForm.style === s.value
+                          ? 'bg-brand-600/15 border-brand-500/30 text-brand-400'
+                          : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:border-white/20',
+                      )}
+                    >
+                      <p className="font-medium">{s.label}</p>
+                      <p className="text-[10px] text-slate-600 mt-0.5">{s.desc}</p>
+                    </button>
+                  ))}
+                </div>
+                {pieceForm.style === 'custom' && (
+                  <textarea
+                    value={pieceForm.customStyle}
+                    onChange={(e) => setPieceForm((f) => ({ ...f, customStyle: e.target.value }))}
+                    placeholder="Descreva o estilo desejado..."
+                    rows={2}
+                    className="mt-2 w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-brand-500/50 resize-none"
+                  />
+                )}
               </div>
               <div>
                 <label className="text-slate-400 text-xs font-medium block mb-1">Instruções específicas (opcional)</label>

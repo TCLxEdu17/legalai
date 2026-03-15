@@ -533,6 +533,8 @@ class ApiClient {
     pieceType: string;
     title: string;
     instructions?: string;
+    style?: string;
+    customStyle?: string;
   }) {
     const { data } = await this.client.post(
       `/cases/${caseId}/pieces`,
@@ -549,6 +551,41 @@ class ApiClient {
 
   async deleteCasePiece(caseId: string, pieceId: string) {
     await this.client.delete(`/cases/${caseId}/pieces/${pieceId}`);
+  }
+
+  async buildCaseNarrative(caseId: string) {
+    const { data } = await this.client.post(`/cases/${caseId}/narrative`, {}, { timeout: 120000 });
+    return data;
+  }
+
+  async analyzeCaseEvidence(caseId: string) {
+    const { data } = await this.client.get(`/cases/${caseId}/evidence`, { timeout: 120000 });
+    return data;
+  }
+
+  async detectCaseTheses(caseId: string) {
+    const { data } = await this.client.get(`/cases/${caseId}/theses`, { timeout: 120000 });
+    return data;
+  }
+
+  async generateHearingQuestions(caseId: string, witnessName?: string, witnessRole?: string) {
+    const { data } = await this.client.post(`/cases/${caseId}/hearing`, { witnessName, witnessRole }, { timeout: 120000 });
+    return data;
+  }
+
+  async analyzeCaseSettlement(caseId: string) {
+    const { data } = await this.client.get(`/cases/${caseId}/settlement`, { timeout: 120000 });
+    return data;
+  }
+
+  async getCasesRadar() {
+    const { data } = await this.client.get('/cases/radar', { timeout: 120000 });
+    return data;
+  }
+
+  async getOfficeCopilot() {
+    const { data } = await this.client.get('/cases/copilot', { timeout: 120000 });
+    return data;
   }
 
   // ==================== CONTRATOS ====================
