@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional, Inject } from '@nestjs/common';
 import { RagService } from '../rag/rag.service';
 
 export interface PredictionPromptParams {
@@ -22,7 +22,7 @@ export interface PredictionResult {
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
 
-  constructor(private readonly ragService: RagService | null) {}
+  constructor(@Optional() @Inject(RagService) private readonly ragService: RagService | null) {}
 
   buildPredictionPrompt(params: PredictionPromptParams): string {
     const { area, pedido, tribunal, resumoFatos, jurisprudencias } = params;
