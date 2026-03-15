@@ -4,7 +4,10 @@ import { PeticoesController } from './peticoes.controller';
 
 @Module({
   controllers: [PeticoesController],
-  providers: [PeticoesService],
+  providers: [
+    PeticoesService,
+    { provide: 'CASES_SERVICE', useValue: null },
+  ],
   exports: [PeticoesService],
 })
 export class PeticoesModule {}
