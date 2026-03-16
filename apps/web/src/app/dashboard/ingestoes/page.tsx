@@ -71,7 +71,7 @@ const STATUS_CONFIG = {
   COMPLETED: { label: 'Concluído', icon: CheckCircle, cls: 'text-emerald-400 bg-emerald-500/15' },
   PARTIAL: { label: 'Parcial', icon: AlertCircle, cls: 'text-amber-400 bg-amber-500/15' },
   FAILED: { label: 'Falhou', icon: XCircle, cls: 'text-red-400 bg-red-500/15' },
-  RUNNING: { label: 'Executando', icon: cls: 'text-brand-400 bg-brand-600/15' },
+  RUNNING: { label: 'Executando', icon: Activity, cls: 'text-brand-400 bg-brand-600/15' },
   PENDING: { label: 'Aguardando', icon: Clock, cls: 'text-slate-400 bg-white/5' },
 };
 
