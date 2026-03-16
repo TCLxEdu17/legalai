@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { GitCompare, Search, X, Loader2, Sparkles, FileText, Upload, Paperclip } from 'lucide-react';
+import { GitCompare, Search, X, Sparkles, FileText, Upload, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
@@ -105,7 +106,7 @@ export default function ComparadorPage() {
               className="w-full pl-10 pr-4 py-2.5 bg-[#111111] border border-white/10 text-slate-100 text-sm rounded-lg
                          placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
-            {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 animate-spin" />}
+            {searching && <PlanetLoader size="xs" />}
           </div>
 
           {/* Upload button */}
@@ -117,7 +118,7 @@ export default function ComparadorPage() {
             title="Anexar PDF, DOCX ou TXT"
           >
             {uploading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <PlanetLoader size="xs" />
             ) : (
               <Paperclip className="w-4 h-4" />
             )}
@@ -210,7 +211,7 @@ export default function ComparadorPage() {
               disabled={compareMutation.isPending}
               className="ml-auto flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
             >
-              {compareMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {compareMutation.isPending ? <PlanetLoader size="xs" /> : <Sparkles className="w-4 h-4" />}
               Comparar com IA
             </button>
           </div>

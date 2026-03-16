@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { Scale, Copy, Check, Clock, AlertTriangle } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage } from '@/lib/utils';
@@ -190,7 +191,7 @@ export default function TrialPage() {
   if (!loadedFromStorage) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
+        <PlanetLoader size="md" />
       </div>
     );
   }

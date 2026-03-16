@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Loader2,
   Clock,
   ChevronDown,
   ChevronUp,
@@ -71,7 +71,7 @@ const STATUS_CONFIG = {
   COMPLETED: { label: 'Concluído', icon: CheckCircle, cls: 'text-emerald-400 bg-emerald-500/15' },
   PARTIAL: { label: 'Parcial', icon: AlertCircle, cls: 'text-amber-400 bg-amber-500/15' },
   FAILED: { label: 'Falhou', icon: XCircle, cls: 'text-red-400 bg-red-500/15' },
-  RUNNING: { label: 'Executando', icon: Loader2, cls: 'text-brand-400 bg-brand-600/15' },
+  RUNNING: { label: 'Executando', icon: cls: 'text-brand-400 bg-brand-600/15' },
   PENDING: { label: 'Aguardando', icon: Clock, cls: 'text-slate-400 bg-white/5' },
 };
 
@@ -152,7 +152,7 @@ export default function IngestoesPage() {
             className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-sm hover:bg-amber-500/20 transition-colors disabled:opacity-60"
           >
             {cleanupMutation.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <PlanetLoader size="xs" />
             ) : (
               <Wrench className="w-4 h-4" />
             )}
@@ -175,7 +175,7 @@ export default function IngestoesPage() {
       <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="text-center py-12 text-slate-500">
-            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+            <PlanetLoader size="sm" />
             Carregando jobs...
           </div>
         ) : jobs.length === 0 ? (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -9,7 +10,6 @@ import {
   MessageSquare,
   FileText,
   Scale,
-  Loader2,
   Send,
   Trash2,
   Download,
@@ -102,8 +102,8 @@ const PIECE_TYPES = [
 
 const processingStatusIcon = {
   NOT_STARTED: <Clock className="w-3.5 h-3.5 text-slate-500" />,
-  CHUNKING: <Loader2 className="w-3.5 h-3.5 text-yellow-400 animate-spin" />,
-  EMBEDDING: <Loader2 className="w-3.5 h-3.5 text-brand-400 animate-spin" />,
+  CHUNKING: <PlanetLoader size="xs" />,
+  EMBEDDING: <PlanetLoader size="xs" />,
   INDEXED: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />,
   FAILED: <AlertCircle className="w-3.5 h-3.5 text-red-400" />,
 };
@@ -282,7 +282,7 @@ export default function CaseDetailPage() {
   if (caseLoading) {
     return (
       <div className="flex items-center justify-center h-full bg-[#0d0d0d]">
-        <Loader2 className="w-6 h-6 text-brand-400 animate-spin" />
+        <PlanetLoader size="sm" />
       </div>
     );
   }
@@ -371,7 +371,7 @@ export default function CaseDetailPage() {
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {historyLoading ? (
               <div className="flex justify-center pt-10">
-                <Loader2 className="w-5 h-5 text-brand-400 animate-spin" />
+                <PlanetLoader size="sm" />
               </div>
             ) : chatHistory.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 text-center">
@@ -411,7 +411,7 @@ export default function CaseDetailPage() {
             {chatMutation.isPending && (
               <div className="flex justify-start">
                 <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3">
-                  <Loader2 className="w-4 h-4 text-brand-400 animate-spin" />
+                  <PlanetLoader size="xs" />
                 </div>
               </div>
             )}
@@ -484,7 +484,7 @@ export default function CaseDetailPage() {
                   disabled={uploadMutation.isPending}
                   className="flex items-center gap-2 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 border border-brand-500/30 text-brand-400 text-xs rounded-lg transition-colors disabled:opacity-50"
                 >
-                  {uploadMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                  {uploadMutation.isPending ? <PlanetLoader size="xs" /> : <Upload className="w-3.5 h-3.5" />}
                   Selecionar arquivo
                 </button>
               </div>
@@ -599,7 +599,7 @@ export default function CaseDetailPage() {
               </div>
             ) : loadPieceMutation.isPending ? (
               <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-5 h-5 text-brand-400 animate-spin" />
+                <PlanetLoader size="sm" />
               </div>
             ) : (
               <>
@@ -660,7 +660,7 @@ export default function CaseDetailPage() {
                 disabled={narrativeMutation.isPending || indexedDocs === 0}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 border border-brand-500/30 text-brand-400 text-xs rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {narrativeMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Brain className="w-3.5 h-3.5" />}
+                {narrativeMutation.isPending ? <PlanetLoader size="xs" /> : <Brain className="w-3.5 h-3.5" />}
                 Gerar Narrativa
               </button>
             </div>
@@ -713,7 +713,7 @@ export default function CaseDetailPage() {
                 disabled={evidenceMutation.isPending || indexedDocs === 0}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 border border-brand-500/30 text-brand-400 text-xs rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {evidenceMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldAlert className="w-3.5 h-3.5" />}
+                {evidenceMutation.isPending ? <PlanetLoader size="xs" /> : <ShieldAlert className="w-3.5 h-3.5" />}
                 Analisar Provas
               </button>
             </div>
@@ -796,7 +796,7 @@ export default function CaseDetailPage() {
                 disabled={thesesMutation.isPending || indexedDocs === 0}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 border border-brand-500/30 text-brand-400 text-xs rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {thesesMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Lightbulb className="w-3.5 h-3.5" />}
+                {thesesMutation.isPending ? <PlanetLoader size="xs" /> : <Lightbulb className="w-3.5 h-3.5" />}
                 Detectar Teses
               </button>
             </div>
@@ -875,7 +875,7 @@ export default function CaseDetailPage() {
               disabled={hearingMutation.isPending || indexedDocs === 0}
               className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
             >
-              {hearingMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mic className="w-4 h-4" />}
+              {hearingMutation.isPending ? <PlanetLoader size="xs" /> : <Mic className="w-4 h-4" />}
               Gerar Perguntas
             </button>
           </div>
@@ -959,7 +959,7 @@ export default function CaseDetailPage() {
               disabled={settlementMutation.isPending || indexedDocs === 0}
               className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
             >
-              {settlementMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <BarChart3 className="w-4 h-4" />}
+              {settlementMutation.isPending ? <PlanetLoader size="xs" /> : <BarChart3 className="w-4 h-4" />}
               Analisar Acordo
             </button>
           </div>
@@ -1162,7 +1162,7 @@ export default function CaseDetailPage() {
               >
                 {generatePieceMutation.isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <PlanetLoader size="xs" />
                     Gerando...
                   </>
                 ) : (

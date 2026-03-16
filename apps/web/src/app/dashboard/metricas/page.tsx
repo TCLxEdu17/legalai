@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery } from '@tanstack/react-query';
 import {
   Users,
   UserCheck,
   UserX,
   ThumbsUp,
-  Loader2,
   Key,
   AlertTriangle,
   Zap,
@@ -175,7 +175,7 @@ function TrialActions({ trialId, isExpired }: { trialId: string; isExpired: bool
           disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
       >
         {extendMutation.isPending ? (
-          <Loader2 className="w-3 h-3 animate-spin" />
+          <PlanetLoader size="xs" />
         ) : (
           <Clock className="w-3 h-3" />
         )}
@@ -198,7 +198,7 @@ function TrialActions({ trialId, isExpired }: { trialId: string; isExpired: bool
               bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors
               disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {convertMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'OK'}
+            {convertMutation.isPending ? <PlanetLoader size="xs" /> : 'OK'}
           </button>
           <button
             onClick={() => setShowConvert(false)}
@@ -292,7 +292,7 @@ export default function MetricasPage() {
       {/* Stats row */}
       {trialLoading ? (
         <div className="flex items-center gap-2 text-slate-500 text-sm">
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <PlanetLoader size="xs" />
           Carregando métricas...
         </div>
       ) : trialError ? (
@@ -343,7 +343,7 @@ export default function MetricasPage() {
         <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
           {trialLoading ? (
             <div className="flex items-center justify-center py-12 text-slate-500 gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <PlanetLoader size="sm" />
               Carregando...
             </div>
           ) : trials.length === 0 ? (
@@ -436,7 +436,7 @@ export default function MetricasPage() {
 
         {tokenLoading ? (
           <div className="flex items-center gap-2 text-slate-500 text-sm">
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <PlanetLoader size="xs" />
             Carregando uso de tokens...
           </div>
         ) : tokenError ? (
@@ -552,7 +552,7 @@ export default function MetricasPage() {
         <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
           {usageLoading ? (
             <div className="flex items-center justify-center py-12 text-slate-500 gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <PlanetLoader size="sm" />
               Carregando...
             </div>
           ) : usageError ? (

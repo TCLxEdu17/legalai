@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useMutation } from '@tanstack/react-query';
-import { FileEdit, Loader2, Copy, Download } from 'lucide-react';
+import { FileEdit, Copy, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage } from '@/lib/utils';
@@ -144,7 +145,7 @@ export default function MinutasPage() {
               disabled={!fields.parteNome || generateMutation.isPending}
               className="w-full py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
             >
-              {generateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileEdit className="w-4 h-4" />}
+              {generateMutation.isPending ? <PlanetLoader size="xs" /> : <FileEdit className="w-4 h-4" />}
               {generateMutation.isPending ? 'Gerando...' : 'Gerar Minuta'}
             </button>
           </div>

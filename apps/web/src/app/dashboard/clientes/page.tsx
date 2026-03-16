@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Plus, Search, Trash2, Edit2, Loader2, X, MapPin, Building2, ChevronDown } from 'lucide-react';
+import { Users, Plus, Search, Trash2, Edit2, X, MapPin, Building2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
@@ -200,7 +201,7 @@ export default function ClientesPage() {
         <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
+              <PlanetLoader size="sm" />
             </div>
           ) : clients.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -286,7 +287,7 @@ export default function ClientesPage() {
                     className="shrink-0 px-2.5 py-2 bg-brand-600/15 border border-brand-500/20 text-brand-400 rounded-lg hover:bg-brand-600/25 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Buscar CNPJ"
                   >
-                    {lookingUpCnpj ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
+                    {lookingUpCnpj ? <PlanetLoader size="xs" /> : <Building2 className="w-4 h-4" />}
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-600 mt-1">CNPJ: sai do campo ou clica no ícone para preencher automaticamente</p>
@@ -327,7 +328,7 @@ export default function ClientesPage() {
                     className="shrink-0 px-2.5 py-2 bg-brand-600/15 border border-brand-500/20 text-brand-400 rounded-lg hover:bg-brand-600/25 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Buscar CEP"
                   >
-                    {lookingUpCep ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                    {lookingUpCep ? <PlanetLoader size="xs" /> : <MapPin className="w-4 h-4" />}
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-600 mt-1">Digite o CEP e clique no ícone para preencher UF/município</p>
@@ -347,7 +348,7 @@ export default function ClientesPage() {
                 </div>
                 <div>
                   <label className="text-xs text-slate-500 mb-1 block">
-                    Município {loadingMunicipios && <Loader2 className="inline w-3 h-3 animate-spin ml-1" />}
+                    Município {loadingMunicipios && <PlanetLoader size="xs" />}
                   </label>
                   <div className="relative">
                     <select value={form.municipio} onChange={(e) => setForm({ ...form, municipio: e.target.value })} disabled={!form.uf || loadingMunicipios} className={cn(selectCls, (!form.uf || loadingMunicipios) && 'opacity-50 cursor-not-allowed')}>
@@ -371,7 +372,7 @@ export default function ClientesPage() {
                 disabled={!form.name || isPending}
                 className="w-full py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
               >
-                {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isPending && <PlanetLoader size="xs" />}
                 {editingClient ? 'Atualizar' : 'Salvar cliente'}
               </button>
             </div>

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, RefreshCw, Trash2, Eye, FileText, Filter, Sparkles, ChevronDown, ChevronUp, Heart, MessageCircle, Send, Loader2 } from 'lucide-react';
+import { Search, RefreshCw, Trash2, Eye, FileText, Filter, Sparkles, ChevronDown, ChevronUp, Heart, MessageCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import {
@@ -417,7 +418,7 @@ function DocumentModal({
                 disabled={!commentText.trim() || addCommentMutation.isPending}
                 className="px-3 py-2 bg-brand-600/15 text-brand-400 border border-brand-500/20 rounded-lg transition-colors hover:bg-brand-600/25 disabled:opacity-50"
               >
-                {addCommentMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                {addCommentMutation.isPending ? <PlanetLoader size="xs" /> : <Send className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>

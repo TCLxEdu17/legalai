@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Upload, FileText, X, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -256,7 +257,7 @@ export default function UploadPage() {
         >
           {uploadMutation.isPending ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <PlanetLoader size="xs" />
               Enviando e processando...
             </>
           ) : (
