@@ -164,7 +164,7 @@ function PlanosContent() {
             <div
               key={plan.id}
               className={cn(
-                'bg-[#141414] border rounded-xl p-5 relative',
+                'bg-[#141414] border rounded-xl p-5 relative flex flex-col',
                 isCurrent ? 'border-brand-500/40' : plan.highlighted ? 'border-emerald-500/20' : 'border-white/[0.07]'
               )}
             >
@@ -197,7 +197,7 @@ function PlanosContent() {
                   onClick={() => handleCheckout(plan.id)}
                   disabled={loadingPlan !== null}
                   className={cn(
-                    'w-full mt-4 py-2.5 rounded-xl text-xs font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50',
+                    'w-full mt-auto pt-4 py-2.5 rounded-xl text-xs font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50',
                     plan.highlighted
                       ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
                       : 'bg-white/5 hover:bg-white/10 text-slate-300'
@@ -214,7 +214,7 @@ function PlanosContent() {
                 <button
                   onClick={handlePortal}
                   disabled={loadingPortal}
-                  className="w-full mt-4 py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl text-xs font-medium transition-colors"
+                  className="w-full mt-auto pt-4 py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl text-xs font-medium transition-colors"
                 >
                   Gerenciar
                 </button>
