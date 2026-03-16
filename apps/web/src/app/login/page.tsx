@@ -34,6 +34,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       await login(data.email, data.password);
+      // Reseta o timestamp de atividade para evitar falso "sessão expirada"
+      localStorage.setItem('legalai_last_activity', String(Date.now()));
       toast.success('Login realizado com sucesso');
       router.push('/dashboard');
     } catch (error) {
