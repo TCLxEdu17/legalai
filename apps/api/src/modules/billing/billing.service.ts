@@ -16,7 +16,9 @@ export class BillingService {
     private readonly prisma: PrismaService,
   ) {
     const secretKey = process.env.STRIPE_SECRET_KEY;
-    this.stripe = secretKey && secretKey.length > 0 ? new Stripe(secretKey) : null;
+    this.stripe = secretKey && secretKey.length > 0
+      ? new Stripe(secretKey, { httpClient: Stripe.createNodeHttpClient() })
+      : null;
     this.prices = {
       basic: this.configService.get<string>('app.stripe.prices.basic', ''),
       pro: this.configService.get<string>('app.stripe.prices.pro', ''),
