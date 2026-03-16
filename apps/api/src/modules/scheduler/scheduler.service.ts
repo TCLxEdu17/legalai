@@ -3,6 +3,8 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { PrismaService } from '../../prisma/prisma.service';
 import { IngestionService } from '../ingestion/ingestion.service';
+import { ProcessosService } from '../processos/processos.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SchedulerService implements OnModuleInit {
@@ -12,6 +14,8 @@ export class SchedulerService implements OnModuleInit {
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly prisma: PrismaService,
     private readonly ingestionService: IngestionService,
+    private readonly processosService: ProcessosService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -23,6 +27,7 @@ export class SchedulerService implements OnModuleInit {
     await this.syncCronJobs();
     this.registerPurgeJob();
     this.registerKnowledgeConsolidationJob();
+    this.registerProcessosCheckJob();
   }
 
   /** Ao reiniciar, resolve jobs órfãos em RUNNING (processo morreu mid-run). */
@@ -134,6 +139,23 @@ export class SchedulerService implements OnModuleInit {
     this.schedulerRegistry.addCronJob('lgpd_purge', job);
     job.start();
     this.logger.log('Job de purga LGPD registrado (diário às 03h)');
+  }
+
+  /** Verifica movimentações de processos monitorados — roda a cada 2 horas */
+  private registerProcessosCheckJob() {
+    const job = new CronJob('0 */2 * * *', async () => {
+      this.logger.log('[PROCESSOS] Iniciando verificação de processos monitorados...');
+      try {
+        await this.processosService.checkAndNotify(this.notificationsService);
+        this.logger.log('[PROCESSOS] Verificação concluída');
+      } catch (err) {
+        this.logger.error(`[PROCESSOS] Erro fatal: ${err.message}`);
+      }
+    });
+
+    this.schedulerRegistry.addCronJob('processos_check', job);
+    job.start();
+    this.logger.log('Job de verificação de processos registrado (a cada 2 horas)');
   }
 
   async removeSourceJob(sourceId: string) {

@@ -1,7 +1,10 @@
 'use client';
 
+import { useState, useEffect, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { CreditCard, Zap, Star, Infinity as InfinityIcon, CheckCircle } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { CreditCard, Zap, Star, Infinity as InfinityIcon, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 
@@ -18,17 +21,18 @@ const PLANS = [
   {
     id: 'basic',
     name: 'Basic',
-    price: 'R$ 97/mês',
+    price: 'R$ 97',
+    period: '/mês',
     icon: Star,
     color: 'text-brand-400',
     features: ['200 msgs/mês', '20 uploads/mês', '500 chamadas API'],
     limits: { chatMessages: 200, uploads: 20, apiCalls: 500 },
-    highlighted: false,
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: 'R$ 297/mês',
+    price: 'R$ 297',
+    period: '/mês',
     icon: Star,
     color: 'text-emerald-400',
     features: ['2.000 msgs/mês', '200 uploads/mês', '5.000 chamadas API', 'Suporte prioritário'],
@@ -38,7 +42,8 @@ const PLANS = [
   {
     id: 'unlimited',
     name: 'Unlimited',
-    price: 'R$ 697/mês',
+    price: 'R$ 697',
+    period: '/mês',
     icon: InfinityIcon,
     color: 'text-violet-400',
     features: ['Mensagens ilimitadas', 'Uploads ilimitados', 'API ilimitada', 'SLA dedicado'],
@@ -68,20 +73,70 @@ function UsageBar({ used, limit, label }: { used: number; limit: number | null; 
   );
 }
 
-export default function PlanosPage() {
-  const { data: planInfo, isLoading } = useQuery({
+function PlanosContent() {
+  const searchParams = useSearchParams();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [loadingPortal, setLoadingPortal] = useState(false);
+
+  const { data: planInfo, isLoading, refetch } = useQuery({
     queryKey: ['plan-info'],
     queryFn: () => apiClient.getPlanInfo(),
   });
 
+  // Handle Stripe redirect callbacks
+  useEffect(() => {
+    if (searchParams.get('success') === '1') {
+      toast.success('Assinatura ativada com sucesso!');
+      refetch();
+    } else if (searchParams.get('canceled') === '1') {
+      toast.info('Checkout cancelado. Você pode tentar novamente.');
+    }
+  }, [searchParams, refetch]);
+
+  const handleCheckout = async (planId: string) => {
+    try {
+      setLoadingPlan(planId);
+      const { url } = await apiClient.createCheckoutSession(planId);
+      window.location.href = url;
+    } catch {
+      toast.error('Erro ao criar sessão de pagamento');
+      setLoadingPlan(null);
+    }
+  };
+
+  const handlePortal = async () => {
+    try {
+      setLoadingPortal(true);
+      const { url } = await apiClient.createPortalSession();
+      window.location.href = url;
+    } catch {
+      toast.error('Erro ao abrir portal de assinatura');
+      setLoadingPortal(false);
+    }
+  };
+
+  const isPaid = planInfo?.plan && planInfo.plan !== 'trial';
+
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-          <CreditCard className="w-6 h-6 text-brand-400" />
-          Planos e Uso
-        </h1>
-        <p className="text-slate-500 text-sm mt-1">Gerencie seu plano e acompanhe o uso mensal</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+            <CreditCard className="w-6 h-6 text-brand-400" />
+            Planos e Uso
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">Gerencie seu plano e acompanhe o uso mensal</p>
+        </div>
+        {isPaid && (
+          <button
+            onClick={handlePortal}
+            disabled={loadingPortal}
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+            Gerenciar assinatura
+          </button>
+        )}
       </div>
 
       {/* Current usage */}
@@ -100,19 +155,20 @@ export default function PlanosPage() {
       )}
 
       {/* Plan comparison */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {PLANS.map((plan) => {
           const isCurrent = planInfo?.plan === plan.id;
           const Icon = plan.icon;
+          const isUpgrade = plan.id !== 'trial';
           return (
             <div
               key={plan.id}
               className={cn(
                 'bg-[#141414] border rounded-xl p-5 relative',
-                isCurrent ? 'border-brand-500/40' : plan.id === 'pro' ? 'border-emerald-500/20' : 'border-white/[0.07]'
+                isCurrent ? 'border-brand-500/40' : plan.highlighted ? 'border-emerald-500/20' : 'border-white/[0.07]'
               )}
             >
-              {plan.id === 'pro' && (
+              {plan.highlighted && !isCurrent && (
                 <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] bg-emerald-500 text-white px-2.5 py-0.5 rounded-full font-bold">
                   RECOMENDADO
                 </div>
@@ -124,7 +180,10 @@ export default function PlanosPage() {
               )}
               <Icon className={cn('w-5 h-5 mb-3', plan.color)} />
               <h3 className="font-semibold text-slate-200 text-sm">{plan.name}</h3>
-              <p className="text-xl font-bold text-slate-100 mt-1 mb-3">{plan.price}</p>
+              <div className="mt-1 mb-3">
+                <span className="text-xl font-bold text-slate-100">{plan.price}</span>
+                {(plan as any).period && <span className="text-slate-500 text-sm">{(plan as any).period}</span>}
+              </div>
               <div className="space-y-1.5">
                 {plan.features.map((f) => (
                   <div key={f} className="flex items-center gap-1.5 text-xs text-slate-400">
@@ -133,9 +192,31 @@ export default function PlanosPage() {
                   </div>
                 ))}
               </div>
-              {!isCurrent && (
-                <button className="w-full mt-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-xs font-medium transition-colors">
-                  Fazer upgrade
+              {!isCurrent && isUpgrade && (
+                <button
+                  onClick={() => handleCheckout(plan.id)}
+                  disabled={loadingPlan !== null}
+                  className={cn(
+                    'w-full mt-4 py-2.5 rounded-xl text-xs font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50',
+                    plan.highlighted
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-300'
+                  )}
+                >
+                  {loadingPlan === plan.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    'Fazer upgrade'
+                  )}
+                </button>
+              )}
+              {isCurrent && isPaid && (
+                <button
+                  onClick={handlePortal}
+                  disabled={loadingPortal}
+                  className="w-full mt-4 py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl text-xs font-medium transition-colors"
+                >
+                  Gerenciar
                 </button>
               )}
             </div>
@@ -143,5 +224,13 @@ export default function PlanosPage() {
         })}
       </div>
     </div>
+  );
+}
+
+export default function PlanosPage() {
+  return (
+    <Suspense>
+      <PlanosContent />
+    </Suspense>
   );
 }

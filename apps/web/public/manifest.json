@@ -1,0 +1,44 @@
+{
+  "name": "LegalAI — Assistente Jurídico",
+  "short_name": "LegalAI",
+  "description": "Copiloto jurídico com IA para advogados",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0a0a",
+  "theme_color": "#2535ea",
+  "lang": "pt-BR",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Meus Casos",
+      "url": "/dashboard/casos",
+      "description": "Acessar casos jurídicos"
+    },
+    {
+      "name": "Copiloto IA",
+      "url": "/dashboard/copiloto",
+      "description": "Copiloto do escritório"
+    },
+    {
+      "name": "Assistente",
+      "url": "/dashboard/chat",
+      "description": "Chat com assistente jurídico"
+    }
+  ]
+}

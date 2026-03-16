@@ -15,7 +15,13 @@ export type FeatureFlag =
   | 'planos'
   | 'analise'
   | 'jurisprudencias'
-  | 'api';
+  | 'api'
+  | 'atualizacao'
+  | 'contratos'
+  | 'financeiro'
+  | 'tarefas'
+  | 'predicao'
+  | 'procuracoes';
 
 const DEFAULTS: Record<FeatureFlag, boolean> = {
   calculadora: true,
@@ -32,6 +38,12 @@ const DEFAULTS: Record<FeatureFlag, boolean> = {
   analise: true,
   jurisprudencias: true,
   api: true,
+  atualizacao: true,
+  contratos: true,
+  financeiro: true,
+  tarefas: true,
+  predicao: true,
+  procuracoes: true,
 };
 
 const STORAGE_KEY = 'legalai_feature_flags';

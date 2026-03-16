@@ -51,6 +51,34 @@ export class TrialController {
     return this.trialService.findById(id);
   }
 
+  @Post(':id/extend')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Extend trial by N hours (admin only)' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as any)
+  extendTrial(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { hours?: number },
+  ) {
+    this.logger.log(`POST /trial/${id}/extend — hours=${body.hours ?? 24}`);
+    return this.trialService.extendTrial(id, body.hours ?? 24);
+  }
+
+  @Post(':id/convert')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Convert trial to paid account (admin only), preserves all data' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as any)
+  convertTrial(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { email: string },
+  ) {
+    this.logger.log(`POST /trial/${id}/convert — email=${body.email}`);
+    return this.trialService.convertTrial(id, body.email);
+  }
+
   @Post(':id/feedback')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Submit feedback for trial user (public)' })

@@ -24,6 +24,8 @@ import { CreateCaseDto } from './dto/create-case.dto';
 import { UpdateCaseDto } from './dto/update-case.dto';
 import { ChatCaseDto } from './dto/chat-case.dto';
 import { GeneratePieceDto } from './dto/generate-piece.dto';
+import { GenerateHearingDto } from './dto/generate-hearing.dto';
+import { PredictCompensationDto } from './dto/predict-compensation.dto';
 import { CaseDocType } from '@prisma/client';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -45,6 +47,23 @@ export class CasesController {
     return this.casesService.listCases(req.user.id);
   }
 
+  // ─── ROTAS SEM :id (devem vir ANTES de :id) ───────────────────────────────
+
+  @Get('radar')
+  detectOpportunities(@Request() req: any) {
+    return this.casesService.detectOpportunities(req.user.id);
+  }
+
+  @Get('copilot')
+  getOfficeCopilot(@Request() req: any) {
+    return this.casesService.getOfficeCopilot(req.user.id);
+  }
+
+  @Post('predict-compensation')
+  predictCompensation(@Body() dto: PredictCompensationDto) {
+    return this.casesService.predictCompensation(dto);
+  }
+
   @Get(':id')
   getCase(@Param('id') id: string, @Request() req: any) {
     return this.casesService.getCase(id, req.user.id);
@@ -64,6 +83,35 @@ export class CasesController {
   @Get(':id/summary')
   getCaseSummary(@Param('id') id: string, @Request() req: any) {
     return this.casesService.getCaseSummary(id, req.user.id);
+  }
+
+  @Post(':id/narrative')
+  buildLegalNarrative(@Param('id') id: string, @Request() req: any) {
+    return this.casesService.buildLegalNarrative(id, req.user.id);
+  }
+
+  @Get(':id/evidence')
+  analyzeEvidence(@Param('id') id: string, @Request() req: any) {
+    return this.casesService.analyzeEvidence(id, req.user.id);
+  }
+
+  @Get(':id/theses')
+  detectLegalTheses(@Param('id') id: string, @Request() req: any) {
+    return this.casesService.detectLegalTheses(id, req.user.id);
+  }
+
+  @Post(':id/hearing')
+  generateHearingQuestions(
+    @Param('id') id: string,
+    @Body() dto: GenerateHearingDto,
+    @Request() req: any,
+  ) {
+    return this.casesService.generateHearingQuestions(id, dto, req.user.id);
+  }
+
+  @Get(':id/settlement')
+  analyzeSettlement(@Param('id') id: string, @Request() req: any) {
+    return this.casesService.analyzeSettlement(id, req.user.id);
   }
 
   // ─── DOCUMENTOS ───────────────────────────────────────────────────────────

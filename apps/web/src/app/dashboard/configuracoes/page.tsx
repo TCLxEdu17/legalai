@@ -122,6 +122,19 @@ export default function ConfiguracoesPage() {
     updateOabMutation.mutate(data);
   };
 
+  const updatePrefixMutation = useMutation({
+    mutationFn: (prefix: string) => apiClient.updateProfile({ prefix }),
+    onSuccess: (_data, prefix) => {
+      toast.success('Tratamento atualizado');
+      const stored = getStoredUser();
+      if (stored) {
+        localStorage.setItem('user', JSON.stringify({ ...stored, prefix }));
+        setCurrentUser((prev: any) => ({ ...prev, prefix }));
+      }
+    },
+    onError: (e) => toast.error(extractApiErrorMessage(e)),
+  });
+
   const updatingName = updateProfileMutation.isPending;
 
   const createUserMutation = useMutation({
@@ -184,6 +197,27 @@ export default function ConfiguracoesPage() {
           {/* Meu Perfil */}
           <div className="bg-[#141414] rounded-xl border border-white/[0.07] p-5 space-y-4">
             <h2 className="font-semibold text-slate-100">Meu Perfil</h2>
+            {/* Tratamento */}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tratamento</label>
+              <div className="flex gap-2">
+                {['Dr.', 'Dra.'].map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => updatePrefixMutation.mutate(p)}
+                    disabled={updatePrefixMutation.isPending}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      currentUser?.prefix === p
+                        ? 'bg-brand-600 text-white'
+                        : 'bg-[#111111] border border-white/10 text-slate-400 hover:text-slate-200 hover:border-white/20'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               {/* Name - editable */}
               <div className="space-y-1">

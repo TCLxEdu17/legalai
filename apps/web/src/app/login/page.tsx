@@ -10,6 +10,7 @@ import { Scale, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { login } from '@/lib/auth';
 import { extractApiErrorMessage } from '@/lib/utils';
+import { DottedSurface } from '@/components/ui/dotted-surface';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -42,6 +43,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+      <DottedSurface />
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">

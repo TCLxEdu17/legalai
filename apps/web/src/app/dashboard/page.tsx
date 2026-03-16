@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { getStoredUser } from '@/lib/auth';
+import { FadeIn, StaggerContainer, StaggerItem, InteractiveCard } from '@/components/ui/motion';
 import type { DocumentStats, User } from '@/types';
 
 // Hook de contador animado (count-up com easing)
@@ -82,7 +83,7 @@ function StatCard({
 }) {
   const animated = useCountUp(value);
   return (
-    <div className="dark-card rounded-xl p-4 hover:border-white/[0.12] transition-colors">
+    <InteractiveCard className="dark-card rounded-xl p-4 hover:border-white/[0.12] transition-colors">
       <div className="flex items-center justify-between mb-3">
         <p className="text-slate-500 text-xs font-medium">{label}</p>
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${bgColor}`}>
@@ -93,7 +94,7 @@ function StatCard({
         {animated.toLocaleString('pt-BR')}
       </p>
       {sub && <p className="text-xs text-slate-500 mt-1">{sub}</p>}
-    </div>
+    </InteractiveCard>
   );
 }
 
@@ -219,10 +220,11 @@ export default function DashboardPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
+      <FadeIn>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 mb-1">
-            Olá, {user?.name?.split(' ')[0] || 'Usuário'}
+            Olá{user?.prefix ? `, ${user.prefix}` : ','} {user?.name?.split(' ')[0] || 'Usuário'}
           </h1>
           <p className="text-slate-500 text-sm">
             Assistente jurídico com IA — base de jurisprudências crescendo diariamente.
@@ -239,6 +241,7 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+      </FadeIn>
 
       {/* Customize modal */}
       {showCustomize && (

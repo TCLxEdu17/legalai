@@ -23,39 +23,63 @@ class ApiClient {
       return config;
     });
 
-    // Interceptor: refresh automático do token
+    // Interceptor: refresh automático do token (com mutex para evitar race condition)
+    let isRefreshing = false;
+    let pendingQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = [];
+
+    const processQueue = (error: unknown, token: string | null) => {
+      pendingQueue.forEach((p) => (token ? p.resolve(token) : p.reject(error)));
+      pendingQueue = [];
+    };
+
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
         const originalRequest = error.config as any;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-
-          try {
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (!refreshToken) throw new Error('Sem refresh token');
-
-            const response = await axios.post(`${API_URL}/api/v1/auth/refresh`, {
-              refreshToken,
-            });
-
-            const { accessToken, refreshToken: newRefreshToken } = response.data;
-            localStorage.setItem('accessToken', accessToken);
-            localStorage.setItem('refreshToken', newRefreshToken);
-
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-            return this.client(originalRequest);
-          } catch {
-            // Token inválido: redirecionar para login
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-          }
+        if (error.response?.status !== 401 || originalRequest._retry) {
+          return Promise.reject(error);
         }
 
-        return Promise.reject(error);
+        // Se já há um refresh em andamento, enfileirar esta requisição
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            pendingQueue.push({
+              resolve: (token) => {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                resolve(this.client(originalRequest));
+              },
+              reject,
+            });
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const refreshToken = localStorage.getItem('refreshToken');
+          if (!refreshToken) throw new Error('Sem refresh token');
+
+          const response = await axios.post(`${API_URL}/api/v1/auth/refresh`, { refreshToken });
+          const { accessToken, refreshToken: newRefreshToken } = response.data;
+
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('refreshToken', newRefreshToken);
+
+          processQueue(null, accessToken);
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          return this.client(originalRequest);
+        } catch (err) {
+          processQueue(err, null);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          return Promise.reject(err);
+        } finally {
+          isRefreshing = false;
+        }
       },
     );
   }
@@ -171,7 +195,22 @@ class ApiClient {
     return data;
   }
 
-  async updateProfile(payload: { name?: string; oabNumber?: string }) {
+  async listSavedProcesses() {
+    const { data } = await this.client.get('/processos/saved/list');
+    return data;
+  }
+
+  async saveProcess(payload: { number: string; title?: string; area?: string }) {
+    const { data } = await this.client.post('/processos/saved', payload);
+    return data;
+  }
+
+  async deleteSavedProcess(id: string) {
+    const { data } = await this.client.delete(`/processos/saved/${id}`);
+    return data;
+  }
+
+  async updateProfile(payload: { name?: string; prefix?: string; oabNumber?: string }) {
     const { data } = await this.client.patch('/users/profile', payload);
     return data;
   }
@@ -401,9 +440,30 @@ class ApiClient {
     await this.client.patch('/notifications/read-all');
   }
 
+  // ==================== BILLING ====================
+  async createCheckoutSession(planId: string): Promise<{ url: string }> {
+    const { data } = await this.client.post('/billing/checkout', { planId });
+    return data;
+  }
+
+  async createPortalSession(): Promise<{ url: string }> {
+    const { data } = await this.client.post('/billing/portal');
+    return data;
+  }
+
   // ==================== RAG TOOLS ====================
   async reviewPeca(text: string): Promise<{ review: string }> {
     const { data } = await this.client.post('/rag/review', { text }, { timeout: 120000 });
+    return data;
+  }
+
+  async reviewPecaFile(file: File): Promise<{ review: string; extractedLength: number }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await this.client.post('/rag/review-file', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
+    });
     return data;
   }
 
@@ -497,6 +557,8 @@ class ApiClient {
     pieceType: string;
     title: string;
     instructions?: string;
+    style?: string;
+    customStyle?: string;
   }) {
     const { data } = await this.client.post(
       `/cases/${caseId}/pieces`,
@@ -515,7 +577,150 @@ class ApiClient {
     await this.client.delete(`/cases/${caseId}/pieces/${pieceId}`);
   }
 
+  async buildCaseNarrative(caseId: string) {
+    const { data } = await this.client.post(`/cases/${caseId}/narrative`, {}, { timeout: 120000 });
+    return data;
+  }
+
+  async analyzeCaseEvidence(caseId: string) {
+    const { data } = await this.client.get(`/cases/${caseId}/evidence`, { timeout: 120000 });
+    return data;
+  }
+
+  async detectCaseTheses(caseId: string) {
+    const { data } = await this.client.get(`/cases/${caseId}/theses`, { timeout: 120000 });
+    return data;
+  }
+
+  async generateHearingQuestions(caseId: string, witnessName?: string, witnessRole?: string) {
+    const { data } = await this.client.post(`/cases/${caseId}/hearing`, { witnessName, witnessRole }, { timeout: 120000 });
+    return data;
+  }
+
+  async analyzeCaseSettlement(caseId: string) {
+    const { data } = await this.client.get(`/cases/${caseId}/settlement`, { timeout: 120000 });
+    return data;
+  }
+
+  async getCasesRadar() {
+    const { data } = await this.client.get('/cases/radar', { timeout: 120000 });
+    return data;
+  }
+
+  async getOfficeCopilot() {
+    const { data } = await this.client.get('/cases/copilot', { timeout: 120000 });
+    return data;
+  }
+
+  async predictCompensation(payload: { tipo: string; estado: string; duracao?: string; detalhes?: string }) {
+    const { data } = await this.client.post('/cases/predict-compensation', payload, { timeout: 60000 });
+    return data;
+  }
+
+  // ==================== CONTRATOS ====================
+  async gerarContrato(payload: {
+    tipo: 'fixo' | 'exito' | 'misto';
+    clienteNome?: string;
+    advogadoNome?: string;
+    objeto?: string;
+    valor?: number;
+    percentual?: number;
+    prazo?: string;
+    oabAdvogado?: string;
+  }): Promise<{ contrato: string }> {
+    const { data } = await this.client.post('/contratos/gerar', payload);
+    return data;
+  }
+
+  // ==================== FINANCEIRO ====================
+  async getFinanceiroResumo() {
+    const { data } = await this.client.get('/financeiro/resumo');
+    return data;
+  }
+
+  async getFinanceiroLancamentos(params?: { tipo?: string; status?: string; page?: number; limit?: number }) {
+    const { data } = await this.client.get('/financeiro/lancamentos', { params });
+    return data;
+  }
+
+  async createLancamento(payload: { tipo: string; valor: number; descricao: string; clienteId?: string; caseId?: string; vencimento?: string; categoria?: string }) {
+    const { data } = await this.client.post('/financeiro/lancamentos', payload);
+    return data;
+  }
+
+  async updateLancamento(id: string, payload: Partial<{ status: string; pagoEm: string; descricao: string; valor: number }>) {
+    const { data } = await this.client.patch(`/financeiro/lancamentos/${id}`, payload);
+    return data;
+  }
+
+  async deleteLancamento(id: string) {
+    await this.client.delete(`/financeiro/lancamentos/${id}`);
+  }
+
+  // ==================== TAREFAS ====================
+  async getTarefas(params?: { caseId?: string; status?: string; prioridade?: string; page?: number; limit?: number }) {
+    const { data } = await this.client.get('/tarefas', { params });
+    return data;
+  }
+
+  async getTarefasVencendo() {
+    const { data } = await this.client.get('/tarefas/vencendo');
+    return data;
+  }
+
+  async createTarefa(payload: { titulo: string; descricao?: string; caseId?: string; prazo?: string; prioridade?: string }) {
+    const { data } = await this.client.post('/tarefas', payload);
+    return data;
+  }
+
+  async updateTarefa(id: string, payload: Partial<{ titulo: string; descricao: string; prazo: string; prioridade: string; status: string; concluidaEm: string }>) {
+    const { data } = await this.client.patch(`/tarefas/${id}`, payload);
+    return data;
+  }
+
+  async deleteTarefa(id: string) {
+    await this.client.delete(`/tarefas/${id}`);
+  }
+
+  // ==================== ANALYTICS / PREDICAO ====================
+  async getPredicao(payload: { area: string; pedido: string; tribunal: string; resumoFatos?: string }): Promise<{ probabilidade: number; prazoMedio: number; fundamento?: string; pontosFavoraveis?: string[]; pontosContrarios?: string[]; jurisprudenciasRelevantes?: string[] }> {
+    const { data } = await this.client.post('/analytics/predicao', payload, { timeout: 120000 });
+    return data;
+  }
+
+  // ==================== PROCURACOES ====================
+  async gerarProcuracao(payload: { outorgante: string; cpf?: string; rg?: string; advogado: string; oab: string; poderes: string; processoNumero?: string; foro?: string }): Promise<{ procuracao: string }> {
+    const { data } = await this.client.post('/procuracoes/gerar', payload);
+    return data;
+  }
+
+  async enviarProcuracaoAssinatura(payload: { email: string; conteudo: string; nomeCliente?: string }) {
+    const { data } = await this.client.post('/procuracoes/enviar-assinatura', payload);
+    return data;
+  }
+
+  // ==================== NOTES ====================
+  async getNotes(): Promise<{ notes: string }> {
+    const { data } = await this.client.get('/users/me/notes');
+    return data;
+  }
+
+  async saveNotes(notes: string): Promise<{ notes: string }> {
+    const { data } = await this.client.patch('/users/me/notes', { notes });
+    return data;
+  }
+
   // ==================== METRICS ====================
+  async extendTrial(id: string, hours = 24) {
+    const { data } = await this.client.post(`/trial/${id}/extend`, { hours });
+    return data;
+  }
+
+  async convertTrial(id: string, email: string) {
+    const { data } = await this.client.post(`/trial/${id}/convert`, { email });
+    return data;
+  }
+
   async getTrialMetrics() {
     const { data } = await this.client.get('/trial/admin/metrics');
     return data;

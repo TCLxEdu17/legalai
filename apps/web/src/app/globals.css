@@ -126,7 +126,34 @@
   50%       { box-shadow: 0 0 20px 2px rgba(255, 255, 255, 0.05); }
 }
 
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
+.ticker-track {
+  display: inline-block;
+  animation: ticker-scroll 35s linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
 /* ======= UTILITY CLASSES ======= */
+
+/* Glass feature card for landing page */
+.glass-feature-card {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.35s cubic-bezier(0.2,0.8,0.2,1);
+}
+.glass-feature-card:hover {
+  background: rgba(255,255,255,0.055);
+  border-color: rgba(255,255,255,0.18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 24px -10px rgba(0,0,0,0.5);
+}
+
+
 
 /* Card escuro com reflexo de luz varrendo */
 .dark-card {

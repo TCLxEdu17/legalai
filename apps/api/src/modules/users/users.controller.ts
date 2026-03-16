@@ -53,9 +53,9 @@ export class UsersController {
   @ApiOperation({ summary: 'Atualizar perfil do próprio usuário' })
   updateProfile(
     @CurrentUser('id') id: string,
-    @Body() dto: { name?: string; oabNumber?: string },
+    @Body() dto: { name?: string; prefix?: string; oabNumber?: string },
   ) {
-    return this.usersService.update(id, { name: dto.name, oabNumber: dto.oabNumber });
+    return this.usersService.update(id, { name: dto.name, prefix: dto.prefix, oabNumber: dto.oabNumber });
   }
 
   @Get(':id')
@@ -79,6 +79,19 @@ export class UsersController {
   @ApiOperation({ summary: 'Atualizar usuário (admin)' })
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);
+  }
+
+  @Get('me/notes')
+  @ApiOperation({ summary: 'Obter bloco de notas do usuário autenticado' })
+  getNotes(@CurrentUser('id') id: string) {
+    return this.usersService.getNotes(id);
+  }
+
+  @Patch('me/notes')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Salvar bloco de notas do usuário autenticado' })
+  saveNotes(@CurrentUser('id') id: string, @Body() body: { notes: string }) {
+    return this.usersService.saveNotes(id, body.notes ?? '');
   }
 
   @Delete('me')
