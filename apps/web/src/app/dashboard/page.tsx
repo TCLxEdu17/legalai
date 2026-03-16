@@ -224,7 +224,7 @@ export default function DashboardPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 mb-1">
-            Olá{user?.prefix ? `, ${user.prefix}` : ','} {user?.name?.split(' ')[0] || 'Usuário'}
+            Olá, Dr. {user?.name?.split(' ')[0] || 'Usuário'}
           </h1>
           <p className="text-slate-500 text-sm">
             Assistente jurídico com IA — base de jurisprudências crescendo diariamente.
