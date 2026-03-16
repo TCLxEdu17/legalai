@@ -1,16 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Scale, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Scale, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { login } from '@/lib/auth';
 import { extractApiErrorMessage } from '@/lib/utils';
-import { DottedSurface } from '@/components/ui/dotted-surface';
+import { FloatingLines } from '@/components/ui/floating-lines';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -44,9 +45,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
-      <DottedSurface />
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative">
+      <FloatingLines
+        enabledWaves={['top', 'middle', 'bottom']}
+        lineCount={5}
+        lineDistance={5}
+        bendRadius={5}
+        bendStrength={-0.5}
+        interactive={true}
+        parallax={true}
+      />
+      <div className="w-full max-w-md relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex flex-col items-center gap-3">
@@ -117,7 +126,7 @@ export default function LoginPage() {
               className="w-full py-3 bg-brand-600 hover:bg-brand-700 disabled:bg-brand-800 disabled:cursor-not-allowed
                          text-white rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
             >
-              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isSubmitting && <PlanetLoader size="xs" />}
               {isSubmitting ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
