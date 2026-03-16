@@ -23,39 +23,63 @@ class ApiClient {
       return config;
     });
 
-    // Interceptor: refresh automático do token
+    // Interceptor: refresh automático do token (com mutex para evitar race condition)
+    let isRefreshing = false;
+    let pendingQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = [];
+
+    const processQueue = (error: unknown, token: string | null) => {
+      pendingQueue.forEach((p) => (token ? p.resolve(token) : p.reject(error)));
+      pendingQueue = [];
+    };
+
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
         const originalRequest = error.config as any;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-
-          try {
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (!refreshToken) throw new Error('Sem refresh token');
-
-            const response = await axios.post(`${API_URL}/api/v1/auth/refresh`, {
-              refreshToken,
-            });
-
-            const { accessToken, refreshToken: newRefreshToken } = response.data;
-            localStorage.setItem('accessToken', accessToken);
-            localStorage.setItem('refreshToken', newRefreshToken);
-
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-            return this.client(originalRequest);
-          } catch {
-            // Token inválido: redirecionar para login
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-          }
+        if (error.response?.status !== 401 || originalRequest._retry) {
+          return Promise.reject(error);
         }
 
-        return Promise.reject(error);
+        // Se já há um refresh em andamento, enfileirar esta requisição
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            pendingQueue.push({
+              resolve: (token) => {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                resolve(this.client(originalRequest));
+              },
+              reject,
+            });
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const refreshToken = localStorage.getItem('refreshToken');
+          if (!refreshToken) throw new Error('Sem refresh token');
+
+          const response = await axios.post(`${API_URL}/api/v1/auth/refresh`, { refreshToken });
+          const { accessToken, refreshToken: newRefreshToken } = response.data;
+
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('refreshToken', newRefreshToken);
+
+          processQueue(null, accessToken);
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          return this.client(originalRequest);
+        } catch (err) {
+          processQueue(err, null);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          return Promise.reject(err);
+        } finally {
+          isRefreshing = false;
+        }
       },
     );
   }
