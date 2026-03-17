@@ -29,43 +29,43 @@ export class PrivateProcessosController {
   @Post('credentials')
   @HttpCode(HttpStatus.NO_CONTENT)
   async saveCredentials(@Request() req: any, @Body() dto: SaveOabCredentialDto) {
-    await this.oabCredentialsService.saveCredentials(req.user.userId, dto.oabNumber, dto.password);
+    await this.oabCredentialsService.saveCredentials(req.user.id, dto.oabNumber, dto.password);
   }
 
   @Get('credentials/status')
   async getCredentialsStatus(@Request() req: any) {
-    const has = await this.oabCredentialsService.hasCredentials(req.user.userId);
+    const has = await this.oabCredentialsService.hasCredentials(req.user.id);
     return { configured: has };
   }
 
   @Delete('credentials')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteCredentials(@Request() req: any) {
-    await this.oabCredentialsService.deleteCredentials(req.user.userId);
+    await this.oabCredentialsService.deleteCredentials(req.user.id);
   }
 
   // ── Process Query ─────────────────────────────────────────────────
 
   @Post('query')
   async queryProcess(@Request() req: any, @Body() dto: QueryPrivateProcessDto) {
-    return this.privateProcessosService.queryPrivateProcess(req.user.userId, dto.numero);
+    return this.privateProcessosService.queryPrivateProcess(req.user.id, dto.numero);
   }
 
   // ── Saved Processes (monitoring) ──────────────────────────────────
 
   @Get()
   async listSaved(@Request() req: any) {
-    return this.privateProcessosService.listSavedPrivateProcesses(req.user.userId);
+    return this.privateProcessosService.listSavedPrivateProcesses(req.user.id);
   }
 
   @Post()
   async saveProcess(@Request() req: any, @Body() dto: SavePrivateProcessDto) {
-    return this.privateProcessosService.savePrivateProcess(req.user.userId, dto.numero, dto.title);
+    return this.privateProcessosService.savePrivateProcess(req.user.id, dto.numero, dto.title);
   }
 
   @Delete(':numero')
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeProcess(@Request() req: any, @Param('numero') numero: string) {
-    await this.privateProcessosService.removeSavedProcess(req.user.userId, numero);
+    await this.privateProcessosService.removeSavedProcess(req.user.id, numero);
   }
 }
