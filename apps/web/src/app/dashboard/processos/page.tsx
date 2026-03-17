@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Gavel, Search, Loader2, AlertCircle, User, Building2, Clock, Scale, ExternalLink, Bell, BellOff, Trash2, BookmarkPlus, BookmarkCheck } from 'lucide-react';
+import { Gavel, Search, AlertCircle, User, Building2, Clock, Scale, ExternalLink, Bell, BellOff, Trash2, BookmarkPlus, BookmarkCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { FadeIn } from '@/components/ui/motion';
@@ -198,7 +199,7 @@ export default function ProcessosPage() {
             disabled={loading}
             className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors shrink-0"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            {loading ? <PlanetLoader size="xs" /> : <Search className="w-4 h-4" />}
             Buscar
           </button>
         </div>
@@ -210,7 +211,7 @@ export default function ProcessosPage() {
       {/* Loading state */}
       {tab === 'consulta' && loading && (
         <div className="flex items-center justify-center py-16 gap-3 text-slate-500">
-          <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
+          <PlanetLoader size="sm" />
           <span className="text-sm">Consultando DataJud...</span>
         </div>
       )}
@@ -368,7 +369,7 @@ export default function ProcessosPage() {
       {tab === 'monitorados' && (
         <div className="space-y-3">
           {savedLoading ? (
-            <div className="flex items-center justify-center py-16"><Loader2 className="w-5 h-5 text-brand-400 animate-spin" /></div>
+            <div className="flex items-center justify-center py-16"><PlanetLoader size="sm" /></div>
           ) : savedProcesses.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Bell className="w-10 h-10 text-slate-700 mb-3" />

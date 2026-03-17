@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import { CreditCard, Zap, Star, Infinity as InfinityIcon, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
+import { CreditCard, Zap, Star, Infinity as InfinityIcon, CheckCircle, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
@@ -133,7 +134,7 @@ function PlanosContent() {
             disabled={loadingPortal}
             className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
           >
-            {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+            {loadingPortal ? <PlanetLoader size="xs" /> : <ExternalLink className="w-4 h-4" />}
             Gerenciar assinatura
           </button>
         )}
@@ -204,7 +205,7 @@ function PlanosContent() {
                   )}
                 >
                   {loadingPlan === plan.id ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <PlanetLoader size="xs" />
                   ) : (
                     'Fazer upgrade'
                   )}

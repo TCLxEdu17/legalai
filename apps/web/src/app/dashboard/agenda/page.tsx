@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Plus, Trash2, ChevronLeft, ChevronRight, List, CalendarDays, Loader2 } from 'lucide-react';
+import { Calendar, Plus, Trash2, ChevronLeft, ChevronRight, List, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
@@ -262,7 +263,7 @@ export default function AgendaPage() {
                 disabled={!form.title || !form.date || createMutation.isPending}
                 className="w-full py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
               >
-                {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                {createMutation.isPending && <PlanetLoader size="xs" />}
                 Salvar audiência
               </button>
             </div>

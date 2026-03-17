@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useMutation } from '@tanstack/react-query';
-import { ClipboardCheck, Loader2, Copy, Trash2, AlertTriangle, BookOpen, Lightbulb, Sparkles, Upload, FileText, X } from 'lucide-react';
+import { ClipboardCheck, Copy, Trash2, AlertTriangle, BookOpen, Lightbulb, Sparkles, Upload, FileText, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage } from '@/lib/utils';
@@ -211,7 +212,7 @@ export default function RevisorPage() {
               disabled={!canSubmit}
               className="flex-1 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
             >
-              {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardCheck className="w-4 h-4" />}
+              {isPending ? <PlanetLoader size="xs" /> : <ClipboardCheck className="w-4 h-4" />}
               {isPending ? 'Revisando...' : 'Revisar'}
             </button>
             <button onClick={clear} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl text-sm transition-colors">

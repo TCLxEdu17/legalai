@@ -1,9 +1,13 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Clock, ThumbsUp, ThumbsDown, X, AlertTriangle } from 'lucide-react';
+import { Clock, AlertTriangle, ThumbsUp, ThumbsDown, CreditCard, MessageCircle, Scale } from 'lucide-react';
 import { getStoredUser } from '@/lib/auth';
 import { apiClient } from '@/lib/api-client';
+import { useRouter } from 'next/navigation';
+
+const WA_URL =
+  'https://wa.me/5513997708569?text=Ol%C3%A1%2C%20Eduardo!%20Acabei%20de%20testar%20o%20LegalAI%20e%20quero%20saber%20mais%20sobre%20os%20planos!';
 
 function pad(n: number) {
   return String(n).padStart(2, '0');
@@ -21,14 +25,14 @@ function formatCountdown(ms: number) {
 type FeedbackState = 'idle' | 'sending' | 'done';
 
 export function TrialCountdown() {
+  const router = useRouter();
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [trialId, setTrialId] = useState<string | null>(null);
   const [remaining, setRemaining] = useState(0);
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
   const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
-  const [feedbackDone, setFeedbackDone] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
-  // Load trial info from stored user
   useEffect(() => {
     const user = getStoredUser();
     if (!user?.trialId || !user?.trialExpiresAt) return;
@@ -36,13 +40,12 @@ export function TrialCountdown() {
     setExpiresAt(new Date(user.trialExpiresAt));
   }, []);
 
-  // Tick
   useEffect(() => {
     if (!expiresAt) return;
     const tick = () => {
       const ms = expiresAt.getTime() - Date.now();
       setRemaining(ms);
-      if (ms <= 0) setShowFeedback(true);
+      if (ms <= 0) setIsExpired(true);
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -55,23 +58,17 @@ export function TrialCountdown() {
       setFeedbackState('sending');
       try {
         await apiClient.submitTrialFeedback(trialId, liked ? 'YES' : 'NO');
-        setFeedbackState('done');
-        setTimeout(() => setFeedbackDone(true), 1500);
-      } catch {
-        setFeedbackState('done');
-        setTimeout(() => setFeedbackDone(true), 1500);
-      }
+      } catch {}
+      setFeedbackState('done');
     },
     [trialId, feedbackState],
   );
 
-  // Not a trial user
   if (!expiresAt) return null;
 
   const { h, m, s, total } = formatCountdown(remaining);
-  const isExpired = remaining <= 0;
-  const isWarning = total > 0 && total < 3600; // last hour
-  const isCritical = total > 0 && total < 600; // last 10 min
+  const isWarning = total > 0 && total < 3600;
+  const isCritical = total > 0 && total < 600;
 
   return (
     <>
@@ -100,69 +97,84 @@ export function TrialCountdown() {
         </div>
       )}
 
-      {/* ── Feedback modal ── */}
-      {showFeedback && !feedbackDone && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="relative bg-[#141414] border border-white/[0.1] rounded-2xl w-full max-w-md shadow-2xl">
-            {/* Close (só após dar feedback ou se já enviou) */}
-            {feedbackState === 'done' && (
-              <button
-                onClick={() => setFeedbackDone(true)}
-                className="absolute top-4 right-4 text-slate-600 hover:text-slate-300 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+      {/* ── Trial expired — upgrade modal ── */}
+      {isExpired && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+          <div className="bg-[#141414] border border-white/[0.1] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
 
-            <div className="p-8 text-center">
-              {/* Icon */}
-              <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-                <Clock className="w-7 h-7 text-indigo-400" />
+            {/* Header gradient */}
+            <div className="bg-gradient-to-br from-brand-600/20 via-[#141414] to-violet-600/10 p-8 text-center border-b border-white/[0.07]">
+              <div className="w-14 h-14 mx-auto mb-4 bg-brand-600/20 border border-brand-500/30 rounded-2xl flex items-center justify-center">
+                <Scale className="w-7 h-7 text-brand-400" />
               </div>
-
               <h2 className="text-xl font-bold text-slate-100 mb-2">
                 Seu período de teste encerrou
               </h2>
-              <p className="text-slate-400 text-sm leading-relaxed mb-8">
-                Esperamos que você tenha aproveitado o LegalAI.
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Você explorou o LegalAI por 24 horas.
                 <br />
-                Gostaria de nos contar o que achou?
+                Pronto para transformar sua prática jurídica?
               </p>
+            </div>
 
-              {feedbackState === 'idle' && (
-                <div className="flex gap-4 justify-center">
-                  <button
-                    onClick={() => submitFeedback(true)}
-                    className="flex-1 flex flex-col items-center gap-2 py-5 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/50 rounded-xl transition-all group"
-                  >
-                    <ThumbsUp className="w-7 h-7 text-emerald-400 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-emerald-300">Gostei muito!</span>
-                  </button>
-                  <button
-                    onClick={() => submitFeedback(false)}
-                    className="flex-1 flex flex-col items-center gap-2 py-5 px-4 bg-slate-500/10 hover:bg-slate-500/20 border border-slate-500/30 hover:border-slate-500/50 rounded-xl transition-all group"
-                  >
-                    <ThumbsDown className="w-7 h-7 text-slate-400 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium text-slate-400">Não era o que esperava</span>
-                  </button>
+            {/* CTAs */}
+            <div className="p-6 space-y-3">
+              <button
+                onClick={() => router.push('/dashboard/planos')}
+                className="w-full flex items-center justify-center gap-2.5 py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-colors text-sm"
+              >
+                <CreditCard className="w-4 h-4" />
+                Assinar um plano agora
+              </button>
+
+              <a
+                href={WA_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2.5 py-3.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 font-semibold rounded-xl transition-colors text-sm"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Falar com Eduardo no WhatsApp
+              </a>
+
+              {/* Feedback toggle */}
+              {!showFeedback && feedbackState === 'idle' && (
+                <button
+                  onClick={() => setShowFeedback(true)}
+                  className="w-full py-2 text-slate-600 hover:text-slate-400 text-xs transition-colors"
+                >
+                  Deixar feedback sobre o teste →
+                </button>
+              )}
+
+              {showFeedback && feedbackState === 'idle' && (
+                <div className="pt-1">
+                  <p className="text-slate-500 text-xs text-center mb-3">O que achou do LegalAI?</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => submitFeedback(true)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-medium transition-colors"
+                    >
+                      <ThumbsUp className="w-3.5 h-3.5" />
+                      Gostei muito!
+                    </button>
+                    <button
+                      onClick={() => submitFeedback(false)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white/5 hover:bg-white/8 border border-white/10 text-slate-400 rounded-xl text-xs font-medium transition-colors"
+                    >
+                      <ThumbsDown className="w-3.5 h-3.5" />
+                      Não era o que esperava
+                    </button>
+                  </div>
                 </div>
               )}
 
               {feedbackState === 'sending' && (
-                <div className="py-6 text-slate-400 text-sm animate-pulse">
-                  Registrando feedback...
-                </div>
+                <p className="text-center text-xs text-slate-500 animate-pulse">Registrando...</p>
               )}
 
               {feedbackState === 'done' && (
-                <div className="py-4 space-y-2">
-                  <p className="text-emerald-400 font-semibold text-base">
-                    Obrigado pelo feedback!
-                  </p>
-                  <p className="text-slate-500 text-sm">
-                    Para continuar usando o LegalAI, entre em contato com nossa equipe.
-                  </p>
-                </div>
+                <p className="text-center text-xs text-emerald-400">Obrigado pelo feedback!</p>
               )}
             </div>
           </div>

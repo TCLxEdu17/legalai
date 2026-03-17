@@ -7,6 +7,7 @@ import { PdfProcessor } from '../uploads/processors/pdf.processor';
 import { DocxProcessor } from '../uploads/processors/docx.processor';
 import { TextProcessor } from '../uploads/processors/text.processor';
 import { AI_PROVIDER_TOKEN } from '../rag/providers/ai-provider.interface';
+import { MetricsService } from '../metrics/metrics.service';
 
 const mockPrisma = {
   case: {
@@ -53,6 +54,7 @@ const mockChunkingService = { chunkText: jest.fn() };
 const mockPdfProcessor = { process: jest.fn() };
 const mockDocxProcessor = { process: jest.fn() };
 const mockTextProcessor = { process: jest.fn() };
+const mockMetricsService = { trackAiUsage: jest.fn().mockResolvedValue(undefined) };
 
 const MOCK_USER_ID = 'user-123';
 const MOCK_CASE_ID = 'case-abc';
@@ -70,6 +72,7 @@ describe('CasesService — Advanced AI Features', () => {
         { provide: DocxProcessor, useValue: mockDocxProcessor },
         { provide: TextProcessor, useValue: mockTextProcessor },
         { provide: AI_PROVIDER_TOKEN, useValue: mockAIProvider },
+        { provide: MetricsService, useValue: mockMetricsService },
       ],
     }).compile();
 
@@ -331,7 +334,7 @@ describe('CasesService — Advanced AI Features', () => {
         observacoes: 'Valores variam conforme provas e posição processual.',
       });
 
-      const result = await service.predictCompensation({ tipo: 'negativação indevida', estado: 'SP', duracao: '3 meses' });
+      const result = await service.predictCompensation({ tipo: 'negativação indevida', estado: 'SP', duracao: '3 meses' }, 'user-1');
 
       expect(result.faixa.minimo).toBe(5200);
       expect(result.faixa.maximo).toBe(9000);
@@ -352,7 +355,7 @@ describe('CasesService — Advanced AI Features', () => {
         observacoes: '',
       });
 
-      const result = await service.predictCompensation({ tipo: 'acidente de trânsito', estado: 'RJ' });
+      const result = await service.predictCompensation({ tipo: 'acidente de trânsito', estado: 'RJ' }, 'user-1');
 
       expect(result.faixa.minimo).toBe(3000);
       expect(result.faixa.maximo).toBe(8000);
@@ -367,7 +370,7 @@ describe('CasesService — Advanced AI Features', () => {
         model: 'gpt-4o',
       });
 
-      const result = await service.predictCompensation({ tipo: 'dano moral', estado: 'MG' });
+      const result = await service.predictCompensation({ tipo: 'dano moral', estado: 'MG' }, 'user-1');
 
       expect(result.faixa.minimo).toBe(0);
       expect(result.faixa.maximo).toBe(0);
@@ -386,7 +389,7 @@ describe('CasesService — Advanced AI Features', () => {
         observacoes: '',
       });
 
-      await service.predictCompensation({ tipo: 'cobrança indevida', estado: 'RS', duracao: '6 meses', detalhes: 'Cartão de crédito cancelado' });
+      await service.predictCompensation({ tipo: 'cobrança indevida', estado: 'RS', duracao: '6 meses', detalhes: 'Cartão de crédito cancelado' }, 'user-1');
 
       const callArgs = mockAIProvider.generateChatCompletion.mock.calls[0][0];
       const userMessage = callArgs[1].content as string;

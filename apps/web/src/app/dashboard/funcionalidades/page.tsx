@@ -10,6 +10,7 @@ import {
   Heart, CreditCard, Zap, ShieldAlert, Lightbulb,
   FolderOpen, ChevronRight,
 } from 'lucide-react';
+import { BentoGrid, type BentoItem } from '@/components/ui/bento-grid';
 
 interface Feature {
   icon: React.ElementType;
@@ -390,6 +391,59 @@ const STATUS_LABELS = {
   soon: { label: 'Em breve', class: 'bg-slate-500/15 text-slate-500 border-slate-500/20' },
 };
 
+const HIGHLIGHT_ITEMS: BentoItem[] = [
+  {
+    title: 'Chat com os Autos',
+    description: 'Faça perguntas em linguagem natural sobre qualquer documento do caso. A IA responde com as fontes dos autos.',
+    icon: <MessageSquare className="w-4 h-4 text-blue-400" />,
+    status: 'Disponível',
+    tags: ['Casos', 'RAG', 'IA'],
+    meta: 'motor semântico',
+    cta: 'Acessar →',
+    href: '/dashboard/casos',
+    colSpan: 2,
+    hasPersistentHover: true,
+  },
+  {
+    title: 'Copiloto IA',
+    description: 'Briefing diário automático: prazos urgentes, casos de risco e ações recomendadas para todo o escritório.',
+    icon: <Bot className="w-4 h-4 text-violet-400" />,
+    status: 'Disponível',
+    tags: ['Escritório'],
+    cta: 'Abrir →',
+    href: '/dashboard/copiloto',
+  },
+  {
+    title: 'Narrativa Jurídica',
+    description: 'O sistema lê todos os documentos e constrói a narrativa cronológica, o enquadramento jurídico e os pontos-chave.',
+    icon: <Brain className="w-4 h-4 text-purple-400" />,
+    status: 'Disponível',
+    tags: ['Análise', 'IA'],
+    cta: 'Ver →',
+    href: '/dashboard/casos',
+  },
+  {
+    title: 'Detecção de Teses',
+    description: 'Análise automática dos autos: teses jurídicas identificadas com lei, nível de confiança e favorabilidade.',
+    icon: <Lightbulb className="w-4 h-4 text-amber-400" />,
+    status: 'Disponível',
+    tags: ['Casos', 'Estratégia'],
+    cta: 'Analisar →',
+    href: '/dashboard/casos',
+    colSpan: 2,
+  },
+  {
+    title: 'Pesquisa Semântica',
+    description: 'Busca de jurisprudência por tema e contexto, não apenas palavras-chave — usando IA para entender sua tese.',
+    icon: <ScanSearch className="w-4 h-4 text-sky-400" />,
+    status: 'Disponível',
+    tags: ['Pesquisa', 'pgvector'],
+    meta: 'busca vetorial',
+    cta: 'Pesquisar →',
+    href: '/dashboard/jurisprudencias',
+  },
+];
+
 export default function FuncionalidadesPage() {
   const totalFeatures = CATEGORIES.reduce((acc, c) => acc + c.features.length, 0);
 
@@ -406,7 +460,7 @@ export default function FuncionalidadesPage() {
             <Zap className="w-3.5 h-3.5 text-violet-400" />
             <span className="text-violet-300 text-xs font-medium">{totalFeatures} funcionalidades disponíveis</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-3">
+          <h1 className="text-3xl font-bold text-slate-100 mb-3">
             Tudo que o LegalAI pode fazer por você
           </h1>
           <p className="text-slate-400 text-base max-w-2xl mx-auto leading-relaxed">
@@ -421,12 +475,21 @@ export default function FuncionalidadesPage() {
               { value: '100%', label: 'Com IA' },
             ].map((s) => (
               <div key={s.label} className="text-center">
-                <p className="text-2xl font-bold text-white">{s.value}</p>
+                <p className="text-2xl font-bold text-slate-100">{s.value}</p>
                 <p className="text-slate-600 text-xs mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Highlights BentoGrid */}
+      <div className="px-6 py-8 border-b border-white/[0.06]">
+        <div className="flex items-center gap-2 mb-5">
+          <Zap className="w-4 h-4 text-brand-400" />
+          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Destaques</h2>
+        </div>
+        <BentoGrid items={HIGHLIGHT_ITEMS} />
       </div>
 
       {/* Categories */}

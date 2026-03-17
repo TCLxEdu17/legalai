@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useDropzone } from 'react-dropzone';
 import {
   Upload,
-  Loader2,
   FileText,
   AlertTriangle,
   Calendar,
@@ -394,7 +394,7 @@ export default function AnalisePage() {
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <PlanetLoader size="xs" />
                   Analisando...
                 </>
               ) : (
@@ -447,7 +447,7 @@ export default function AnalisePage() {
                 disabled={generatingPdf}
                 className="flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
               >
-                {generatingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                {generatingPdf ? <PlanetLoader size="xs" /> : <Download className="w-3.5 h-3.5" />}
                 {generatingPdf ? 'Gerando...' : 'Baixar PDF'}
               </button>
               <button

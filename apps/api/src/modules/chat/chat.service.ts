@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RagService } from '../rag/rag.service';
+import { MetricsService } from '../metrics/metrics.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { MessageRole } from '@prisma/client';
 
@@ -22,6 +23,7 @@ export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ragService: RagService,
+    private readonly metricsService: MetricsService,
   ) {}
 
   async sendMessage(dto: SendMessageDto, userId: string) {
@@ -61,6 +63,12 @@ export class ChatService {
       this.logger.log(
         `[RAG] Concluído | ${ragElapsed}ms | chunks=${ragResult.retrievedChunks} | confiança=${ragResult.confidence} | modelo=${ragResult.model} | tokens=in:${ragResult.tokensUsed.input} out:${ragResult.tokensUsed.output}`,
       );
+      // Track AI cost (fire-and-forget)
+      this.metricsService.trackAiUsage(
+        userId, 'chat/rag',
+        ragResult.tokensUsed.input, ragResult.tokensUsed.output,
+        ragResult.model, ragElapsed,
+      ).catch(() => {});
     } catch (err: any) {
       ragFailed = true;
       const ragElapsed = Date.now() - ragStart;

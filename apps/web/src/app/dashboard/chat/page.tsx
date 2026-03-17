@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Send, Loader2, MessageSquare, Plus, Trash2, ChevronRight, Paperclip, X, Scale } from 'lucide-react';
+import { Send, MessageSquare, Plus, Trash2, ChevronRight, Paperclip, X, Scale } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
@@ -556,7 +557,7 @@ export default function ChatPage() {
                     <X className="w-3 h-3" />
                   </button>
                 </div>
-                {isUploading && <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-400" />}
+                {isUploading && <PlanetLoader size="xs" />}
               </div>
             )}
             <div className="flex gap-3">
@@ -605,7 +606,7 @@ export default function ChatPage() {
                            text-white rounded-xl transition-colors flex items-center justify-center shrink-0 self-start mt-0"
               >
                 {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <PlanetLoader size="xs" />
                 ) : (
                   <Send className="w-4 h-4" />
                 )}

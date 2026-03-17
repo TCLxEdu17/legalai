@@ -404,15 +404,19 @@ model ApiKey {
 // ============================================================
 
 model UsageLog {
-  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  apiKeyId   String?  @map("api_key_id") @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
-  endpoint   String
-  method     String   @default("POST")
-  tokensUsed Int      @default(0) @map("tokens_used")
-  durationMs Int      @default(0) @map("duration_ms")
-  statusCode Int      @default(200) @map("status_code")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  apiKeyId         String?  @map("api_key_id") @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  endpoint         String
+  method           String   @default("POST")
+  tokensUsed       Int      @default(0) @map("tokens_used")
+  promptTokens     Int      @default(0) @map("prompt_tokens")
+  completionTokens Int      @default(0) @map("completion_tokens")
+  costUsd          Float    @default(0) @map("cost_usd")
+  model            String   @default("") @map("model")
+  durationMs       Int      @default(0) @map("duration_ms")
+  statusCode       Int      @default(200) @map("status_code")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   apiKey ApiKey? @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -749,12 +753,12 @@ enum StatusPagamento {
 
 model LancamentoFinanceiro {
   id          String          @id @default(cuid())
-  userId      String          @map("user_id")
+  userId      String          @map("user_id") @db.Uuid
   tipo        TipoLancamento
   valor       Float
   descricao   String
-  clienteId   String?         @map("cliente_id")
-  caseId      String?         @map("case_id")
+  clienteId   String?         @map("cliente_id") @db.Uuid
+  caseId      String?         @map("case_id") @db.Uuid
   vencimento  DateTime?
   pagoEm      DateTime?       @map("pago_em")
   status      StatusPagamento @default(PENDENTE)
@@ -790,8 +794,8 @@ enum StatusTarefa {
 
 model Tarefa {
   id          String       @id @default(cuid())
-  userId      String       @map("user_id")
-  caseId      String?      @map("case_id")
+  userId      String       @map("user_id") @db.Uuid
+  caseId      String?      @map("case_id") @db.Uuid
   titulo      String
   descricao   String?
   prazo       DateTime?

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
@@ -9,7 +10,6 @@ import {
   Clock,
   TrendingUp,
   ChevronRight,
-  Loader2,
   RefreshCw,
   Zap,
   BarChart3,
@@ -112,7 +112,7 @@ export default function CopilotoPage() {
         {copilotLoading ? (
           <div className="flex items-center justify-center h-48">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 text-brand-400 animate-spin mx-auto mb-3" />
+              <PlanetLoader size="xs" />
               <p className="text-slate-500 text-sm">Analisando seu portfólio...</p>
             </div>
           </div>
@@ -271,7 +271,7 @@ export default function CopilotoPage() {
 
               {radarLoading && (
                 <div className="flex items-center gap-2 text-slate-500 text-sm">
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <PlanetLoader size="xs" />
                   Analisando padrões...
                 </div>
               )}
@@ -383,7 +383,7 @@ export default function CopilotoPage() {
                 className="mt-4 flex items-center gap-2 px-4 py-2 bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 text-violet-300 text-sm rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {compensationMutation.isPending ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />Calculando...</>
+                  <><PlanetLoader size="xs" />Calculando...</>
                 ) : (
                   <><Calculator className="w-4 h-4" />Calcular Previsão</>
                 )}

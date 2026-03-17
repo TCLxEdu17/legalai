@@ -18,7 +18,7 @@ export default registerAs('app', () => ({
     provider: process.env.AI_PROVIDER || 'openai',
     openai: {
       apiKey: process.env.OPENAI_API_KEY || '',
-      chatModel: process.env.OPENAI_CHAT_MODEL || 'gpt-4o',
+      chatModel: process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini',
       embeddingModel:
         process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
       embeddingDimensions: parseInt(
@@ -58,9 +58,9 @@ export default registerAs('app', () => ({
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 
   rag: {
-    chunkSize: parseInt(process.env.CHUNK_SIZE || '1000', 10),
-    chunkOverlap: parseInt(process.env.CHUNK_OVERLAP || '200', 10),
-    topK: parseInt(process.env.RAG_TOP_K || '5', 10),
+    chunkSize: parseInt(process.env.CHUNK_SIZE || '1500', 10),
+    chunkOverlap: parseInt(process.env.CHUNK_OVERLAP || '100', 10),
+    topK: parseInt(process.env.RAG_TOP_K || '3', 10),
     similarityThreshold: parseFloat(
       process.env.RAG_SIMILARITY_THRESHOLD || '0.30',
     ),

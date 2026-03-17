@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, MapPin, Building2, User, Loader2, CheckCircle, AlertCircle, Copy, Check } from 'lucide-react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
+import { Search, MapPin, Building2, User, CheckCircle, AlertCircle, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchCep, fetchCnpj, type CepResult, type CnpjResult } from '@/lib/lookups';
 import { FadeIn } from '@/components/ui/motion';
@@ -174,7 +175,7 @@ export default function ConsultasPage() {
                   className={inputCls}
                 />
                 <button onClick={searchCep} disabled={cepLoading} className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors shrink-0">
-                  {cepLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  {cepLoading ? <PlanetLoader size="xs" /> : <Search className="w-4 h-4" />}
                   Buscar
                 </button>
               </div>
@@ -217,7 +218,7 @@ export default function ConsultasPage() {
                   className={inputCls}
                 />
                 <button onClick={searchCnpj} disabled={cnpjLoading} className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors shrink-0">
-                  {cnpjLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  {cnpjLoading ? <PlanetLoader size="xs" /> : <Search className="w-4 h-4" />}
                   Buscar
                 </button>
               </div>

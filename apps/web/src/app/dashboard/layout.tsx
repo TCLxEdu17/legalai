@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useCallback, useState, useRef } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { isAuthenticated, logout } from '@/lib/auth';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
@@ -9,18 +9,30 @@ import { CookieBanner } from '@/components/ui/cookie-banner';
 import { TrialCountdown } from '@/components/ui/trial-countdown';
 import { WifiOff } from 'lucide-react';
 import { DollarTicker } from '@/components/ui/dollar-ticker';
+import { apiClient } from '@/lib/api-client';
 
 const ACTIVITY_KEY = 'legalai_last_activity';
+const TRIAL_KEY = 'legalai_trial';
 const TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 horas sem atividade
 
 function updateActivity() {
   try { localStorage.setItem(ACTIVITY_KEY, String(Date.now())); } catch {}
 }
 
+function getTrialId(): string | null {
+  try {
+    const raw = localStorage.getItem(TRIAL_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw)?.id ?? null;
+  } catch { return null; }
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isOffline, setIsOffline] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const lastClickTrackRef = useRef<number>(0);
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -65,6 +77,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       clearInterval(interval);
     };
   }, [checkSession]);
+
+  // Trial tracking: page_view when pathname changes
+  useEffect(() => {
+    const trialId = getTrialId();
+    if (!trialId) return;
+    apiClient.trackTrialMetric(trialId, { event: 'page_view', page: pathname }).catch(() => {});
+  }, [pathname]);
+
+  // Trial tracking: throttled click (at most 1 per 10s per page)
+  useEffect(() => {
+    const trialId = getTrialId();
+    if (!trialId) return;
+
+    const handleClick = () => {
+      const now = Date.now();
+      if (now - lastClickTrackRef.current < 10_000) return;
+      lastClickTrackRef.current = now;
+      apiClient.trackTrialMetric(trialId, { event: 'click', page: pathname }).catch(() => {});
+    };
+
+    window.addEventListener('click', handleClick, { passive: true });
+    return () => window.removeEventListener('click', handleClick);
+  }, [pathname]);
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] overflow-hidden">

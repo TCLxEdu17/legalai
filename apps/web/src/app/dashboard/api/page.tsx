@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,7 +13,6 @@ import {
   Trash2,
   Copy,
   CheckCircle,
-  Loader2,
   AlertTriangle,
   Code,
   Eye,
@@ -179,7 +179,7 @@ export default function ApiPage() {
               disabled={createMutation.isPending}
               className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-white/5 text-white rounded-lg text-sm font-medium flex items-center gap-2"
             >
-              {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+              {createMutation.isPending && <PlanetLoader size="xs" />}
               Criar
             </button>
             <button
@@ -201,7 +201,7 @@ export default function ApiPage() {
 
         {isLoading ? (
           <div className="text-center py-8 text-slate-500">
-            <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+            <PlanetLoader size="sm" />
           </div>
         ) : apiKeys.length === 0 ? (
           <div className="text-center py-12">

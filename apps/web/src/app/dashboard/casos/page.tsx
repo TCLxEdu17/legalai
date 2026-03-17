@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import {
@@ -8,7 +9,6 @@ import {
   Plus,
   Search,
   Trash2,
-  Loader2,
   FileText,
   MessageSquare,
   Scale,
@@ -144,7 +144,7 @@ export default function CasosPage() {
       {/* Content */}
       {isLoading ? (
         <div className="flex items-center justify-center h-40">
-          <Loader2 className="w-6 h-6 text-brand-400 animate-spin" />
+          <PlanetLoader size="sm" />
         </div>
       ) : filtered.length === 0 ? (
         <FadeIn delay={0.15}>
@@ -336,7 +336,7 @@ export default function CasosPage() {
                 disabled={!form.title.trim() || createMutation.isPending}
                 className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-colors"
               >
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                {createMutation.isPending ? <PlanetLoader size="xs" /> : <Plus className="w-4 h-4" />}
                 Criar Caso
               </button>
             </div>
