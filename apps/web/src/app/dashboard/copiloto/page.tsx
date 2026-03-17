@@ -93,7 +93,7 @@ export default function CopilotoPage() {
               <Bot className="w-5 h-5 text-brand-400" />
             </div>
             <div>
-              <h1 className="text-slate-100 font-semibold">Copiloto do Escritório</h1>
+              <h1 className="text-slate-100 font-semibold">Augustus AI</h1>
               <p className="text-slate-500 text-xs mt-0.5">Visão geral inteligente de todos os seus casos</p>
             </div>
           </div>

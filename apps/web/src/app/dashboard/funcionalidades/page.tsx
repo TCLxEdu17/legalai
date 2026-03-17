@@ -111,12 +111,12 @@ const CATEGORIES: Category[] = [
     ],
   },
   {
-    label: 'Copiloto do Escritório',
+    label: 'Augustus AI',
     description: 'Visão estratégica de todo o seu portfólio de casos. A IA que acompanha o escritório inteiro.',
     features: [
       {
         icon: Bot,
-        title: 'Copiloto IA',
+        title: 'Augustus AI',
         tagline: 'Briefing diário automático: prazos urgentes, casos de risco e ações recomendadas',
         description: 'Toda vez que você abre o copiloto, a IA analisa todos os seus casos e entrega um briefing com o que é urgente, o que está em risco e o que você precisa fazer primeiro.',
         example: 'Prazo crítico: Contestação vence em 3 dias — Caso A • Alto risco: Caso B sem provas suficientes',
@@ -405,7 +405,7 @@ const HIGHLIGHT_ITEMS: BentoItem[] = [
     hasPersistentHover: true,
   },
   {
-    title: 'Copiloto IA',
+    title: 'Augustus AI',
     description: 'Briefing diário automático: prazos urgentes, casos de risco e ações recomendadas para todo o escritório.',
     icon: <Bot className="w-4 h-4 text-violet-400" />,
     status: 'Disponível',
