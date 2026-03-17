@@ -1,383 +1,334 @@
 'use client';
 
 import Link from 'next/link';
-import { Scale, Search, ShieldCheck, ArrowRight, CheckCircle, Zap, FileText, Users, FolderOpen, BookOpen } from 'lucide-react';
-import { ScrollReveal, FadeIn, InteractiveCard, StaggerContainer, StaggerItem } from '@/components/ui/motion';
-import { Carousel } from '@/components/ui/carousel';
-import { SplashCursor } from '@/components/ui/splash-cursor';
+import {
+  Scale, Search, ShieldCheck, ArrowRight, CheckCircle,
+  Zap, FileText, Users, FolderOpen, BookOpen,
+  Shield, Brain, Gavel,
+} from 'lucide-react';
+import { GradientButton } from '@/components/ui/gradient-button';
+import { motion } from 'framer-motion';
 
 const RECURSOS = [
   {
     icon: Search,
     title: 'Busca semântica',
-    description: 'Vá além das palavras-chave. Encontre jurisprudências pelo sentido jurídico real de cada termo.',
+    description: 'Vá além das palavras-chave. Encontre jurisprudências pelo sentido jurídico real.',
+    color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100',
   },
   {
-    icon: FileText,
-    title: 'Base própria',
-    description: 'Seu acervo transformado em inteligência. Indexação automática de PDFs e DOCX em segundos.',
+    icon: Brain,
+    title: 'IA especializada',
+    description: 'Prompts calibrados para linguagem jurídica brasileira. Nunca inventa jurisprudência.',
+    color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100',
   },
   {
     icon: ShieldCheck,
-    title: 'Fundamentação sólida',
-    description: 'Respostas com citações precisas, trechos destacados e indicação clara da fonte oficial.',
+    title: 'Processos Privados',
+    description: 'Consulte processos restritos via credenciais OAB diretamente no e-SAJ TJSP.',
+    color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100',
   },
   {
     icon: Users,
     title: 'Gestão de clientes',
     description: 'Controle total com integração de dados via CNPJ e CEP para máxima agilidade.',
+    color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100',
   },
   {
     icon: FolderOpen,
     title: 'Copiloto por caso',
-    description: 'Um assistente dedicado para cada processo, com memória completa dos autos e documentos.',
+    description: 'Um assistente dedicado para cada processo, com memória completa dos autos.',
+    color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100',
   },
   {
     icon: BookOpen,
     title: 'Gerador de peças',
     description: 'Redija contestações, recursos e apelações com suporte de IA e jurisprudência indexada.',
+    color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100',
   },
 ];
 
-const STEPS = [
-  { num: '01', icon: FileText, title: 'Upload', description: 'Suba documentos PDF ou DOCX para sua base de conhecimento.' },
-  { num: '02', icon: Zap, title: 'Indexação', description: 'Extraímos o contexto jurídico e vetorizamos cada parágrafo.' },
-  { num: '03', icon: Search, title: 'Busca', description: 'A IA cruza sua pergunta com os fragmentos mais relevantes.' },
-  { num: '04', icon: ShieldCheck, title: 'Resposta', description: 'Entrega fundamentada com citação das fontes oficiais.' },
+const STATS = [
+  { value: '99.9%', label: 'Uptime garantido' },
+  { value: '< 3s', label: 'Tempo de resposta' },
+  { value: 'TLS 1.3', label: 'Criptografia' },
+  { value: 'LGPD', label: 'Conformidade' },
 ];
+
+const CHECKLIST = [
+  'Respostas baseadas exclusivamente em fontes indexadas',
+  'Citação automática de tribunal, processo e relator',
+  'Nível de confiança por resposta gerada',
+  'Aviso jurídico automático em cada consulta',
+  'Histórico de conversas por sessão',
+  'Controle de acesso por perfil de usuário',
+];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show: (i = 0) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  }),
+};
 
 export default function LandingPage() {
   return (
-    <div
-      className="min-h-screen text-white overflow-x-hidden"
-      style={{ background: 'linear-gradient(160deg, #020818 0%, #050d1f 40%, #000000 100%)' }}
-    >
-      {/* Fluid simulation background */}
-      <SplashCursor
-        SIM_RESOLUTION={128}
-        DYE_RESOLUTION={1440}
-        DENSITY_DISSIPATION={3.5}
-        VELOCITY_DISSIPATION={2}
-        PRESSURE={0.1}
-        CURL={3}
-        SPLAT_RADIUS={0.2}
-        SPLAT_FORCE={6000}
-        COLOR_UPDATE_SPEED={10}
-      />
+    <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden">
 
-      {/* ── Header ────────────────────────────────────────────────── */}
-      <FadeIn>
-        <header
-          className="relative z-20 border-b"
-          style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(2,8,24,0.7)', backdropFilter: 'blur(12px)' }}
-        >
-          <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(37,53,234,0.25) 0%, rgba(124,58,237,0.2) 100%)',
-                  border: '1px solid rgba(98,128,253,0.35)',
-                  boxShadow: '0 0 12px rgba(37,53,234,0.25)',
-                }}
-              >
-                <Scale className="w-4 h-4 text-brand-400" />
-              </div>
-              <span className="font-semibold text-lg tracking-tight text-slate-100">LegalAI</span>
+      {/* ── NAVBAR ─────────────────────────────────── */}
+      <motion.header
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100"
+      >
+        <div className="max-w-6xl mx-auto px-6 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-sm">
+              <Scale className="w-4 h-4 text-white" />
             </div>
-            <Link
-              href="/login"
-              className="px-4 py-2 text-white rounded-xl text-sm font-medium transition-all hover:-translate-y-px"
-              style={{
-                background: 'linear-gradient(135deg, #2535ea 0%, #7c3aed 100%)',
-                boxShadow: '0 4px 15px -2px rgba(37,53,234,0.45)',
-              }}
-            >
-              Entrar
-            </Link>
+            <span className="font-bold text-lg tracking-tight text-slate-900">LegalAI</span>
           </div>
-        </header>
-      </FadeIn>
 
-      {/* ── Hero ──────────────────────────────────────────────────── */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 pt-32 pb-28 text-center">
-        <FadeIn delay={0.1}>
-          <div
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-8"
-            style={{
-              background: 'rgba(37,53,234,0.12)',
-              border: '1px solid rgba(98,128,253,0.25)',
-              boxShadow: '0 0 20px rgba(37,53,234,0.12)',
-            }}
-          >
-            <Zap className="w-3 h-3 text-brand-400" />
-            <span className="text-brand-300">Busca Semântica</span>
-            <span className="text-slate-600">·</span>
-            <span className="text-slate-400">IA Jurídica</span>
-            <span className="text-slate-600">·</span>
-            <span className="text-slate-400">RAG</span>
-          </div>
-        </FadeIn>
+          <nav className="hidden md:flex items-center gap-8 text-sm text-slate-500 font-medium">
+            <a href="#recursos" className="hover:text-slate-900 transition-colors">Recursos</a>
+            <a href="#como-funciona" className="hover:text-slate-900 transition-colors">Como funciona</a>
+            <Link href="/dashboard/planos" className="hover:text-slate-900 transition-colors">Planos</Link>
+          </nav>
 
-        <FadeIn delay={0.2}>
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-[1.1] text-slate-100">
-            Pesquisa jurídica com<br />
-            <span className="text-white">
-              inteligência artificial
-            </span>
-          </h1>
-        </FadeIn>
-
-        <FadeIn delay={0.3}>
-          <p className="text-base text-slate-400 max-w-xl mx-auto mb-12 leading-relaxed">
-            Encontre jurisprudências, analise documentos e fundamente suas teses
-            com um assistente especializado que sempre cita as fontes.
-          </p>
-        </FadeIn>
-
-        <FadeIn delay={0.4}>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2.5 px-7 py-3.5 text-white rounded-xl font-medium transition-all hover:-translate-y-0.5"
-            style={{
-              background: 'linear-gradient(135deg, #2535ea 0%, #7c3aed 100%)',
-              boxShadow: '0 4px 20px -2px rgba(37,53,234,0.55)',
-            }}
-          >
-            Acessar o sistema
-            <ArrowRight className="w-4 h-4" />
+          <Link href="/login">
+            <GradientButton className="h-9 min-w-0 px-5 py-0 text-sm rounded-lg">
+              Acessar o sistema
+            </GradientButton>
           </Link>
-        </FadeIn>
-      </section>
-
-      {/* Mesh divider */}
-      <div
-        className="relative z-10 max-w-5xl mx-auto"
-        style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(98,128,253,0.2), transparent)' }}
-      />
-
-      {/* ── Recursos ─────────────────────────────────────────────── */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 py-24">
-        <ScrollReveal>
-          <div className="text-center mb-14">
-            <h2 className="text-2xl font-bold text-slate-100 mb-3">Transformando o direito brasileiro</h2>
-            <p className="text-slate-500 text-sm max-w-md mx-auto">
-              Tecnologia RAG aplicada ao direito. Resultados precisos, fundamentados e verificáveis.
-            </p>
-          </div>
-        </ScrollReveal>
-
-        {/* Desktop grid */}
-        <StaggerContainer className="hidden md:grid md:grid-cols-3 gap-4">
-          {RECURSOS.map(({ icon: Icon, title, description }) => (
-            <StaggerItem key={title}>
-              <InteractiveCard className="rounded-xl p-5 h-full cursor-default glass-feature-card">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(37,53,234,0.2) 0%, rgba(124,58,237,0.15) 100%)',
-                    border: '1px solid rgba(98,128,253,0.2)',
-                  }}
-                >
-                  <Icon className="w-4 h-4 text-brand-400" />
-                </div>
-                <h3 className="font-semibold text-slate-100 text-sm mb-1.5">{title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{description}</p>
-              </InteractiveCard>
-            </StaggerItem>
-          ))}
-        </StaggerContainer>
-
-        {/* Mobile carousel */}
-        <div className="md:hidden">
-          <FadeIn>
-            <Carousel
-              items={RECURSOS.map(({ icon: Icon, title, description }) => (
-                <div
-                  key={title}
-                  className="rounded-xl p-6 mx-1"
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                  }}
-                >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-                    style={{
-                      background: 'rgba(37,53,234,0.2)',
-                      border: '1px solid rgba(98,128,253,0.2)',
-                    }}
-                  >
-                    <Icon className="w-4 h-4 text-brand-400" />
-                  </div>
-                  <h3 className="font-semibold text-slate-100 text-sm mb-1">{title}</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed">{description}</p>
-                </div>
-              ))}
-            />
-          </FadeIn>
         </div>
-      </section>
+      </motion.header>
 
-      {/* Mesh divider */}
-      <div
-        className="relative z-10 max-w-5xl mx-auto"
-        style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(98,128,253,0.15), transparent)' }}
-      />
+      {/* ── HERO ─────────────────────────────────────── */}
+      <section className="relative max-w-6xl mx-auto px-6 pt-24 pb-28 text-center">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-violet-50/40 to-transparent rounded-full blur-3xl opacity-60" />
+        </div>
 
-      {/* ── Como funciona ─────────────────────────────────────────── */}
-      <section id="como-funciona" className="relative z-10">
-        <div className="max-w-5xl mx-auto px-6 py-24">
-          <ScrollReveal>
-            <div className="text-center mb-16">
-              <h2 className="text-2xl font-bold text-slate-100 mb-3">Processo Inteligente</h2>
-              <p className="text-slate-500 text-sm max-w-md mx-auto">
-                Como a infraestrutura RAG garante precisão absoluta em cada resposta gerada.
-              </p>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold mb-8 tracking-wide">
+            <Zap className="w-3 h-3" />
+            IA Jurídica · Busca Semântica · RAG
+          </span>
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative text-5xl md:text-6xl font-bold tracking-tight leading-[1.08] text-slate-900 mb-6"
+        >
+          Pesquisa jurídica com<br />
+          <span className="bg-gradient-to-r from-blue-600 via-violet-600 to-blue-700 bg-clip-text text-transparent">
+            inteligência artificial
+          </span>
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="relative text-lg text-slate-500 max-w-xl mx-auto mb-10 leading-relaxed"
+        >
+          Encontre jurisprudências, analise documentos e fundamente suas teses
+          com um assistente especializado que sempre cita as fontes.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="relative flex flex-col sm:flex-row gap-3 justify-center items-center"
+        >
+          <Link href="/trial">
+            <GradientButton className="h-12 px-8 text-sm rounded-xl gap-2">
+              Começar agora
+              <ArrowRight className="w-4 h-4" />
+            </GradientButton>
+          </Link>
+          <Link href="/login">
+            <GradientButton variant="variant" className="h-12 px-8 text-sm rounded-xl">
+              Acessar o sistema
+            </GradientButton>
+          </Link>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+          className="relative mt-16 flex flex-wrap justify-center gap-x-12 gap-y-4"
+        >
+          {STATS.map(({ value, label }) => (
+            <div key={label} className="text-center">
+              <p className="text-2xl font-bold text-slate-900">{value}</p>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">{label}</p>
             </div>
-          </ScrollReveal>
+          ))}
+        </motion.div>
+      </section>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {STEPS.map(({ num, icon: Icon, title, description }, i) => (
-              <ScrollReveal key={num} delay={i * 0.1}>
-                <div className="text-center group">
-                  <div className="relative inline-flex mb-4">
-                    <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto"
-                      style={{
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                      }}
-                    >
-                      <Icon className="w-5 h-5 text-brand-400" />
-                    </div>
-                    <span
-                      className="absolute -top-3 -right-2 text-[10px] font-bold tabular-nums"
-                      style={{
-                        background: 'linear-gradient(135deg, #6280fd, #a78bfa)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    >
-                      {num}
-                    </span>
-                  </div>
-                  <h3 className="font-semibold text-slate-200 text-sm mb-1">{title}</h3>
-                  <p className="text-slate-600 text-xs leading-relaxed">{description}</p>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+      </div>
+
+      {/* ── RECURSOS ─────────────────────────────────── */}
+      <section id="recursos" className="max-w-6xl mx-auto px-6 py-24">
+        <motion.div
+          initial="hidden" whileInView="show" viewport={{ once: true, margin: '-80px' }} variants={fadeUp}
+          className="text-center mb-14"
+        >
+          <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-3">Plataforma completa</p>
+          <h2 className="text-3xl font-bold text-slate-900 mb-3">Tudo que seu escritório precisa</h2>
+          <p className="text-slate-500 text-base max-w-md mx-auto">
+            Tecnologia RAG aplicada ao direito. Resultados precisos, fundamentados e verificáveis.
+          </p>
+        </motion.div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {RECURSOS.map(({ icon: Icon, title, description, color, bg, border }, i) => (
+            <motion.div
+              key={title} custom={i} initial="hidden" whileInView="show"
+              viewport={{ once: true, margin: '-60px' }} variants={fadeUp}
+              className={`rounded-2xl p-6 border ${border} ${bg} group hover:shadow-md transition-shadow`}
+            >
+              <div className={`w-10 h-10 rounded-xl ${bg} border ${border} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
+                <Icon className={`w-5 h-5 ${color}`} />
+              </div>
+              <h3 className="font-semibold text-slate-900 mb-1.5">{title}</h3>
+              <p className="text-slate-500 text-sm leading-relaxed">{description}</p>
+            </motion.div>
+          ))}
         </div>
       </section>
 
-      {/* ── CTA ──────────────────────────────────────────────────── */}
-      <ScrollReveal>
-        <section className="relative z-10 max-w-5xl mx-auto px-6 py-20">
-          <div
-            className="rounded-2xl p-8 md:p-10 relative overflow-hidden"
-            style={{
-              background: 'rgba(255,255,255,0.025)',
-              border: '1px solid rgba(98,128,253,0.2)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
-            }}
-          >
-            {/* Inner glow */}
-            <div
-              className="absolute -top-20 left-1/4 w-72 h-72 pointer-events-none"
-              style={{
-                background: 'radial-gradient(ellipse, rgba(37,53,234,0.12) 0%, transparent 70%)',
-                filter: 'blur(30px)',
-              }}
-            />
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+      </div>
 
-            <div className="relative grid md:grid-cols-2 gap-10 items-center">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-100 mb-3">
-                  A nova era do direito já começou.
-                </h2>
-                <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                  Feito para o direito brasileiro. Prompts calibrados para linguagem jurídica —
-                  a IA nunca inventa jurisprudência e informa quando não encontra base suficiente.
-                </p>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-sm font-medium transition-all hover:-translate-y-px"
-                  style={{
-                    background: 'linear-gradient(135deg, #2535ea 0%, #7c3aed 100%)',
-                    boxShadow: '0 4px 15px -2px rgba(37,53,234,0.5)',
-                  }}
-                >
-                  Começar agora
-                  <ArrowRight className="w-4 h-4" />
+      {/* ── COMO FUNCIONA ────────────────────────────── */}
+      <section id="como-funciona" className="max-w-6xl mx-auto px-6 py-24">
+        <motion.div
+          initial="hidden" whileInView="show" viewport={{ once: true }} variants={fadeUp}
+          className="text-center mb-16"
+        >
+          <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-3">Pipeline RAG</p>
+          <h2 className="text-3xl font-bold text-slate-900 mb-3">Processo inteligente</h2>
+          <p className="text-slate-500 text-base max-w-md mx-auto">
+            Como a infraestrutura RAG garante precisão absoluta em cada resposta gerada.
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {[
+            { num: '1', icon: FileText, title: 'Upload', desc: 'Suba documentos PDF ou DOCX para sua base de conhecimento.' },
+            { num: '2', icon: Zap, title: 'Indexação', desc: 'Extraímos o contexto jurídico e vetorizamos cada parágrafo.' },
+            { num: '3', icon: Search, title: 'Busca', desc: 'A IA cruza sua pergunta com os fragmentos mais relevantes.' },
+            { num: '4', icon: ShieldCheck, title: 'Resposta', desc: 'Entrega fundamentada com citação das fontes oficiais.' },
+          ].map(({ num, icon: Icon, title, desc }, i) => (
+            <motion.div
+              key={num} custom={i} initial="hidden" whileInView="show"
+              viewport={{ once: true }} variants={fadeUp}
+              className="text-center group"
+            >
+              <div className="relative inline-flex mb-5">
+                <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto group-hover:border-blue-200 group-hover:bg-blue-50 transition-colors">
+                  <Icon className="w-5 h-5 text-slate-500 group-hover:text-blue-600 transition-colors" />
+                </div>
+                <span className="absolute -top-2 -right-2 text-[10px] font-black text-white bg-blue-600 rounded-full w-5 h-5 flex items-center justify-center">
+                  {num}
+                </span>
+              </div>
+              <h3 className="font-semibold text-slate-900 text-sm mb-1">{title}</h3>
+              <p className="text-slate-400 text-xs leading-relaxed">{desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+      </div>
+
+      {/* ── CTA FINAL ────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-6 py-20">
+        <motion.div
+          initial="hidden" whileInView="show" viewport={{ once: true }} variants={fadeUp}
+          className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-10 md:p-14 relative overflow-hidden"
+        >
+          <div className="absolute -top-24 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 right-1/4 w-80 h-80 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Gavel className="w-5 h-5 text-blue-400" />
+                <span className="text-blue-400 text-sm font-semibold">Direito brasileiro</span>
+              </div>
+              <h2 className="text-3xl font-bold text-white mb-4 leading-tight">
+                A nova era do direito<br />já começou.
+              </h2>
+              <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+                Feito para o direito brasileiro. A IA nunca inventa jurisprudência
+                e informa quando não encontra base suficiente.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href="/trial">
+                  <GradientButton className="h-11 px-7 text-sm rounded-xl gap-2">
+                    Começar agora
+                    <ArrowRight className="w-4 h-4" />
+                  </GradientButton>
+                </Link>
+                <Link href="/login">
+                  <GradientButton variant="variant" className="h-11 px-7 text-sm rounded-xl">
+                    Já tenho conta
+                  </GradientButton>
                 </Link>
               </div>
-
-              <StaggerContainer className="space-y-3" staggerDelay={0.07}>
-                {[
-                  'Respostas baseadas exclusivamente em fontes indexadas',
-                  'Citação automática de tribunal, processo e relator',
-                  'Nível de confiança por resposta',
-                  'Aviso jurídico automático em cada consulta',
-                  'Histórico de conversas por sessão',
-                  'Controle de acesso por perfil',
-                ].map((item) => (
-                  <StaggerItem key={item}>
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
-                        style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.25)' }}
-                      >
-                        <CheckCircle className="w-2.5 h-2.5 text-emerald-400" />
-                      </div>
-                      <span className="text-slate-400 text-sm">{item}</span>
-                    </div>
-                  </StaggerItem>
-                ))}
-              </StaggerContainer>
             </div>
-          </div>
-        </section>
-      </ScrollReveal>
 
-      {/* ── Footer ───────────────────────────────────────────────── */}
-      <FadeIn>
-        <footer
-          className="relative z-10 border-t py-8"
-          style={{ borderColor: 'rgba(255,255,255,0.06)' }}
-        >
-          <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{
-                  background: 'rgba(37,53,234,0.15)',
-                  border: '1px solid rgba(98,128,253,0.2)',
-                }}
-              >
-                <Scale className="w-3.5 h-3.5 text-brand-400" />
-              </div>
-              <div>
-                <p className="text-slate-300 text-sm font-semibold leading-tight">LegalAI</p>
-                <p
-                  className="text-[10px]"
-                  style={{
-                    background: 'linear-gradient(135deg, #6280fd, #a78bfa)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
+            <div className="space-y-3">
+              {CHECKLIST.map((item, i) => (
+                <motion.div
+                  key={item} custom={i} initial="hidden" whileInView="show"
+                  viewport={{ once: true }} variants={fadeUp}
+                  className="flex items-center gap-3"
                 >
-                  A inteligência que fundamenta suas vitórias.
-                </p>
-              </div>
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                    <CheckCircle className="w-3 h-3 text-emerald-400" />
+                  </div>
+                  <span className="text-slate-300 text-sm">{item}</span>
+                </motion.div>
+              ))}
             </div>
-            <p className="text-slate-700 text-xs text-center md:text-right max-w-sm">
-              As respostas não substituem análise jurídica formal de advogado habilitado.
-            </p>
           </div>
-        </footer>
-      </FadeIn>
+        </motion.div>
+      </section>
+
+      {/* ── FOOTER ───────────────────────────────────── */}
+      <footer className="border-t border-slate-100 py-8">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center">
+              <Scale className="w-3.5 h-3.5 text-white" />
+            </div>
+            <div>
+              <p className="text-slate-800 text-sm font-bold leading-tight">LegalAI</p>
+              <p className="text-slate-400 text-[10px]">A inteligência que fundamenta suas vitórias.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-slate-400 text-xs">
+            <Shield className="w-3.5 h-3.5" />
+            <span>As respostas não substituem análise jurídica formal de advogado habilitado.</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
