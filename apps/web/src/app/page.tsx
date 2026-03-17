@@ -181,7 +181,7 @@ export default function LandingPage() {
       {/* ── RECURSOS ─────────────────────────────────── */}
       <section id="recursos" className="max-w-6xl mx-auto px-6 py-24">
         <motion.div
-          initial="hidden" whileInView="show" viewport={{ once: true }} variants={fadeUp}
+          initial="hidden" animate="show" variants={fadeUp}
           className="text-center mb-14"
         >
           <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-3">Plataforma completa</p>
@@ -194,8 +194,7 @@ export default function LandingPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {RECURSOS.map(({ icon: Icon, title, description, color, bg, border }, i) => (
             <motion.div
-              key={title} custom={i} initial="hidden" whileInView="show"
-              viewport={{ once: true }} variants={fadeUp}
+              key={title} custom={i} initial="hidden" animate="show" variants={fadeUp}
               className={`rounded-2xl p-6 border ${border} ${bg} group hover:shadow-md transition-shadow`}
             >
               <div className={`w-10 h-10 rounded-xl ${bg} border ${border} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
@@ -215,7 +214,7 @@ export default function LandingPage() {
       {/* ── COMO FUNCIONA ────────────────────────────── */}
       <section id="como-funciona" className="max-w-6xl mx-auto px-6 py-24">
         <motion.div
-          initial="hidden" whileInView="show" viewport={{ once: true }} variants={fadeUp}
+          initial="hidden" animate="show" variants={fadeUp}
           className="text-center mb-16"
         >
           <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-3">Pipeline RAG</p>
@@ -233,8 +232,7 @@ export default function LandingPage() {
             { num: '4', icon: ShieldCheck, title: 'Resposta', desc: 'Entrega fundamentada com citação das fontes oficiais.' },
           ].map(({ num, icon: Icon, title, desc }, i) => (
             <motion.div
-              key={num} custom={i} initial="hidden" whileInView="show"
-              viewport={{ once: true }} variants={fadeUp}
+              key={num} custom={i} initial="hidden" animate="show" variants={fadeUp}
               className="text-center group"
             >
               <div className="relative inline-flex mb-5">
@@ -259,7 +257,7 @@ export default function LandingPage() {
       {/* ── CTA FINAL ────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-20">
         <motion.div
-          initial="hidden" whileInView="show" viewport={{ once: true }} variants={fadeUp}
+          initial="hidden" animate="show" variants={fadeUp}
           className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-10 md:p-14 relative overflow-hidden"
         >
           <div className="absolute -top-24 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
@@ -296,8 +294,7 @@ export default function LandingPage() {
             <div className="space-y-3">
               {CHECKLIST.map((item, i) => (
                 <motion.div
-                  key={item} custom={i} initial="hidden" whileInView="show"
-                  viewport={{ once: true }} variants={fadeUp}
+                  key={item} custom={i} initial="hidden" animate="show" variants={fadeUp}
                   className="flex items-center gap-3"
                 >
                   <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
