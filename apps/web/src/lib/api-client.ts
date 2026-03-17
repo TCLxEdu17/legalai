@@ -25,6 +25,7 @@ class ApiClient {
 
     // Interceptor: refresh automático do token (com mutex para evitar race condition)
     let isRefreshing = false;
+    let lastRefreshAt = 0; // timestamp do último refresh bem-sucedido
     let pendingQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = [];
 
     const processQueue = (error: unknown, token: string | null) => {
@@ -41,6 +42,16 @@ class ApiClient {
           return Promise.reject(error);
         }
 
+        originalRequest._retry = true;
+
+        // Se o token acabou de ser renovado (< 10s atrás), reusar o token do localStorage
+        // em vez de tentar outro refresh — evita falha com refresh token já rotacionado
+        const freshToken = localStorage.getItem('accessToken');
+        if (freshToken && Date.now() - lastRefreshAt < 10_000) {
+          originalRequest.headers.Authorization = `Bearer ${freshToken}`;
+          return this.client(originalRequest);
+        }
+
         // Se já há um refresh em andamento, enfileirar esta requisição
         if (isRefreshing) {
           return new Promise((resolve, reject) => {
@@ -54,7 +65,6 @@ class ApiClient {
           });
         }
 
-        originalRequest._retry = true;
         isRefreshing = true;
 
         try {
@@ -66,6 +76,7 @@ class ApiClient {
 
           localStorage.setItem('accessToken', accessToken);
           localStorage.setItem('refreshToken', newRefreshToken);
+          lastRefreshAt = Date.now();
 
           processQueue(null, accessToken);
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
