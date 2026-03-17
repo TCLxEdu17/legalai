@@ -29,4 +29,4 @@ RUN mkdir -p uploads logs
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma migrate deploy 2>&1 || echo '[startup] migrate deploy skipped' && node dist/src/main"]
+CMD ["node", "dist/src/main"]
