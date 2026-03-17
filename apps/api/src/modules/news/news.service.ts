@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import Parser from 'rss-parser';
 
+// rss-parser é CJS; import default quebra no build NestJS — require() resolve
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const Parser = require('rss-parser');
 const parser = new Parser({ timeout: 8000 });
 
 const FEEDS = [
@@ -33,7 +35,7 @@ export class NewsService {
     const results = await Promise.allSettled(
       FEEDS.map(async (feed) => {
         const parsed = await parser.parseURL(feed.url);
-        return parsed.items.slice(0, 6).map((item) => ({
+        return parsed.items.slice(0, 6).map((item: any) => ({
           title: (item.title || '').trim(),
           link: item.link || '',
           summary: ((item.contentSnippet || item.content || '') as string)
