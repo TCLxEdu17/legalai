@@ -4,7 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 // Chave pública do DataJud (CNJ) — disponível na documentação oficial
 const DATAJUD_API_KEY =
-  'APIKey cDZHYzlZa0JadVREZDJCendFbzV3cG1BR09yRnE6SkJlTzNjLV9TRENyQWpaS3FUSEZPUw==';
+  'APIKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
 const DATAJUD_BASE = 'https://api-publica.datajud.cnj.jus.br';
 
 // Mapeamento J.TT → índice DataJud
