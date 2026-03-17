@@ -406,7 +406,7 @@ export default function FuncionalidadesPage() {
             <Zap className="w-3.5 h-3.5 text-violet-400" />
             <span className="text-violet-300 text-xs font-medium">{totalFeatures} funcionalidades disponíveis</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-3">
+          <h1 className="text-3xl font-bold text-slate-100 mb-3">
             Tudo que o LegalAI pode fazer por você
           </h1>
           <p className="text-slate-400 text-base max-w-2xl mx-auto leading-relaxed">
@@ -421,7 +421,7 @@ export default function FuncionalidadesPage() {
               { value: '100%', label: 'Com IA' },
             ].map((s) => (
               <div key={s.label} className="text-center">
-                <p className="text-2xl font-bold text-white">{s.value}</p>
+                <p className="text-2xl font-bold text-slate-100">{s.value}</p>
                 <p className="text-slate-600 text-xs mt-0.5">{s.label}</p>
               </div>
             ))}

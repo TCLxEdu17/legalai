@@ -237,6 +237,7 @@
 
 /* Backgrounds */
 html.light [class*="#0a0a0a"] { background-color: #f5f5f5 !important; }
+html.light [class*="#0d0d0d"] { background-color: #f3f4f6 !important; }
 html.light [class*="#141414"] { background-color: #ffffff !important; }
 html.light [class*="#1a1a1a"] { background-color: #f9f9f9 !important; }
 html.light [class*="#111111"] { background-color: #f0f0f0 !important; }
@@ -298,10 +299,16 @@ html.light .text-emerald-400 { color: #059669 !important; }
 html.light .text-emerald-500 { color: #047857 !important; }
 html.light .text-amber-400  { color: #d97706 !important; }
 
-/* Subtle white backgrounds used for progress bars, badges, tags */
-html.light [class*="bg-white\/5"]  { background-color: rgba(0,0,0,0.06) !important; }
+/* Subtle white backgrounds used for cards, progress bars, badges, tags */
+html.light [class*="bg-white\/5"]          { background-color: rgba(0,0,0,0.06) !important; }
+html.light [class*="bg-white\/\[0.02\]"]  { background-color: rgba(0,0,0,0.04) !important; }
+html.light [class*="bg-white\/\[0.03\]"]  { background-color: rgba(0,0,0,0.04) !important; }
 html.light [class*="bg-white\/\[0.04\]"]  { background-color: rgba(0,0,0,0.04) !important; }
 html.light [class*="bg-white\/\[0.05\]"]  { background-color: rgba(0,0,0,0.05) !important; }
+html.light [class*="bg-white\/\[0.06\]"]  { background-color: rgba(0,0,0,0.06) !important; }
+html.light [class*="bg-white\/\[0.07\]"]  { background-color: rgba(0,0,0,0.07) !important; }
+html.light [class*="bg-white\/\[0.08\]"]  { background-color: rgba(0,0,0,0.07) !important; }
+
 
 /* Gradient banner via-[#141414] becomes white → keep subtle tinted bg */
 html.light [class*="from-brand-600\/10"] {
