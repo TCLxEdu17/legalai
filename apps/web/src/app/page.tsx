@@ -181,7 +181,7 @@ export default function LandingPage() {
       {/* ── RECURSOS ─────────────────────────────────── */}
       <section id="recursos" className="max-w-6xl mx-auto px-6 py-24">
         <motion.div
-          initial="hidden" whileInView="show" viewport={{ once: true, margin: '-80px' }} variants={fadeUp}
+          initial="hidden" whileInView="show" viewport={{ once: true }} variants={fadeUp}
           className="text-center mb-14"
         >
           <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-3">Plataforma completa</p>
@@ -195,7 +195,7 @@ export default function LandingPage() {
           {RECURSOS.map(({ icon: Icon, title, description, color, bg, border }, i) => (
             <motion.div
               key={title} custom={i} initial="hidden" whileInView="show"
-              viewport={{ once: true, margin: '-60px' }} variants={fadeUp}
+              viewport={{ once: true }} variants={fadeUp}
               className={`rounded-2xl p-6 border ${border} ${bg} group hover:shadow-md transition-shadow`}
             >
               <div className={`w-10 h-10 rounded-xl ${bg} border ${border} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
