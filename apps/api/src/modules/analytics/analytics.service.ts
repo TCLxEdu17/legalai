@@ -1,5 +1,6 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { AI_PROVIDER_TOKEN, IAIProvider } from '../rag/providers/ai-provider.interface';
+import { PrismaService } from '../../prisma/prisma.service';
 
 export interface PredictionPromptParams {
   area: string;
@@ -24,6 +25,7 @@ export class AnalyticsService {
 
   constructor(
     @Inject(AI_PROVIDER_TOKEN) private readonly aiProvider: IAIProvider,
+    private readonly prisma: PrismaService,
   ) {}
 
   buildPredictionPrompt(params: PredictionPromptParams): string {
@@ -87,6 +89,25 @@ Com base na jurisprudência consolidada do ${tribunal} e nos dados fornecidos, r
         pontosContrarios: [],
         jurisprudenciasRelevantes: [],
       };
+    }
+  }
+
+  async trackEvent(
+    userId: string,
+    payload: { event: string; page?: string; element?: string; metadata?: Record<string, unknown> },
+  ): Promise<void> {
+    try {
+      await this.prisma.userEvent.create({
+        data: {
+          userId,
+          event: payload.event,
+          page: payload.page ?? null,
+          element: payload.element ?? null,
+          metadata: (payload.metadata ?? {}) as any,
+        },
+      });
+    } catch (err) {
+      this.logger.warn('Failed to track user event', err);
     }
   }
 

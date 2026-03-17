@@ -4,53 +4,11 @@ import { useState, useEffect, Suspense } from 'react';
 import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import { CreditCard, Zap, Star, Infinity as InfinityIcon, CheckCircle, ExternalLink } from 'lucide-react';
+import { CreditCard, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
-
-const PLANS = [
-  {
-    id: 'trial',
-    name: 'Trial',
-    price: 'Grátis',
-    icon: Zap,
-    color: 'text-slate-400',
-    features: ['20 msgs/mês', '3 uploads/mês', '50 chamadas API'],
-    limits: { chatMessages: 20, uploads: 3, apiCalls: 50 },
-  },
-  {
-    id: 'basic',
-    name: 'Basic',
-    price: 'R$ 97',
-    period: '/mês',
-    icon: Star,
-    color: 'text-brand-400',
-    features: ['200 msgs/mês', '20 uploads/mês', '500 chamadas API'],
-    limits: { chatMessages: 200, uploads: 20, apiCalls: 500 },
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: 'R$ 297',
-    period: '/mês',
-    icon: Star,
-    color: 'text-emerald-400',
-    features: ['2.000 msgs/mês', '200 uploads/mês', '5.000 chamadas API', 'Suporte prioritário'],
-    limits: { chatMessages: 2000, uploads: 200, apiCalls: 5000 },
-    highlighted: true,
-  },
-  {
-    id: 'unlimited',
-    name: 'Unlimited',
-    price: 'R$ 697',
-    period: '/mês',
-    icon: InfinityIcon,
-    color: 'text-violet-400',
-    features: ['Mensagens ilimitadas', 'Uploads ilimitados', 'API ilimitada', 'SLA dedicado'],
-    limits: { chatMessages: null, uploads: null, apiCalls: null },
-  },
-];
+import PricingSection from '@/components/ui/pricing-section';
 
 function UsageBar({ used, limit, label }: { used: number; limit: number | null; label: string }) {
   const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
@@ -65,10 +23,11 @@ function UsageBar({ used, limit, label }: { used: number; limit: number | null; 
         </span>
       </div>
       <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-        {limit !== null && (
+        {limit !== null ? (
           <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+        ) : (
+          <div className="h-full rounded-full bg-violet-500 opacity-30 w-full" />
         )}
-        {limit === null && <div className="h-full rounded-full bg-violet-500" style={{ width: '100%', opacity: 0.3 }} />}
       </div>
     </div>
   );
@@ -84,7 +43,6 @@ function PlanosContent() {
     queryFn: () => apiClient.getPlanInfo(),
   });
 
-  // Handle Stripe redirect callbacks
   useEffect(() => {
     if (searchParams.get('success') === '1') {
       toast.success('Assinatura ativada com sucesso!');
@@ -120,6 +78,7 @@ function PlanosContent() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
+      {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
@@ -140,12 +99,19 @@ function PlanosContent() {
         )}
       </div>
 
-      {/* Current usage */}
+      {/* Uso atual */}
       {!isLoading && planInfo && (
         <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-slate-300">Uso este mês</h2>
-            <span className="text-xs px-2 py-1 bg-brand-600/15 text-brand-400 rounded-full capitalize font-medium">{planInfo.plan}</span>
+            <span className={cn(
+              "text-xs px-2 py-1 rounded-full capitalize font-medium",
+              planInfo.plan === 'pro' ? 'bg-brand-600/15 text-brand-400' :
+              planInfo.plan === 'unlimited' ? 'bg-violet-600/15 text-violet-400' :
+              'bg-slate-700/30 text-slate-400'
+            )}>
+              {planInfo.plan}
+            </span>
           </div>
           <div className="space-y-4">
             <UsageBar used={planInfo.usage.chatMessages} limit={planInfo.limits.chatMessages} label="Mensagens de chat" />
@@ -155,74 +121,13 @@ function PlanosContent() {
         </div>
       )}
 
-      {/* Plan comparison */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {PLANS.map((plan) => {
-          const isCurrent = planInfo?.plan === plan.id;
-          const Icon = plan.icon;
-          const isUpgrade = plan.id !== 'trial';
-          return (
-            <div
-              key={plan.id}
-              className={cn(
-                'bg-[#141414] border rounded-xl p-5 relative flex flex-col',
-                isCurrent ? 'border-brand-500/40' : plan.highlighted ? 'border-emerald-500/20' : 'border-white/[0.07]'
-              )}
-            >
-              {plan.highlighted && !isCurrent && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] bg-emerald-500 text-white px-2.5 py-0.5 rounded-full font-bold">
-                  RECOMENDADO
-                </div>
-              )}
-              {isCurrent && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] bg-brand-600 text-white px-2.5 py-0.5 rounded-full font-bold">
-                  SEU PLANO
-                </div>
-              )}
-              <Icon className={cn('w-5 h-5 mb-3', plan.color)} />
-              <h3 className="font-semibold text-slate-200 text-sm">{plan.name}</h3>
-              <div className="mt-1 mb-3">
-                <span className="text-xl font-bold text-slate-100">{plan.price}</span>
-                {(plan as any).period && <span className="text-slate-500 text-sm">{(plan as any).period}</span>}
-              </div>
-              <div className="space-y-1.5">
-                {plan.features.map((f) => (
-                  <div key={f} className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
-                    {f}
-                  </div>
-                ))}
-              </div>
-              {!isCurrent && isUpgrade && (
-                <button
-                  onClick={() => handleCheckout(plan.id)}
-                  disabled={loadingPlan !== null}
-                  className={cn(
-                    'w-full mt-auto pt-4 py-2.5 rounded-xl text-xs font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50',
-                    plan.highlighted
-                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                      : 'bg-white/5 hover:bg-white/10 text-slate-300'
-                  )}
-                >
-                  {loadingPlan === plan.id ? (
-                    <PlanetLoader size="xs" />
-                  ) : (
-                    'Fazer upgrade'
-                  )}
-                </button>
-              )}
-              {isCurrent && isPaid && (
-                <button
-                  onClick={handlePortal}
-                  disabled={loadingPortal}
-                  className="w-full mt-auto pt-4 py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl text-xs font-medium transition-colors"
-                >
-                  Gerenciar
-                </button>
-              )}
-            </div>
-          );
-        })}
+      {/* Pricing section */}
+      <div className="-mx-4 sm:-mx-6 rounded-2xl overflow-hidden">
+        <PricingSection
+          currentPlan={planInfo?.plan}
+          onSelectPlan={handleCheckout}
+          loadingPlan={loadingPlan}
+        />
       </div>
     </div>
   );

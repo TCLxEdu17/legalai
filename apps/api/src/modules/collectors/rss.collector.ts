@@ -13,14 +13,28 @@ export class RssCollector implements ICollector {
   private readonly contentCache = new Map<string, { title: string; content: string; metadata: any }>();
 
   private sanitizeXml(xml: string): string {
-    return xml
-      // & solto (não seguido de nome_entidade;) → &amp;
+    let result = xml
+      // & solto (não seguido de entidade válida) → &amp;
       .replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[\da-fA-F]+);)/g, '&amp;')
-      // atributos sem valor: <tag attr> → <tag attr="">
-      .replace(/<([^>]*)\s([a-zA-Z][a-zA-Z0-9_:-]*)(\s|>)/g, (m, pre, attr, suf) => {
-        if (m.includes('=')) return m;
-        return `<${pre} ${attr}=""${suf}`;
+      // Remove tags com caracteres inválidos no nome (ex: +, @, espaço) — CNJ feed
+      .replace(/<\/?([a-zA-Z][^>\s/]*)([^>]*)>/g, (match, tagName) => {
+        if (/[^a-zA-Z0-9_\-.:]/g.test(tagName)) return '';
+        return match;
       });
+
+    // Corrige atributos booleanos sem valor: <tag attr> → <tag attr="">
+    // Bug anterior: m.includes('=') descartava o fix quando havia outros atributos com valor.
+    // A regex (\s|>) garante que attr não é seguido por '=', então todo match é booleano.
+    for (let i = 0; i < 3; i++) {
+      const prev = result;
+      result = result.replace(
+        /<([^>]*)\s([a-zA-Z][a-zA-Z0-9_:-]*)(\s|>)/g,
+        (_, pre, attr, suf) => `<${pre} ${attr}=""${suf}`,
+      );
+      if (result === prev) break;
+    }
+
+    return result;
   }
 
   private async fetchFeedXml(feedUrl: string): Promise<string> {

@@ -61,7 +61,6 @@ export class UploadsService {
       throw new BadRequestException('Tipo de arquivo não suportado. Use PDF, DOCX ou TXT.');
     }
 
-    // Criar registro no banco com status PROCESSING
     const document = await this.prisma.jurisprudenceDocument.create({
       data: {
         title: dto.title.trim(),
@@ -81,11 +80,10 @@ export class UploadsService {
       },
     });
 
-    // Processar em background sem bloquear a resposta HTTP
-    const buffer = file.buffer;
-    this.processDocumentAsync(document.id, buffer, file.mimetype, file.originalname, dto).catch((err) => {
-      this.logger.error(`Falha no processamento do documento ${document.id}:`, err.stack);
-    });
+    // TODO sexta: substituir por queue BullMQ quando Redis estiver no Render
+    this.processDocumentAsync(document.id, file.buffer, file.mimetype, file.originalname, dto).catch(
+      (err) => this.logger.error(`Falha ao processar documento ${document.id}: ${err.message}`),
+    );
 
     return {
       id: document.id,
@@ -93,106 +91,6 @@ export class UploadsService {
       status: 'PROCESSING',
       message: 'Documento recebido e em processamento. Acompanhe o status na listagem.',
     };
-  }
-
-  /**
-   * Pipeline completo de processamento:
-   * 1. Upload do arquivo para storage (R2 ou disco local)
-   * 2. Extração de texto (do buffer em memória — sem leitura de disco)
-   * 3. Limpeza e normalização
-   * 4. Geração de chunks
-   * 5. Geração de embeddings
-   * 6. Indexação no banco vetorial
-   */
-  private async processDocumentAsync(
-    documentId: string,
-    buffer: Buffer,
-    mimetype: string,
-    originalname: string,
-    dto: UploadDocumentDto,
-  ): Promise<void> {
-    try {
-      await this.updateStatus(documentId, UploadStatus.PROCESSING, ProcessingStatus.CHUNKING);
-
-      // Etapa 1: Salvar arquivo no storage (R2 ou disco local)
-      const storageKey = this.buildStorageKey(documentId, originalname);
-      const filePath = await this.storageService.uploadFile(buffer, storageKey, mimetype);
-
-      await this.prisma.jurisprudenceDocument.update({
-        where: { id: documentId },
-        data: { filePath },
-      });
-
-      // Etapa 2: Extração de texto do buffer em memória (nunca lê do disco)
-      const processor = this.getProcessor(mimetype, originalname);
-      const extracted = await processor.process(buffer);
-
-      const extractedText = extracted.text?.trim() || '';
-
-      // Etapa 3: Auto-extração de metadados se solicitado e houver texto
-      let metadata: Partial<typeof dto> = {};
-      if (dto.autoExtractMetadata && extractedText.length > 0) {
-        this.logger.debug(`Extraindo metadados automaticamente para ${documentId}`);
-        const extracted_meta = await this.ragService.extractMetadata(extractedText);
-        metadata = {
-          tribunal: extracted_meta.tribunal || dto.tribunal,
-          processNumber: extracted_meta.processNumber || dto.processNumber,
-          relator: extracted_meta.relator || dto.relator,
-          judgmentDate: extracted_meta.judgmentDate || dto.judgmentDate,
-          theme: extracted_meta.theme || dto.theme,
-          keywords: extracted_meta.keywords.length > 0 ? extracted_meta.keywords : dto.keywords,
-        };
-      }
-
-      await this.prisma.jurisprudenceDocument.update({
-        where: { id: documentId },
-        data: {
-          originalText: extractedText || null,
-          cleanedText: extractedText || null,
-          ...metadata,
-        },
-      });
-
-      // Etapa 4: Geração de chunks (somente se houver texto extraído)
-      const chunks = extractedText.length > 0
-        ? this.chunkingService.chunkText(extractedText)
-        : [];
-
-      this.logger.log(`${chunks.length} chunks gerados para ${documentId}`);
-
-      // Etapa 5 & 6: Embeddings + Indexação (somente se houver chunks)
-      if (chunks.length > 0) {
-        await this.updateStatus(documentId, UploadStatus.PROCESSING, ProcessingStatus.EMBEDDING);
-        await this.embeddingsService.generateAndStoreEmbeddings(
-          documentId,
-          chunks,
-          this.embeddingModel,
-        );
-      }
-
-      // Sucesso: atualizar status final
-      await this.prisma.jurisprudenceDocument.update({
-        where: { id: documentId },
-        data: {
-          uploadStatus: UploadStatus.COMPLETED,
-          processingStatus: ProcessingStatus.INDEXED,
-          chunkCount: chunks.length,
-        },
-      });
-
-      this.logger.log(`Documento ${documentId} indexado com sucesso (${chunks.length} chunks)`);
-    } catch (error) {
-      this.logger.error(`Erro no processamento do documento ${documentId}:`, error.message);
-
-      await this.prisma.jurisprudenceDocument.update({
-        where: { id: documentId },
-        data: {
-          uploadStatus: UploadStatus.FAILED,
-          processingStatus: ProcessingStatus.FAILED,
-          processingError: error.message,
-        },
-      });
-    }
   }
 
   async reindex(documentId: string): Promise<void> {
@@ -204,13 +102,88 @@ export class UploadsService {
       throw new NotFoundException(`Documento ${documentId} não encontrado`);
     }
 
-    this.logger.log(`Reindexando documento: ${documentId}`);
+    this.logger.log(`Reindexando: ${documentId}`);
+    // TODO sexta: enfileirar via BullMQ
+    this.reindexAsync(documentId, document).catch(
+      (err) => this.logger.error(`Falha ao reindexar ${documentId}: ${err.message}`),
+    );
+  }
 
+  private async processDocumentAsync(
+    documentId: string,
+    buffer: Buffer,
+    mimetype: string,
+    originalname: string,
+    dto: UploadDocumentDto,
+  ): Promise<void> {
+    try {
+      await this.updateStatus(documentId, UploadStatus.PROCESSING, ProcessingStatus.CHUNKING);
+
+      // 1. Storage
+      const storageKey = `documents/${documentId}/${originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const filePath = await this.storageService.uploadFile(buffer, storageKey, mimetype);
+      await this.prisma.jurisprudenceDocument.update({ where: { id: documentId }, data: { filePath } });
+
+      // 2. Extração de texto
+      const processor = this.getProcessor(mimetype, originalname);
+      const { text: extractedText = '' } = await processor.process(buffer);
+      const cleanText = extractedText.trim();
+
+      // 3. Metadados automáticos
+      let metadata: Partial<UploadDocumentDto> = {};
+      if (dto.autoExtractMetadata && cleanText.length > 0) {
+        const extracted = await this.ragService.extractMetadata(cleanText);
+        metadata = {
+          tribunal: extracted.tribunal || dto.tribunal,
+          processNumber: extracted.processNumber || dto.processNumber,
+          relator: extracted.relator || dto.relator,
+          judgmentDate: extracted.judgmentDate || dto.judgmentDate,
+          theme: extracted.theme || dto.theme,
+          keywords: extracted.keywords.length > 0 ? extracted.keywords : dto.keywords,
+        };
+      }
+
+      await this.prisma.jurisprudenceDocument.update({
+        where: { id: documentId },
+        data: { originalText: cleanText || null, cleanedText: cleanText || null, ...metadata },
+      });
+
+      // 4. Chunks + Embeddings
+      const chunks = cleanText.length > 0 ? this.chunkingService.chunkText(cleanText) : [];
+      this.logger.log(`${chunks.length} chunks para ${documentId}`);
+
+      if (chunks.length > 0) {
+        await this.updateStatus(documentId, UploadStatus.PROCESSING, ProcessingStatus.EMBEDDING);
+        await this.embeddingsService.generateAndStoreEmbeddings(documentId, chunks, this.embeddingModel);
+      }
+
+      await this.prisma.jurisprudenceDocument.update({
+        where: { id: documentId },
+        data: {
+          uploadStatus: UploadStatus.COMPLETED,
+          processingStatus: ProcessingStatus.INDEXED,
+          chunkCount: chunks.length,
+          processingError: null,
+        },
+      });
+
+      this.logger.log(`Documento ${documentId} indexado (${chunks.length} chunks)`);
+    } catch (error) {
+      await this.prisma.jurisprudenceDocument.update({
+        where: { id: documentId },
+        data: {
+          uploadStatus: UploadStatus.FAILED,
+          processingStatus: ProcessingStatus.FAILED,
+          processingError: error.message,
+        },
+      });
+      throw error;
+    }
+  }
+
+  private async reindexAsync(documentId: string, document: any): Promise<void> {
     await this.updateStatus(documentId, UploadStatus.PROCESSING, ProcessingStatus.CHUNKING);
-
-    const chunks = document.cleanedText
-      ? this.chunkingService.chunkText(document.cleanedText)
-      : [];
+    const chunks = document.cleanedText ? this.chunkingService.chunkText(document.cleanedText) : [];
 
     if (chunks.length > 0) {
       await this.updateStatus(documentId, UploadStatus.PROCESSING, ProcessingStatus.EMBEDDING);
@@ -219,33 +192,15 @@ export class UploadsService {
 
     await this.prisma.jurisprudenceDocument.update({
       where: { id: documentId },
-      data: {
-        uploadStatus: UploadStatus.COMPLETED,
-        processingStatus: ProcessingStatus.INDEXED,
-        chunkCount: chunks.length,
-        processingError: null,
-      },
+      data: { uploadStatus: UploadStatus.COMPLETED, processingStatus: ProcessingStatus.INDEXED, chunkCount: chunks.length, processingError: null },
     });
   }
 
-  private async updateStatus(
-    id: string,
-    uploadStatus: UploadStatus,
-    processingStatus: ProcessingStatus,
-  ) {
+  private async updateStatus(id: string, uploadStatus: UploadStatus, processingStatus: ProcessingStatus) {
     await this.prisma.jurisprudenceDocument.update({
       where: { id },
       data: { uploadStatus, processingStatus },
     });
-  }
-
-  /**
-   * Constrói a chave de armazenamento para o arquivo.
-   * Formato: documents/<documentId>/<hash>-<originalname>
-   */
-  private buildStorageKey(documentId: string, originalname: string): string {
-    const safeName = originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-    return `documents/${documentId}/${safeName}`;
   }
 
   private getFileType(mimetype: string, filename: string): string | null {

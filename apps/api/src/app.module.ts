@@ -39,6 +39,9 @@ import { ProcuracoesModule } from './modules/procuracoes/procuracoes.module';
 import { NotificacoesClientesModule } from './modules/notificacoes-clientes/notificacoes-clientes.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NewsModule } from './modules/news/news.module';
+import { PrivateProcessosModule } from './modules/private-processos/private-processos.module';
+// import { RedisModule } from './redis/redis.module';   // TODO sexta
+// import { QueueModule } from './modules/queue/queue.module';  // TODO sexta
 
 @Module({
   controllers: [AppController],
@@ -75,6 +78,8 @@ import { NewsModule } from './modules/news/news.module';
     // Infraestrutura
     PrismaModule,
     StorageModule,
+    // RedisModule,  // TODO sexta: adicionar REDIS_URL no Render e reativar
+    // QueueModule,  // TODO sexta: reativar junto com RedisModule
 
     // Módulos de negócio
     AuthModule,
@@ -133,6 +138,9 @@ import { NewsModule } from './modules/news/news.module';
     NotificacoesClientesModule,
     AnalyticsModule,
     NewsModule,
+
+    // Processos Privados (PRO) — e-SAJ TJSP
+    PrivateProcessosModule,
   ],
   providers: [
     {

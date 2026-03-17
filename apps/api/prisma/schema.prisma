@@ -155,8 +155,10 @@ model User {
   webhooks               Webhook[]
   cases                  Case[]
   savedProcesses         SavedProcess[]
+  oabCredential          OabCredential?
   lancamentos            LancamentoFinanceiro[]
   tarefas                Tarefa[]
+  userEvents             UserEvent[]
 
   @@index([tenantId])
   @@map("users")
@@ -735,6 +737,21 @@ model SavedProcess {
   @@map("saved_processes")
 }
 
+model OabCredential {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String   @unique @map("user_id") @db.Uuid
+  oabNumber    String   @map("oab_number")
+  encryptedPwd String   @map("encrypted_pwd") @db.Text
+  iv           String   @db.Text
+  authTag      String   @map("auth_tag") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("oab_credentials")
+}
+
 // ============================================================
 // FINANCEIRO
 // ============================================================
@@ -812,4 +829,21 @@ model Tarefa {
   @@index([status])
   @@index([prazo])
   @@map("tarefas")
+}
+
+model UserEvent {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  event     String
+  page      String?
+  element   String?
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([event])
+  @@index([createdAt])
+  @@map("user_events")
 }

@@ -4,7 +4,7 @@ describe('AnalyticsService', () => {
   let service: AnalyticsService;
 
   beforeEach(() => {
-    service = new AnalyticsService(null as any);
+    service = new AnalyticsService(null as any, null as any);
   });
 
   describe('buildPredictionPrompt', () => {

@@ -78,23 +78,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
   }, [checkSession]);
 
-  // Trial tracking: page_view when pathname changes
+  // Track page_view for all authenticated users
   useEffect(() => {
+    apiClient.trackEvent({ event: 'page_view', page: pathname }).catch(() => {});
+    // Also track for trial users (legacy)
     const trialId = getTrialId();
-    if (!trialId) return;
-    apiClient.trackTrialMetric(trialId, { event: 'page_view', page: pathname }).catch(() => {});
+    if (trialId) {
+      apiClient.trackTrialMetric(trialId, { event: 'page_view', page: pathname }).catch(() => {});
+    }
   }, [pathname]);
 
-  // Trial tracking: throttled click (at most 1 per 10s per page)
+  // Track throttled clicks for all authenticated users (at most 1 per 10s per page)
   useEffect(() => {
-    const trialId = getTrialId();
-    if (!trialId) return;
-
     const handleClick = () => {
       const now = Date.now();
       if (now - lastClickTrackRef.current < 10_000) return;
       lastClickTrackRef.current = now;
-      apiClient.trackTrialMetric(trialId, { event: 'click', page: pathname }).catch(() => {});
+      apiClient.trackEvent({ event: 'click', page: pathname }).catch(() => {});
+      // Also track for trial users (legacy)
+      const trialId = getTrialId();
+      if (trialId) {
+        apiClient.trackTrialMetric(trialId, { event: 'click', page: pathname }).catch(() => {});
+      }
     };
 
     window.addEventListener('click', handleClick, { passive: true });
