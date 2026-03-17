@@ -445,6 +445,10 @@ class ApiClient {
     return data;
   }
 
+  async trackEvent(payload: { event: string; page?: string; element?: string; metadata?: any }) {
+    await this.client.post('/analytics/track', payload);
+  }
+
   // ==================== WEBHOOKS ====================
   async getWebhooks() {
     const { data } = await this.client.get('/webhooks');
