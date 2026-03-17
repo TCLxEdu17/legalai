@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { GradientButton } from '@/components/ui/gradient-button';
 import { AuroraBackground } from '@/components/ui/aurora-background';
+import { GlowingShadow } from '@/components/ui/glowing-shadow';
 import { motion, type Variants } from 'framer-motion';
 
 const RECURSOS = [
@@ -255,55 +256,48 @@ export default function LandingPage() {
 
       {/* ── CTA FINAL ────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-20">
-        <motion.div
-          initial="hidden" animate="show" variants={fadeUp}
-          className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-10 md:p-14 relative overflow-hidden"
-        >
-          <div className="absolute -top-24 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 right-1/4 w-80 h-80 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Gavel className="w-5 h-5 text-blue-400" />
-                <span className="text-blue-400 text-sm font-semibold">Direito brasileiro</span>
+        <motion.div initial="hidden" animate="show" variants={fadeUp}>
+          <GlowingShadow fullWidth>
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Gavel className="w-5 h-5 text-blue-400" />
+                  <span className="text-blue-400 text-sm font-semibold">Direito brasileiro</span>
+                </div>
+                <h2 className="text-3xl font-bold text-white mb-4 leading-tight">
+                  A nova era do direito<br />já começou.
+                </h2>
+                <p className="text-white text-sm mb-8 leading-relaxed">
+                  Feito para o direito brasileiro. A IA nunca inventa jurisprudência
+                  e informa quando não encontra base suficiente.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href="/trial">
+                    <GradientButton className="h-11 px-7 text-sm rounded-xl gap-2">
+                      Começar agora
+                      <ArrowRight className="w-4 h-4" />
+                    </GradientButton>
+                  </Link>
+                  <Link href="/login">
+                    <GradientButton variant="variant" className="h-11 px-7 text-sm rounded-xl">
+                      Já tenho conta
+                    </GradientButton>
+                  </Link>
+                </div>
               </div>
-              <h2 className="text-3xl font-bold text-white mb-4 leading-tight">
-                A nova era do direito<br />já começou.
-              </h2>
-              <p className="text-slate-400 text-sm mb-8 leading-relaxed">
-                Feito para o direito brasileiro. A IA nunca inventa jurisprudência
-                e informa quando não encontra base suficiente.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link href="/trial">
-                  <GradientButton className="h-11 px-7 text-sm rounded-xl gap-2">
-                    Começar agora
-                    <ArrowRight className="w-4 h-4" />
-                  </GradientButton>
-                </Link>
-                <Link href="/login">
-                  <GradientButton variant="variant" className="h-11 px-7 text-sm rounded-xl">
-                    Já tenho conta
-                  </GradientButton>
-                </Link>
-              </div>
-            </div>
 
-            <div className="space-y-3">
-              {CHECKLIST.map((item, i) => (
-                <motion.div
-                  key={item} initial="hidden" animate="show" variants={fadeUp}
-                  className="flex items-center gap-3"
-                >
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
-                    <CheckCircle className="w-3 h-3 text-emerald-400" />
+              <div className="space-y-3">
+                {CHECKLIST.map((item) => (
+                  <div key={item} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                      <CheckCircle className="w-3 h-3 text-emerald-400" />
+                    </div>
+                    <span className="text-white text-sm">{item}</span>
                   </div>
-                  <span className="text-slate-300 text-sm">{item}</span>
-                </motion.div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          </GlowingShadow>
         </motion.div>
       </section>
 
