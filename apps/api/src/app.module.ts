@@ -40,8 +40,8 @@ import { NotificacoesClientesModule } from './modules/notificacoes-clientes/noti
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NewsModule } from './modules/news/news.module';
 import { PrivateProcessosModule } from './modules/private-processos/private-processos.module';
-import { RedisModule } from './redis/redis.module';
-import { QueueModule } from './modules/queue/queue.module';
+// import { RedisModule } from './redis/redis.module';   // TODO sexta
+// import { QueueModule } from './modules/queue/queue.module';  // TODO sexta
 
 @Module({
   controllers: [AppController],
@@ -78,8 +78,8 @@ import { QueueModule } from './modules/queue/queue.module';
     // Infraestrutura
     PrismaModule,
     StorageModule,
-    RedisModule,
-    QueueModule,
+    // RedisModule,  // TODO sexta: adicionar REDIS_URL no Render e reativar
+    // QueueModule,  // TODO sexta: reativar junto com RedisModule
 
     // Módulos de negócio
     AuthModule,
