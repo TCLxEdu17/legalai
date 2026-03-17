@@ -95,13 +95,23 @@ export class ProcessosService {
 
     const url = `${DATAJUD_BASE}/api_publica_${index}/_search`;
 
+    this.logger.debug(`[DataJud] Consultando ${index} | formatted=${formatted} | digits=${digits}`);
+
     let response: any;
     try {
       response = await axios.post(
         url,
         {
           query: {
-            match: { numeroProcesso: digits },
+            bool: {
+              should: [
+                { term: { 'numeroProcesso.keyword': formatted } },
+                { term: { 'numeroProcesso.keyword': digits } },
+                { match: { numeroProcesso: formatted } },
+                { match: { numeroProcesso: digits } },
+              ],
+              minimum_should_match: 1,
+            },
           },
           size: 1,
         },
@@ -119,9 +129,16 @@ export class ProcessosService {
       throw new BadRequestException(`Erro ao consultar DataJud: ${err?.message || 'timeout'}`);
     }
 
+    const totalHits = response.data?.hits?.total?.value ?? 0;
     const hits = response.data?.hits?.hits ?? [];
+    this.logger.debug(`[DataJud] ${index} total=${totalHits} returned=${hits.length}`);
+
     if (hits.length === 0) {
-      throw new NotFoundException('Processo não encontrado. Verifique o número e tente novamente.');
+      throw new NotFoundException(
+        `Processo não encontrado no DataJud (${index.toUpperCase()}). ` +
+        'O DataJud pode não ter cobertura completa de todos os processos. ' +
+        'Verifique o número ou consulte diretamente no portal do tribunal.',
+      );
     }
 
     const doc = hits[0]._source;
