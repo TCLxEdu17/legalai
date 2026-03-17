@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Scale, Search, ShieldCheck, ArrowRight, CheckCircle, Zap, FileText, Users, FolderOpen, BookOpen } from 'lucide-react';
 import { ScrollReveal, FadeIn, InteractiveCard, StaggerContainer, StaggerItem } from '@/components/ui/motion';
 import { Carousel } from '@/components/ui/carousel';
-import { BackgroundBeams } from '@/components/ui/background-beams';
+import { VantaBirds } from '@/components/ui/vanta-birds';
 
 const RECURSOS = [
   {
@@ -52,17 +52,8 @@ export default function LandingPage() {
       className="min-h-screen text-white overflow-x-hidden"
       style={{ background: 'linear-gradient(160deg, #020818 0%, #050d1f 40%, #000000 100%)' }}
     >
-      {/* Grid dot background */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0)',
-          backgroundSize: '28px 28px',
-        }}
-      />
-
-      {/* Background beams */}
-      <BackgroundBeams className="fixed opacity-40" />
+      {/* Vanta Birds animated background */}
+      <VantaBirds />
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <FadeIn>
