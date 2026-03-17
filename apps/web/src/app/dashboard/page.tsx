@@ -336,13 +336,14 @@ export default function DashboardPage() {
                 value={newTask}
                 onChange={e => setNewTask(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAddTask()}
-                placeholder="Adicionar tarefa..."
-                className="flex-1 bg-transparent text-sm text-slate-300 placeholder:text-slate-700 outline-none"
+                placeholder="Digite e pressione Enter ou +"
+                className="flex-1 bg-transparent text-sm text-slate-300 placeholder:text-slate-600 outline-none"
               />
               <button
                 onClick={handleAddTask}
                 disabled={!newTask.trim()}
-                className="p-1 rounded-lg bg-brand-600/20 text-brand-400 hover:bg-brand-600/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title={newTask.trim() ? 'Adicionar tarefa' : 'Digite uma tarefa primeiro'}
+                className="p-1.5 rounded-lg bg-brand-600 text-white hover:bg-brand-500 disabled:bg-white/5 disabled:text-slate-700 disabled:cursor-not-allowed transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
