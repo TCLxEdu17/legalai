@@ -8,7 +8,8 @@ async function main() {
 
   // Criar usuário admin padrão
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@legalai.com.br';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123456';
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminPassword) throw new Error('ADMIN_PASSWORD env var is required for seed');
 
   const existingAdmin = await prisma.user.findUnique({
     where: { email: adminEmail },
@@ -34,7 +35,8 @@ async function main() {
 
   // Criar usuário demo
   const demoEmail = process.env.DEMO_EMAIL || 'demo@legalai.com.br';
-  const demoPassword = process.env.DEMO_PASSWORD || 'Demo@123456';
+  const demoPassword = process.env.DEMO_PASSWORD;
+  if (!demoPassword) throw new Error('DEMO_PASSWORD env var is required for seed');
 
   const existingDemo = await prisma.user.findUnique({
     where: { email: demoEmail },

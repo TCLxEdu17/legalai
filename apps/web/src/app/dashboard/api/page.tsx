@@ -252,7 +252,7 @@ export default function ApiPage() {
 {`# Login e obtenção do token
 curl -X POST http://localhost:3001/api/v1/auth/login \\
   -H "Content-Type: application/json" \\
-  -d '{"email":"admin@legalai.com.br","password":"Admin@123456"}'
+  -d '{"email":"seu@email.com","password":"sua-senha"}'
 
 # Usar o accessToken retornado:
 curl http://localhost:3001/api/v1/ai/query \\

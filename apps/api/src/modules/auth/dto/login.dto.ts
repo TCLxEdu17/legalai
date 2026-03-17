@@ -6,7 +6,7 @@ export class LoginDto {
   @IsEmail({}, { message: 'E-mail inválido' })
   email: string;
 
-  @ApiProperty({ example: 'Admin@123456', minLength: 6 })
+  @ApiProperty({ example: '********', minLength: 6 })
   @IsString()
   @MinLength(6, { message: 'Senha deve ter no mínimo 6 caracteres' })
   password: string;
