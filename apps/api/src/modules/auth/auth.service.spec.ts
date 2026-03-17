@@ -34,8 +34,11 @@ const mockJwtService = {
 const mockConfig = {
   get: (key: string, def?: any) => {
     const map: Record<string, any> = {
+      'app.jwt': { secret: 'test-secret', expiresIn: '15m', refreshSecret: 'test-refresh-secret', refreshExpiresIn: '7d' },
       'app.jwt.secret': 'test-secret',
       'app.jwt.expiresIn': '15m',
+      'app.jwt.refreshSecret': 'test-refresh-secret',
+      'app.jwt.refreshExpiresIn': '7d',
     };
     return map[key] ?? def;
   },

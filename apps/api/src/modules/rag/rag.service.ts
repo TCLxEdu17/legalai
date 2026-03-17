@@ -65,16 +65,17 @@ export class RagService {
     legalArea?: string,
   ): Promise<RagQueryResult> {
     const RAG_TIMEOUT_MS = 60_000;
+    let timeoutHandle: ReturnType<typeof setTimeout>;
 
     return Promise.race([
       this._queryInternal(question, sessionHistory, legalArea),
-      new Promise<never>((_, reject) =>
-        setTimeout(
+      new Promise<never>((_, reject) => {
+        timeoutHandle = setTimeout(
           () => reject(new Error(`[RAG] Timeout após ${RAG_TIMEOUT_MS / 1000}s`)),
           RAG_TIMEOUT_MS,
-        ),
-      ),
-    ]);
+        );
+      }),
+    ]).finally(() => clearTimeout(timeoutHandle));
   }
 
   private async _queryInternal(
