@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -40,6 +41,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NewsModule } from './modules/news/news.module';
 
 @Module({
+  controllers: [AppController],
   imports: [
     // Configuração global
     ConfigModule.forRoot({

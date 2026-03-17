@@ -6,10 +6,8 @@ const Parser = require('rss-parser');
 const parser = new Parser({ timeout: 8000 });
 
 const FEEDS = [
-  { name: 'Conjur', url: 'https://www.conjur.com.br/rss/news', category: 'Geral' },
-  { name: 'STF', url: 'https://portal.stf.jus.br/rss/', category: 'STF' },
-  { name: 'STJ', url: 'https://www.stj.jus.br/sites/portalp/Paginas/Comunicacao/Noticias/RSS.aspx', category: 'STJ' },
-  { name: 'CNJ', url: 'https://www.cnj.jus.br/feed/', category: 'CNJ' },
+  { name: 'Conjur', url: 'https://www.conjur.com.br/rss/', category: 'Geral' },
+  { name: 'JOTA', url: 'https://www.jota.info/feed', category: 'Geral' },
 ];
 
 export interface NewsItem {
