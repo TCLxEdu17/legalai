@@ -1,6 +1,7 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger, Optional } from '@nestjs/common';
 import { VectorSearchService, RetrievedChunk } from './vector-search.service';
 import { AI_PROVIDER_TOKEN, IAIProvider } from './providers/ai-provider.interface';
+import { RagCacheService } from './rag-cache.service';
 import {
   LEGAL_SYSTEM_PROMPT,
   LEGAL_FALLBACK_SYSTEM_PROMPT,
@@ -53,6 +54,7 @@ export class RagService {
   constructor(
     private readonly vectorSearchService: VectorSearchService,
     @Inject(AI_PROVIDER_TOKEN) private readonly aiProvider: IAIProvider,
+    @Optional() private readonly ragCache?: RagCacheService,
   ) {}
 
   /**
@@ -64,10 +66,21 @@ export class RagService {
     sessionHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
     legalArea?: string,
   ): Promise<RagQueryResult> {
+    // Cache só faz sentido em queries sem histórico (sem contexto de sessão)
+    const canCache = !sessionHistory || sessionHistory.length === 0;
+
+    if (canCache && this.ragCache) {
+      const cached = await this.ragCache.get(question, legalArea);
+      if (cached) {
+        this.logger.log(`[RAG] Cache HIT — "${question.slice(0, 60)}"`);
+        return { ...cached, model: `${cached.model} (cached)` };
+      }
+    }
+
     const RAG_TIMEOUT_MS = 60_000;
     let timeoutHandle: ReturnType<typeof setTimeout>;
 
-    return Promise.race([
+    const result = await Promise.race([
       this._queryInternal(question, sessionHistory, legalArea),
       new Promise<never>((_, reject) => {
         timeoutHandle = setTimeout(
@@ -76,6 +89,12 @@ export class RagService {
         );
       }),
     ]).finally(() => clearTimeout(timeoutHandle));
+
+    if (canCache && this.ragCache) {
+      await this.ragCache.set(question, result, legalArea);
+    }
+
+    return result;
   }
 
   private async _queryInternal(

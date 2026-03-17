@@ -8,6 +8,7 @@ import { VectorSearchService } from './vector-search.service';
 import { OpenAIProvider } from './providers/openai.provider';
 import { AnthropicProvider } from './providers/anthropic.provider';
 import { AI_PROVIDER_TOKEN } from './providers/ai-provider.interface';
+import { RagCacheService } from './rag-cache.service';
 
 /**
  * Factory para selecionar o provider de IA baseado na variável AI_PROVIDER.
@@ -39,7 +40,8 @@ const aiProviderFactory = {
     EmbeddingsService,
     VectorSearchService,
     RagService,
+    RagCacheService,
   ],
-  exports: [RagService, ChunkingService, EmbeddingsService, VectorSearchService, AI_PROVIDER_TOKEN],
+  exports: [RagService, ChunkingService, EmbeddingsService, VectorSearchService, AI_PROVIDER_TOKEN, RagCacheService],
 })
 export class RagModule {}

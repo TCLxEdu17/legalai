@@ -40,6 +40,8 @@ import { NotificacoesClientesModule } from './modules/notificacoes-clientes/noti
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NewsModule } from './modules/news/news.module';
 import { PrivateProcessosModule } from './modules/private-processos/private-processos.module';
+import { RedisModule } from './redis/redis.module';
+import { QueueModule } from './modules/queue/queue.module';
 
 @Module({
   controllers: [AppController],
@@ -76,6 +78,8 @@ import { PrivateProcessosModule } from './modules/private-processos/private-proc
     // Infraestrutura
     PrismaModule,
     StorageModule,
+    RedisModule,
+    QueueModule,
 
     // Módulos de negócio
     AuthModule,
