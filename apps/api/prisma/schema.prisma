@@ -155,6 +155,7 @@ model User {
   webhooks               Webhook[]
   cases                  Case[]
   savedProcesses         SavedProcess[]
+  oabCredential          OabCredential?
   lancamentos            LancamentoFinanceiro[]
   tarefas                Tarefa[]
 
@@ -733,6 +734,21 @@ model SavedProcess {
   @@unique([userId, number])
   @@index([userId])
   @@map("saved_processes")
+}
+
+model OabCredential {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String   @unique @map("user_id") @db.Uuid
+  oabNumber    String   @map("oab_number")
+  encryptedPwd String   @map("encrypted_pwd") @db.Text
+  iv           String   @db.Text
+  authTag      String   @map("auth_tag") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("oab_credentials")
 }
 
 // ============================================================

@@ -39,6 +39,7 @@ import { ProcuracoesModule } from './modules/procuracoes/procuracoes.module';
 import { NotificacoesClientesModule } from './modules/notificacoes-clientes/notificacoes-clientes.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NewsModule } from './modules/news/news.module';
+import { PrivateProcessosModule } from './modules/private-processos/private-processos.module';
 
 @Module({
   controllers: [AppController],
@@ -133,6 +134,9 @@ import { NewsModule } from './modules/news/news.module';
     NotificacoesClientesModule,
     AnalyticsModule,
     NewsModule,
+
+    // Processos Privados (PRO) — e-SAJ TJSP
+    PrivateProcessosModule,
   ],
   providers: [
     {
