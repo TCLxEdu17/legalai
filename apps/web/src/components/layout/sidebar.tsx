@@ -51,7 +51,7 @@ const navGroups: NavGroup[] = [
     label: 'IA & Casos',
     items: [
       { href: '/dashboard/casos', icon: FolderOpen, label: 'Meus Casos', children: CASE_CHILDREN },
-      { href: '/dashboard/copiloto', icon: Bot, label: 'Copiloto IA' },
+      { href: '/dashboard/copiloto', icon: Bot, label: 'Augustus AI' },
       { href: '/dashboard/chat', icon: MessageSquare, label: 'Assistente Jurídico' },
       { href: '/dashboard/analise', icon: ScanSearch, label: 'Análise de Documento' },
       { href: '/dashboard/predicao', icon: TrendingUp, label: 'Análise Preditiva' },
