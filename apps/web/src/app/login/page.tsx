@@ -11,7 +11,7 @@ import { Scale, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { login } from '@/lib/auth';
 import { extractApiErrorMessage } from '@/lib/utils';
-import { FloatingLines } from '@/components/ui/floating-lines';
+import { AuroraBackground } from '@/components/ui/aurora-background';
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -46,15 +46,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative">
-      <FloatingLines
-        enabledWaves={['top', 'middle', 'bottom']}
-        lineCount={5}
-        lineDistance={5}
-        bendRadius={5}
-        bendStrength={-0.5}
-        interactive={true}
-        parallax={true}
-      />
+      <AuroraBackground />
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
