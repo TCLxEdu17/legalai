@@ -201,6 +201,11 @@ class ApiClient {
     return data as { plan: string; limits: { chatMessages: number | null; uploads: number | null; apiCalls: number | null }; usage: { chatMessages: number; uploads: number; apiCalls: number } };
   }
 
+  async getLegalNews() {
+    const { data } = await this.client.get('/news/legal');
+    return data as Array<{ title: string; link: string; summary: string; pubDate: string; source: string; category: string }>;
+  }
+
   async getProcesso(numero: string) {
     const { data } = await this.client.get(`/processos/${encodeURIComponent(numero)}`);
     return data;

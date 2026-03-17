@@ -1,513 +1,361 @@
 'use client';
 
-import Link from 'next/link';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
-import {
-  MessageSquare,
-  FileText,
-  Upload,
-  Database,
-  ArrowRight,
-  Zap,
-  TrendingUp,
-  BookOpen,
-  Scale,
-  Activity,
-  Settings2,
-  X,
-  Brain,
-  Bot,
-  Calculator,
-  Gavel,
-  ShieldAlert,
-} from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { getStoredUser } from '@/lib/auth';
-import { FadeIn, StaggerContainer, StaggerItem, InteractiveCard } from '@/components/ui/motion';
-import { BentoGrid, type BentoItem } from '@/components/ui/bento-grid';
-import type { DocumentStats, User } from '@/types';
+import {
+  Cloud, CloudRain, CloudSnow, Sun, CloudLightning, Wind,
+  Newspaper, ExternalLink, Plus, Trash2, Check, MapPin, RefreshCw,
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-// Hook de contador animado (count-up com easing)
-function useCountUp(target: number, duration = 1200): number {
-  const [value, setValue] = useState(0);
-  const startRef = useRef<number | null>(null);
-  const frameRef = useRef<number | null>(null);
-  const prevTarget = useRef(0);
-
-  useEffect(() => {
-    if (target === prevTarget.current) return;
-    prevTarget.current = target;
-    startRef.current = null;
-
-    const from = value;
-    const range = target - from;
-
-    const animate = (timestamp: number) => {
-      if (!startRef.current) startRef.current = timestamp;
-      const elapsed = timestamp - startRef.current;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-      setValue(Math.round(from + eased * range));
-      if (progress < 1) frameRef.current = requestAnimationFrame(animate);
-    };
-
-    frameRef.current = requestAnimationFrame(animate);
-    return () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, duration]);
-
-  return value;
+// ─── Saudação ────────────────────────────────────────────────────────────────
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bom dia';
+  if (h < 18) return 'Boa tarde';
+  return 'Boa noite';
 }
 
-function LiveBadge() {
-  return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-xs font-medium text-emerald-400">
-      <span className="relative flex w-2 h-2">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-        <span className="relative inline-flex rounded-full w-2 h-2 bg-emerald-500" />
-      </span>
-      Base atualizando diariamente
-    </span>
-  );
-}
+// ─── Checklist ───────────────────────────────────────────────────────────────
+interface Task { id: string; text: string; done: boolean }
 
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  bgColor,
-  iconColor,
-  sub,
-}: {
-  label: string;
-  value: number;
-  icon: React.ElementType;
-  bgColor: string;
-  iconColor: string;
-  sub?: string;
-}) {
-  const animated = useCountUp(value);
-  return (
-    <InteractiveCard className="dark-card rounded-xl p-4 hover:border-white/[0.12] transition-colors">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-slate-500 text-xs font-medium">{label}</p>
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${bgColor}`}>
-          <Icon className={`w-4 h-4 ${iconColor}`} />
-        </div>
-      </div>
-      <p className="text-2xl font-bold text-slate-100 tabular-nums">
-        {animated.toLocaleString('pt-BR')}
-      </p>
-      {sub && <p className="text-xs text-slate-500 mt-1">{sub}</p>}
-    </InteractiveCard>
-  );
-}
+const INITIAL_TASKS: Task[] = [
+  { id: '1', text: 'Verificar prazos processuais do dia', done: false },
+  { id: '2', text: 'Revisar petições pendentes', done: false },
+  { id: '3', text: 'Retornar ligações de clientes', done: false },
+];
 
-function ThemeBar({ theme, count, max }: { theme: string; count: number; max: number }) {
-  const pct = max > 0 ? Math.round((count / max) * 100) : 0;
-  const [width, setWidth] = useState(0);
+function useChecklist() {
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  useEffect(() => {
-    const t = setTimeout(() => setWidth(pct), 120);
-    return () => clearTimeout(t);
-  }, [pct]);
-
-  const COLORS = [
-    'bg-brand-500', 'bg-violet-500', 'bg-emerald-500', 'bg-amber-500',
-    'bg-sky-500', 'bg-rose-500', 'bg-teal-500', 'bg-orange-500',
-    'bg-indigo-500', 'bg-pink-500', 'bg-cyan-500', 'bg-lime-600',
-  ];
-  const idx = Math.abs((theme.charCodeAt(0) ?? 0) + (theme.charCodeAt(1) ?? 0)) % COLORS.length;
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-300 font-medium truncate pr-2 max-w-[200px]" title={theme}>
-          {theme}
-        </span>
-        <span className="text-xs text-slate-500 tabular-nums shrink-0">{count}</span>
-      </div>
-      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-700 ease-out ${COLORS[idx]}`}
-          style={{ width: `${width}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-const DEFAULT_WIDGETS = { stats: true, quickActions: true, themes: true, tribunais: true, recentSessions: true };
-
-function useWidgetPrefs() {
-  const [prefs, setPrefs] = useState(DEFAULT_WIDGETS);
   useEffect(() => {
     try {
-      const stored = JSON.parse(localStorage.getItem('dashboard-widgets') || '{}');
-      setPrefs({ ...DEFAULT_WIDGETS, ...stored });
-    } catch {}
+      const saved = localStorage.getItem('legalai_checklist');
+      setTasks(saved ? JSON.parse(saved) : INITIAL_TASKS);
+    } catch {
+      setTasks(INITIAL_TASKS);
+    }
   }, []);
-  const toggle = (key: keyof typeof DEFAULT_WIDGETS) => {
-    setPrefs((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      localStorage.setItem('dashboard-widgets', JSON.stringify(next));
-      return next;
-    });
+
+  const save = useCallback((updated: Task[]) => {
+    setTasks(updated);
+    localStorage.setItem('legalai_checklist', JSON.stringify(updated));
+  }, []);
+
+  const toggle = (id: string) => save(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  const remove = (id: string) => save(tasks.filter(t => t.id !== id));
+  const add = (text: string) => {
+    if (!text.trim()) return;
+    save([...tasks, { id: Date.now().toString(), text: text.trim(), done: false }]);
   };
-  return { prefs, toggle };
+
+  return { tasks, toggle, remove, add };
 }
 
+// ─── Weather ─────────────────────────────────────────────────────────────────
+interface WeatherData { temp: number; apparent: number; code: number; city: string }
+
+function weatherIcon(code: number) {
+  if (code === 0) return <Sun className="w-6 h-6 text-yellow-400" />;
+  if (code <= 3) return <Cloud className="w-6 h-6 text-slate-400" />;
+  if (code <= 67) return <CloudRain className="w-6 h-6 text-blue-400" />;
+  if (code <= 77) return <CloudSnow className="w-6 h-6 text-sky-300" />;
+  if (code <= 82) return <CloudRain className="w-6 h-6 text-blue-400" />;
+  if (code <= 99) return <CloudLightning className="w-6 h-6 text-yellow-300" />;
+  return <Wind className="w-6 h-6 text-slate-400" />;
+}
+
+function weatherDesc(code: number) {
+  if (code === 0) return 'Céu limpo';
+  if (code === 1) return 'Principalmente limpo';
+  if (code === 2) return 'Parcialmente nublado';
+  if (code === 3) return 'Nublado';
+  if (code <= 48) return 'Neblina';
+  if (code <= 57) return 'Chuvisco';
+  if (code <= 67) return 'Chuva';
+  if (code <= 77) return 'Neve';
+  if (code <= 82) return 'Pancadas de chuva';
+  return 'Tempestade';
+}
+
+function useWeather() {
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!navigator.geolocation) { setLoading(false); return; }
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const [meteo, geo] = await Promise.all([
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.latitude}&longitude=${coords.longitude}&current=temperature_2m,apparent_temperature,weather_code&timezone=America%2FSao_Paulo`).then(r => r.json()),
+            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json`).then(r => r.json()),
+          ]);
+          setWeather({
+            temp: Math.round(meteo.current.temperature_2m),
+            apparent: Math.round(meteo.current.apparent_temperature),
+            code: meteo.current.weather_code,
+            city: geo.address?.city || geo.address?.town || geo.address?.municipality || 'Sua cidade',
+          });
+        } catch { /* silently fail */ }
+        setLoading(false);
+      },
+      () => setLoading(false),
+      { timeout: 6000 },
+    );
+  }, []);
+
+  return { weather, loading };
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const CATEGORY_COLORS: Record<string, string> = {
+  STF: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  STJ: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  CNJ: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  Geral: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+};
+
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 2) return 'agora';
+  if (m < 60) return `${m}min atrás`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h atrás`;
+  return `${Math.floor(h / 24)}d atrás`;
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [showCustomize, setShowCustomize] = useState(false);
-  const { prefs, toggle } = useWidgetPrefs();
-  useEffect(() => { setUser(getStoredUser()); }, []);
+  const user = getStoredUser();
+  const firstName = user?.name?.split(' ')[0] ?? 'Advogado';
+  const greeting = getGreeting();
+  const today = format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const todayCap = today.charAt(0).toUpperCase() + today.slice(1);
 
-  const { data: stats } = useQuery<DocumentStats>({
-    queryKey: ['document-stats'],
-    queryFn: () => apiClient.getDocumentStats(),
-    refetchInterval: 30_000,
+  const { weather, loading: weatherLoading } = useWeather();
+  const { tasks, toggle, remove, add } = useChecklist();
+  const [newTask, setNewTask] = useState('');
+
+  const { data: news, isLoading: newsLoading, refetch: refetchNews, isRefetching } = useQuery({
+    queryKey: ['legal-news'],
+    queryFn: () => apiClient.getLegalNews(),
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
   });
 
-  const { data: sessions = [] } = useQuery<any[]>({
-    queryKey: ['chat-sessions'],
-    queryFn: () => apiClient.getChatSessions(),
-  });
-
-  const { data: favorites = [] } = useQuery({
-    queryKey: ['favorites'],
-    queryFn: () => apiClient.getFavorites(),
-  });
-
-  // Extraídos no topo para respeitar regras dos hooks
-  const totalDocs = stats?.totalDocuments ?? 0;
-  const totalChunks = stats?.totalChunks ?? 0;
-  const indexed = stats?.byStatus?.INDEXED ?? 0;
-  const lastWeek = stats?.growth?.lastWeek ?? 0;
-  const topThemes = stats?.topThemes ?? [];
-  const maxThemeCount = topThemes[0]?.count ?? 1;
-
-  const quickActions = [
-    {
-      href: '/dashboard/chat',
-      icon: MessageSquare,
-      title: 'Nova consulta jurídica',
-      description: 'Faça uma pergunta à IA com base nas jurisprudências indexadas',
-      iconBg: 'bg-brand-600',
-    },
-    {
-      href: '/dashboard/jurisprudencias',
-      icon: FileText,
-      title: 'Ver jurisprudências',
-      description: 'Consulte e gerencie os documentos indexados na base',
-      iconBg: 'bg-slate-600',
-    },
-    ...(user?.role === 'ADMIN'
-      ? [
-          {
-            href: '/dashboard/upload',
-            icon: Upload,
-            title: 'Upload de documento',
-            description: 'Adicione novas jurisprudências à base de conhecimento',
-            iconBg: 'bg-emerald-600',
-          },
-          {
-            href: '/dashboard/fontes',
-            icon: Activity,
-            title: 'Fontes automáticas',
-            description: 'Gerencie fontes e acompanhe o crescimento diário da base',
-            iconBg: 'bg-violet-600',
-          },
-        ]
-      : []),
-  ];
-
-  const featuredItems: BentoItem[] = [
-    {
-      title: 'Chat com os Autos',
-      description: 'Converse com seu processo em linguagem natural. A IA lê os autos e responde com as fontes.',
-      icon: <MessageSquare className="w-4 h-4 text-brand-400" />,
-      status: 'Disponível',
-      tags: ['Casos', 'RAG'],
-      meta: 'IA por caso',
-      cta: 'Acessar →',
-      href: '/dashboard/casos',
-      colSpan: 2,
-      hasPersistentHover: true,
-    },
-    {
-      title: 'Copiloto IA',
-      description: 'Briefing diário com prazos urgentes, casos de risco e ações recomendadas.',
-      icon: <Bot className="w-4 h-4 text-violet-400" />,
-      status: 'Disponível',
-      tags: ['Escritório', 'IA'],
-      cta: 'Acessar →',
-      href: '/dashboard/copiloto',
-    },
-    {
-      title: 'Motor de Provas',
-      description: 'A IA lista as provas necessárias, identifica as que faltam e alerta sobre riscos probatórios.',
-      icon: <ShieldAlert className="w-4 h-4 text-amber-400" />,
-      status: 'Disponível',
-      tags: ['Análise'],
-      cta: 'Acessar →',
-      href: '/dashboard/casos',
-      colSpan: 2,
-    },
-    {
-      title: 'Previsão de Indenização',
-      description: 'Quanto vale o caso? Cálculo baseado em jurisprudência real do tribunal.',
-      icon: <Calculator className="w-4 h-4 text-emerald-400" />,
-      status: 'Disponível',
-      tags: ['Copiloto'],
-      cta: 'Calcular →',
-      href: '/dashboard/copiloto',
-    },
-    {
-      title: 'Narrativa Jurídica',
-      description: 'Constrói a narrativa cronológica, enquadramento jurídico e pontos-chave automaticamente.',
-      icon: <Brain className="w-4 h-4 text-purple-400" />,
-      status: 'Disponível',
-      tags: ['Casos', 'IA'],
-      cta: 'Ver →',
-      href: '/dashboard/casos',
-    },
-    {
-      title: 'Consulta de Processos',
-      description: 'Acompanhe andamento processual em tempo real via DataJud para todos os tribunais do Brasil.',
-      icon: <Gavel className="w-4 h-4 text-sky-400" />,
-      status: 'Disponível',
-      tags: ['DataJud', 'CNJ'],
-      meta: '67 tribunais',
-      cta: 'Consultar →',
-      href: '/dashboard/processos',
-    },
-  ];
+  const handleAddTask = () => { add(newTask); setNewTask(''); };
+  const done = tasks.filter(t => t.done).length;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-6">
+
       {/* Header */}
-      <FadeIn>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 mb-1">
-            Olá, Dr. {user?.name?.split(' ')[0] || 'Usuário'}
+          <h1 className="text-2xl font-bold text-slate-100">
+            {greeting}, {firstName}! 👋
           </h1>
-          <p className="text-slate-500 text-sm">
-            Assistente jurídico com IA — base de jurisprudências crescendo diariamente.
-          </p>
+          <p className="text-slate-500 text-sm mt-1">{todayCap}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <LiveBadge />
-          <button
-            onClick={() => setShowCustomize(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-400 rounded-lg text-xs transition-colors"
-          >
-            <Settings2 className="w-3.5 h-3.5" />
-            Personalizar
-          </button>
+
+        {/* Clima */}
+        <div className="flex items-center gap-3 bg-[#141414] border border-white/[0.07] rounded-xl px-4 py-3 min-w-[220px]">
+          {weatherLoading ? (
+            <div className="flex gap-3 items-center w-full">
+              <div className="w-6 h-6 bg-white/5 rounded-full animate-pulse shrink-0" />
+              <div className="space-y-1.5 flex-1">
+                <div className="h-3 bg-white/5 rounded w-16 animate-pulse" />
+                <div className="h-2 bg-white/5 rounded w-24 animate-pulse" />
+              </div>
+            </div>
+          ) : weather ? (
+            <>
+              {weatherIcon(weather.code)}
+              <div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xl font-bold text-slate-100">{weather.temp}°C</span>
+                  <span className="text-xs text-slate-600">sensação {weather.apparent}°C</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
+                  <MapPin className="w-3 h-3 shrink-0" />
+                  <span className="truncate max-w-[120px]">{weather.city}</span>
+                  <span>·</span>
+                  <span>{weatherDesc(weather.code)}</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <span className="text-slate-600 text-sm">Clima indisponível</span>
+          )}
         </div>
       </div>
-      </FadeIn>
 
-      {/* Customize modal */}
-      {showCustomize && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#141414] border border-white/10 rounded-2xl w-full max-w-sm">
-            <div className="flex items-center justify-between p-5 border-b border-white/[0.07]">
-              <h3 className="font-semibold text-slate-100">Personalizar painel</h3>
-              <button onClick={() => setShowCustomize(false)} className="text-slate-500 hover:text-slate-300"><X className="w-4 h-4" /></button>
+      {/* Grid principal */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+        {/* Notícias — 2/3 */}
+        <div className="lg:col-span-2 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Newspaper className="w-4 h-4 text-brand-400" />
+              <h2 className="text-sm font-semibold text-slate-300">Notícias Jurídicas do Dia</h2>
             </div>
-            <div className="p-5 space-y-3">
-              {([
-                { key: 'stats', label: 'Estatísticas' },
-                { key: 'quickActions', label: 'Ações rápidas' },
-                { key: 'themes', label: 'Temas jurídicos' },
-                { key: 'tribunais', label: 'Tribunais na base' },
-                { key: 'recentSessions', label: 'Últimas pesquisas' },
-              ] as { key: keyof typeof DEFAULT_WIDGETS; label: string }[]).map(({ key, label }) => (
-                <label key={key} className="flex items-center justify-between cursor-pointer">
-                  <span className="text-sm text-slate-300">{label}</span>
-                  <button
-                    onClick={() => toggle(key)}
-                    className={`w-10 h-5 rounded-full transition-colors relative ${prefs[key] ? 'bg-brand-600' : 'bg-white/10'}`}
-                  >
-                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${prefs[key] ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                  </button>
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stats principais animados */}
-      {prefs.stats && <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          label="Documentos"
-          value={totalDocs}
-          icon={FileText}
-          bgColor="bg-brand-600/15"
-          iconColor="text-brand-400"
-          sub="total na base"
-        />
-        <StatCard
-          label="Chunks vetorizados"
-          value={totalChunks}
-          icon={Database}
-          bgColor="bg-violet-500/15"
-          iconColor="text-violet-400"
-          sub="fragmentos semânticos"
-        />
-        <StatCard
-          label="Indexados"
-          value={indexed}
-          icon={Zap}
-          bgColor="bg-emerald-500/15"
-          iconColor="text-emerald-400"
-          sub="prontos para busca"
-        />
-        <StatCard
-          label="Esta semana"
-          value={lastWeek}
-          icon={TrendingUp}
-          bgColor="bg-amber-500/15"
-          iconColor="text-amber-400"
-          sub="novos documentos"
-        />
-      </div>}
-
-      {/* Banner de crescimento */}
-      <div className="bg-gradient-to-r from-brand-600/10 via-[#141414] to-violet-600/10 border border-brand-500/20 rounded-xl p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Scale className="w-4 h-4 text-brand-400" />
-          <h2 className="text-sm font-semibold text-brand-300">
-            Maior base de jurisprudências com IA da América Latina
-          </h2>
-        </div>
-        <div className="grid grid-cols-3 gap-6 mb-3">
-          <div>
-            <p className="text-3xl font-bold text-brand-400 tabular-nums">
-              {totalDocs.toLocaleString('pt-BR')}
-            </p>
-            <p className="text-xs text-brand-500 mt-0.5">jurisprudências indexadas</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-emerald-400 tabular-nums">
-              +{stats?.growth?.lastWeek ?? 0}
-            </p>
-            <p className="text-xs text-emerald-500 mt-0.5">adicionados esta semana</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-violet-400 tabular-nums">
-              +{stats?.growth?.lastMonth ?? 0}
-            </p>
-            <p className="text-xs text-violet-500 mt-0.5">adicionados este mês</p>
-          </div>
-        </div>
-        <p className="text-xs text-slate-500">
-          Fontes RSS ativas coletam novos julgados diariamente. Sínteses temáticas geradas por IA consolidam o conhecimento por área do direito.
-        </p>
-      </div>
-
-      {/* Recursos em destaque — BentoGrid */}
-      <div>
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-1">
-          Recursos em destaque
-        </h2>
-        <p className="text-xs text-slate-600 mb-4">Acesse as principais funcionalidades da plataforma</p>
-        <BentoGrid items={featuredItems} />
-      </div>
-
-      {/* Vertentes jurídicas */}
-      {prefs.themes && topThemes.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <BookOpen className="w-4 h-4 text-slate-500" />
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">
-              Vertentes jurídicas na base
-            </h2>
-            <span className="text-xs text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
-              {topThemes.length} temas
-            </span>
-          </div>
-          <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-5">
-            <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
-              {topThemes.map(({ theme, count }) => (
-                <ThemeBar key={theme} theme={theme} count={count} max={maxThemeCount} />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Ações rápidas */}
-      {prefs.quickActions && <div>
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
-          Ações rápidas
-        </h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          {quickActions.map(({ href, icon: Icon, title, description, iconBg }) => (
-            <Link
-              key={href}
-              href={href}
-              className="group bg-[#141414] border border-white/[0.07] rounded-xl p-5 hover:border-brand-500/30 hover:bg-white/[0.04] transition-all"
+            <button
+              onClick={() => refetchNews()}
+              disabled={isRefetching}
+              className="p-1.5 rounded-lg text-slate-600 hover:text-slate-300 hover:bg-white/5 transition-colors disabled:opacity-40"
+              title="Atualizar"
             >
-              <div className="flex items-start gap-4">
-                <div className={`w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center shrink-0`}>
-                  <Icon className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-200 mb-1 group-hover:text-brand-400 transition-colors">
-                    {title}
-                  </p>
-                  <p className="text-slate-500 text-sm leading-relaxed">{description}</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-brand-400 shrink-0 mt-0.5 transition-colors" />
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>}
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
 
-      {/* Últimas pesquisas widget */}
-      {prefs.recentSessions && sessions.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Últimas pesquisas</h2>
-            <Link href="/dashboard/chat" className="text-xs text-brand-400 hover:text-brand-300">Ver todas →</Link>
-          </div>
-          <div className="bg-[#141414] border border-white/[0.07] rounded-xl divide-y divide-white/[0.05]">
-            {sessions.slice(0, 5).map((s: any) => (
-              <div key={s.id} className="flex items-center gap-3 px-4 py-3">
-                <MessageSquare className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                <p className="text-slate-300 text-sm flex-1 truncate">{s.title}</p>
-                <p className="text-slate-600 text-xs">{new Date(s.updatedAt).toLocaleDateString('pt-BR')}</p>
-              </div>
-            ))}
-          </div>
+          {newsLoading ? (
+            <div className="space-y-2">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-[#141414] border border-white/[0.07] rounded-xl p-4 animate-pulse">
+                  <div className="flex gap-2 mb-2">
+                    <div className="h-4 w-12 bg-white/5 rounded-full" />
+                    <div className="h-4 w-10 bg-white/5 rounded-full" />
+                  </div>
+                  <div className="h-3.5 bg-white/5 rounded w-4/5 mb-1.5" />
+                  <div className="h-2.5 bg-white/5 rounded w-full mb-1" />
+                  <div className="h-2.5 bg-white/5 rounded w-2/3" />
+                </div>
+              ))}
+            </div>
+          ) : news && news.length > 0 ? (
+            <div className="space-y-2">
+              {news.map((item, i) => (
+                <a
+                  key={i}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block bg-[#141414] border border-white/[0.07] hover:border-white/[0.15] rounded-xl p-4 transition-all group"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${CATEGORY_COLORS[item.category] ?? CATEGORY_COLORS.Geral}`}>
+                          {item.source}
+                        </span>
+                        <span className="text-[10px] text-slate-600">{timeAgo(item.pubDate)}</span>
+                      </div>
+                      <p className="text-sm font-medium text-slate-200 group-hover:text-white line-clamp-2 leading-snug">
+                        {item.title}
+                      </p>
+                      {item.summary && (
+                        <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
+                          {item.summary}
+                        </p>
+                      )}
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-700 group-hover:text-slate-400 transition-colors shrink-0 mt-1" />
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-[#141414] border border-white/[0.07] rounded-xl p-10 text-center">
+              <Newspaper className="w-8 h-8 text-slate-700 mx-auto mb-3" />
+              <p className="text-slate-500 text-sm">Não foi possível carregar as notícias</p>
+              <button onClick={() => refetchNews()} className="text-brand-400 text-xs mt-2 hover:underline">
+                Tentar novamente
+              </button>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Tribunais */}
-      {prefs.tribunais && stats?.topTribunais && stats.topTribunais.length > 0 && (
-        <div>
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
-            Tribunais na base
-          </h2>
-          <div className="bg-[#141414] border border-white/[0.07] rounded-xl divide-y divide-white/[0.05]">
-            {stats.topTribunais.slice(0, 5).map(({ tribunal, count }) => (
-              <div key={tribunal} className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-slate-300 font-medium">{tribunal}</span>
-                <span className="text-xs text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
-                  {count} doc{count !== 1 ? 's' : ''}
-                </span>
-              </div>
-            ))}
+        {/* Checklist — 1/3 */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-sm font-semibold text-slate-300">Meu Dia</h2>
+            </div>
+            {tasks.length > 0 && (
+              <span className="text-[10px] text-slate-600">{done}/{tasks.length} concluídas</span>
+            )}
           </div>
+
+          <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
+            {/* Barra de progresso */}
+            {tasks.length > 0 && (
+              <div className="h-0.5 bg-white/[0.04]">
+                <div
+                  className="h-full bg-emerald-500 transition-all duration-500"
+                  style={{ width: `${Math.round((done / tasks.length) * 100)}%` }}
+                />
+              </div>
+            )}
+
+            {/* Lista */}
+            <div className="divide-y divide-white/[0.04]">
+              {tasks.length === 0 && (
+                <div className="p-8 text-center text-slate-600 text-sm">
+                  Sem tarefas. Adicione uma abaixo ↓
+                </div>
+              )}
+              {tasks.map(task => (
+                <div
+                  key={task.id}
+                  className="flex items-start gap-3 px-4 py-3 group hover:bg-white/[0.02] transition-colors"
+                >
+                  <button
+                    onClick={() => toggle(task.id)}
+                    className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
+                      task.done
+                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                        : 'border-white/20 hover:border-emerald-400/50'
+                    }`}
+                  >
+                    {task.done && <Check className="w-2.5 h-2.5" />}
+                  </button>
+                  <span className={`flex-1 text-sm leading-snug pt-0.5 ${task.done ? 'line-through text-slate-600' : 'text-slate-300'}`}>
+                    {task.text}
+                  </span>
+                  <button
+                    onClick={() => remove(task.id)}
+                    className="opacity-0 group-hover:opacity-100 text-slate-700 hover:text-red-400 transition-all mt-0.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-white/[0.04] px-4 py-3 flex items-center gap-2">
+              <input
+                value={newTask}
+                onChange={e => setNewTask(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddTask()}
+                placeholder="Adicionar tarefa..."
+                className="flex-1 bg-transparent text-sm text-slate-300 placeholder:text-slate-700 outline-none"
+              />
+              <button
+                onClick={handleAddTask}
+                disabled={!newTask.trim()}
+                className="p-1 rounded-lg bg-brand-600/20 text-brand-400 hover:bg-brand-600/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {tasks.length > 0 && done === tasks.length && (
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
+              <p className="text-emerald-400 text-sm font-medium">🎉 Tudo concluído!</p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
