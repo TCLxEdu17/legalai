@@ -122,13 +122,7 @@ export default function LandingPage() {
         <FadeIn delay={0.2}>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-[1.1] text-slate-100">
             Pesquisa jurídica com<br />
-            <span
-              style={{
-                background: 'linear-gradient(135deg, #6280fd 0%, #a78bfa 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
+            <span className="text-white">
               inteligência artificial
             </span>
           </h1>
