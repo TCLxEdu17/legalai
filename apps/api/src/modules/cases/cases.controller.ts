@@ -60,8 +60,8 @@ export class CasesController {
   }
 
   @Post('predict-compensation')
-  predictCompensation(@Body() dto: PredictCompensationDto) {
-    return this.casesService.predictCompensation(dto);
+  predictCompensation(@Body() dto: PredictCompensationDto, @Request() req: any) {
+    return this.casesService.predictCompensation(dto, req.user.id);
   }
 
   @Get(':id')

@@ -9,6 +9,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { ChunkingService, TextChunk } from '../rag/chunking.service';
 import { AI_PROVIDER_TOKEN, IAIProvider } from '../rag/providers/ai-provider.interface';
+import { MetricsService } from '../metrics/metrics.service';
 import { PdfProcessor } from '../uploads/processors/pdf.processor';
 import { DocxProcessor } from '../uploads/processors/docx.processor';
 import { TextProcessor } from '../uploads/processors/text.processor';
@@ -104,8 +105,13 @@ export class CasesService {
     private readonly pdfProcessor: PdfProcessor,
     private readonly docxProcessor: DocxProcessor,
     private readonly textProcessor: TextProcessor,
+    private readonly metricsService: MetricsService,
     @Inject(AI_PROVIDER_TOKEN) private readonly aiProvider: IAIProvider,
   ) {}
+
+  private trackAi(userId: string, endpoint: string, result: { inputTokens: number; outputTokens: number; model: string }, durationMs = 0) {
+    this.metricsService.trackAiUsage(userId, endpoint, result.inputTokens, result.outputTokens, result.model, durationMs).catch(() => {});
+  }
 
   // ─── CASOS CRUD ───────────────────────────────────────────────────────────
 
@@ -413,10 +419,12 @@ ${hasContext ? `\n--- TRECHOS DOS AUTOS ---\n${contextText}` : '\n[Nenhum docume
       { role: 'user' as const, content: dto.message },
     ];
 
+    const chatStart = Date.now();
     const result = await this.aiProvider.generateChatCompletion(messages, {
       temperature: hasContext ? 0.1 : 0.3,
       maxTokens: 2000,
     });
+    this.trackAi(userId, 'cases/chat', result, Date.now() - chatStart);
 
     const sources = chunks.map((c) => ({
       documentId: c.document_id,
@@ -555,6 +563,7 @@ ${caseInfo}
 --- AUTOS DO PROCESSO ---
 ${contextText}`;
 
+    const pieceStart = Date.now();
     const result = await this.aiProvider.generateChatCompletion(
       [
         { role: 'system', content: systemPrompt },
@@ -562,6 +571,7 @@ ${contextText}`;
       ],
       { temperature: 0.15, maxTokens: 4000 },
     );
+    this.trackAi(userId, 'cases/generate-piece', result, Date.now() - pieceStart);
 
     const piece = await this.prisma.casePiece.create({
       data: {
@@ -639,6 +649,7 @@ ${contextText}`;
         ],
         { temperature: 0.2, maxTokens: 600 },
       );
+      this.trackAi(userId, 'cases/analyze-summary', result);
       aiSummary = result.content;
     }
 
@@ -693,6 +704,7 @@ Retorne APENAS um JSON válido com esta estrutura:
       ],
       { temperature: 0.15, maxTokens: 2500 },
     );
+    this.trackAi(userId, 'cases/narrative', result);
 
     try {
       const jsonMatch = result.content.match(/\{[\s\S]*\}/);
@@ -748,6 +760,7 @@ Retorne APENAS um JSON válido com esta estrutura:
       ],
       { temperature: 0.1, maxTokens: 2000 },
     );
+    this.trackAi(userId, 'cases/evidence', result);
 
     try {
       const jsonMatch = result.content.match(/\{[\s\S]*\}/);
@@ -806,6 +819,7 @@ Retorne APENAS um JSON válido com esta estrutura:
       ],
       { temperature: 0.15, maxTokens: 2500 },
     );
+    this.trackAi(userId, 'cases/theses', result);
 
     try {
       const jsonMatch = result.content.match(/\{[\s\S]*\}/);
@@ -864,6 +878,7 @@ Retorne APENAS um JSON válido com esta estrutura:
       ],
       { temperature: 0.2, maxTokens: 2000 },
     );
+    this.trackAi(userId, 'cases/hearing', result);
 
     try {
       const jsonMatch = result.content.match(/\{[\s\S]*\}/);
@@ -926,6 +941,7 @@ Retorne APENAS um JSON válido com esta estrutura:
       ],
       { temperature: 0.2, maxTokens: 2000 },
     );
+    this.trackAi(userId, 'cases/opportunities', result);
 
     try {
       const jsonMatch = result.content.match(/\{[\s\S]*\}/);
@@ -1000,6 +1016,7 @@ Retorne APENAS um JSON válido com esta estrutura:
       ],
       { temperature: 0.15, maxTokens: 2500 },
     );
+    this.trackAi(userId, 'cases/copilot', result);
 
     try {
       const jsonMatch = result.content.match(/\{[\s\S]*\}/);
@@ -1071,6 +1088,7 @@ Retorne APENAS um JSON válido com esta estrutura:
       ],
       { temperature: 0.15, maxTokens: 2500 },
     );
+    this.trackAi(userId, 'cases/settlement', result);
 
     try {
       const jsonMatch = result.content.match(/\{[\s\S]*\}/);
@@ -1089,7 +1107,7 @@ Retorne APENAS um JSON válido com esta estrutura:
 
   // ─── PREVISÃO DE INDENIZAÇÃO ──────────────────────────────────────────────
 
-  async predictCompensation(dto: PredictCompensationDto) {
+  async predictCompensation(dto: PredictCompensationDto, userId: string) {
     const { tipo, estado, duracao, detalhes } = dto;
 
     const result = await this.aiProvider.generateChatCompletion(
@@ -1119,6 +1137,7 @@ Use valores realistas baseados na jurisprudência brasileira atual. Considere o 
       ],
       { temperature: 0.1, maxTokens: 2000 },
     );
+    this.trackAi(userId, 'cases/predict-compensation', result);
 
     try {
       const jsonMatch = result.content.match(/\{[\s\S]*\}/);

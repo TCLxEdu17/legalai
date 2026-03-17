@@ -14,6 +14,7 @@ import {
   Activity,
   Clock,
   UserPlus,
+  DollarSign,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { isAdmin } from '@/lib/auth';
@@ -66,6 +67,7 @@ interface EndpointStat {
   endpoint: string;
   count: number;
   tokens: number;
+  costUsd: number;
 }
 
 interface TokenUsageResponse {
@@ -74,8 +76,11 @@ interface TokenUsageResponse {
   totalTokensAllTime: number;
   totalRequestsToday: number;
   totalRequestsThisMonth: number;
+  totalCostUsdToday: number;
+  totalCostUsdThisMonth: number;
+  totalCostUsdAllTime: number;
   requestsByEndpoint: EndpointStat[];
-  dailyUsage: { date: string; tokens: number; requests: number }[];
+  dailyUsage: { date: string; tokens: number; requests: number; costUsd: number }[];
 }
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
@@ -445,7 +450,7 @@ export default function MetricasPage() {
           </div>
         ) : (
           <>
-            {/* 4 stat cards */}
+            {/* Token + Cost stat cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <StatCard
                 label="Tokens hoje"
@@ -481,6 +486,34 @@ export default function MetricasPage() {
               />
             </div>
 
+            {/* Cost cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <StatCard
+                label="Custo IA hoje"
+                value={`$${(tokenData?.totalCostUsdToday ?? 0).toFixed(4)}`}
+                icon={DollarSign}
+                iconBg="bg-red-500/15"
+                iconColor="text-red-400"
+                valueColor="text-red-400"
+              />
+              <StatCard
+                label="Custo IA este mês"
+                value={`$${(tokenData?.totalCostUsdThisMonth ?? 0).toFixed(4)}`}
+                icon={DollarSign}
+                iconBg="bg-orange-500/15"
+                iconColor="text-orange-400"
+                valueColor="text-orange-400"
+              />
+              <StatCard
+                label="Custo IA total"
+                value={`$${(tokenData?.totalCostUsdAllTime ?? 0).toFixed(4)}`}
+                icon={DollarSign}
+                iconBg="bg-slate-500/15"
+                iconColor="text-slate-400"
+                valueColor="text-slate-100"
+              />
+            </div>
+
             {/* Endpoint breakdown table */}
             <div>
               <h3 className="text-sm font-semibold text-slate-300 mb-2">Uso por endpoint</h3>
@@ -495,7 +528,7 @@ export default function MetricasPage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-white/[0.05] bg-white/[0.02]">
-                          {['Endpoint', 'Requests', 'Tokens'].map((col) => (
+                          {['Endpoint', 'Requests', 'Tokens', 'Custo (USD)'].map((col) => (
                             <th
                               key={col}
                               className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap"
@@ -519,6 +552,11 @@ export default function MetricasPage() {
                             <td className="px-4 py-3">
                               <span className="text-slate-300 tabular-nums">
                                 {ep.tokens.toLocaleString('pt-BR')}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`tabular-nums text-sm font-medium ${(ep.costUsd ?? 0) > 0.5 ? 'text-red-400' : (ep.costUsd ?? 0) > 0.1 ? 'text-orange-400' : 'text-slate-400'}`}>
+                                ${(ep.costUsd ?? 0).toFixed(4)}
                               </span>
                             </td>
                           </tr>
