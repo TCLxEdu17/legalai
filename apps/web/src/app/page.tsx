@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Scale, Search, ShieldCheck, ArrowRight, CheckCircle, Zap, FileText, Users, FolderOpen, BookOpen } from 'lucide-react';
 import { ScrollReveal, FadeIn, InteractiveCard, StaggerContainer, StaggerItem } from '@/components/ui/motion';
 import { Carousel } from '@/components/ui/carousel';
-import { VantaBirds } from '@/components/ui/vanta-birds';
+import { SplashCursor } from '@/components/ui/splash-cursor';
 
 const RECURSOS = [
   {
@@ -52,8 +52,18 @@ export default function LandingPage() {
       className="min-h-screen text-white overflow-x-hidden"
       style={{ background: 'linear-gradient(160deg, #020818 0%, #050d1f 40%, #000000 100%)' }}
     >
-      {/* Vanta Birds animated background */}
-      <VantaBirds />
+      {/* Fluid simulation background */}
+      <SplashCursor
+        SIM_RESOLUTION={128}
+        DYE_RESOLUTION={1440}
+        DENSITY_DISSIPATION={3.5}
+        VELOCITY_DISSIPATION={2}
+        PRESSURE={0.1}
+        CURL={3}
+        SPLAT_RADIUS={0.2}
+        SPLAT_FORCE={6000}
+        COLOR_UPDATE_SPEED={10}
+      />
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <FadeIn>
