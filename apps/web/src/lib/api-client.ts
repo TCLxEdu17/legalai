@@ -226,6 +226,39 @@ class ApiClient {
     return data;
   }
 
+  // ==================== PROCESSOS PRIVADOS (PRO) ====================
+  async getOabCredentialStatus(): Promise<{ configured: boolean }> {
+    const { data } = await this.client.get('/private-processos/credentials/status');
+    return data;
+  }
+
+  async saveOabCredentials(oabNumber: string, password: string) {
+    await this.client.post('/private-processos/credentials', { oabNumber, password });
+  }
+
+  async deleteOabCredentials() {
+    await this.client.delete('/private-processos/credentials');
+  }
+
+  async queryPrivateProcess(numero: string) {
+    const { data } = await this.client.post('/private-processos/query', { numero });
+    return data;
+  }
+
+  async listPrivateSavedProcesses() {
+    const { data } = await this.client.get('/private-processos');
+    return data;
+  }
+
+  async savePrivateProcess(numero: string, title?: string) {
+    const { data } = await this.client.post('/private-processos', { numero, title });
+    return data;
+  }
+
+  async deletePrivateProcess(numero: string) {
+    await this.client.delete(`/private-processos/${encodeURIComponent(numero)}`);
+  }
+
   async updateProfile(payload: { name?: string; prefix?: string; oabNumber?: string }) {
     const { data } = await this.client.patch('/users/profile', payload);
     return data;

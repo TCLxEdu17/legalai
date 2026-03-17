@@ -47,6 +47,7 @@ import {
   Zap,
   ShieldAlert,
   Lightbulb,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
@@ -119,6 +120,7 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/dashboard/jurisprudencias', icon: FileText, label: 'Jurisprudências' },
       { href: '/dashboard/processos', icon: Gavel, label: 'Processos' },
+      { href: '/dashboard/processos-privados', icon: ShieldCheck, label: 'Processos Privados', badge: 'PRO', badgeColor: 'amber' },
       { href: '/dashboard/consultas', icon: Search, label: 'Consultas (CEP/CNPJ)' },
       { href: '/dashboard/comparador', icon: GitCompare, label: 'Comparador de Decisões' },
     ],
