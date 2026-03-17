@@ -7,7 +7,7 @@ import {
   Shield, Brain, Gavel,
 } from 'lucide-react';
 import { GradientButton } from '@/components/ui/gradient-button';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
 const RECURSOS = [
   {
@@ -64,12 +64,9 @@ const CHECKLIST = [
   'Controle de acesso por perfil de usuário',
 ];
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
-  show: (i = 0) => ({
-    opacity: 1, y: 0,
-    transition: { delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-  }),
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 };
 
 export default function LandingPage() {
@@ -194,7 +191,7 @@ export default function LandingPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {RECURSOS.map(({ icon: Icon, title, description, color, bg, border }, i) => (
             <motion.div
-              key={title} custom={i} initial="hidden" animate="show" variants={fadeUp}
+              key={title} initial="hidden" animate="show" variants={fadeUp}
               className={`rounded-2xl p-6 border ${border} ${bg} group hover:shadow-md transition-shadow`}
             >
               <div className={`w-10 h-10 rounded-xl ${bg} border ${border} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
@@ -232,7 +229,7 @@ export default function LandingPage() {
             { num: '4', icon: ShieldCheck, title: 'Resposta', desc: 'Entrega fundamentada com citação das fontes oficiais.' },
           ].map(({ num, icon: Icon, title, desc }, i) => (
             <motion.div
-              key={num} custom={i} initial="hidden" animate="show" variants={fadeUp}
+              key={num} initial="hidden" animate="show" variants={fadeUp}
               className="text-center group"
             >
               <div className="relative inline-flex mb-5">
@@ -294,7 +291,7 @@ export default function LandingPage() {
             <div className="space-y-3">
               {CHECKLIST.map((item, i) => (
                 <motion.div
-                  key={item} custom={i} initial="hidden" animate="show" variants={fadeUp}
+                  key={item} initial="hidden" animate="show" variants={fadeUp}
                   className="flex items-center gap-3"
                 >
                   <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
