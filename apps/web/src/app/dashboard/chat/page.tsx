@@ -453,7 +453,7 @@ export default function ChatPage() {
             />
           </button>
           <h2 className="text-sm font-medium text-slate-400">
-            {activeSessionId ? 'Assistente Jurídico' : 'Nova consulta'}
+            {activeSessionId ? 'Lexis' : 'Nova consulta'}
           </h2>
         </div>
 
@@ -471,7 +471,7 @@ export default function ChatPage() {
                 </div>
               )}
               <p className="text-slate-500 text-sm max-w-sm leading-relaxed">
-                Seu assistente jurídico. Pergunte sobre legislação, jurisprudência, prazos, estratégias processuais ou qualquer questão de direito brasileiro.
+                Lexis — seu assistente jurídico. Pergunte sobre legislação, jurisprudência, prazos, estratégias processuais ou qualquer questão de direito brasileiro.
               </p>
               <div className="mt-6 space-y-2">
                 {examples.map((example) => (
