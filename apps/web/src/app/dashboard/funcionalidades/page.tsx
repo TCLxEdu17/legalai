@@ -400,6 +400,7 @@ const HIGHLIGHT_ITEMS: BentoItem[] = [
     tags: ['Casos', 'RAG', 'IA'],
     meta: 'motor semântico',
     cta: 'Acessar →',
+    href: '/dashboard/casos',
     colSpan: 2,
     hasPersistentHover: true,
   },
@@ -410,6 +411,7 @@ const HIGHLIGHT_ITEMS: BentoItem[] = [
     status: 'Disponível',
     tags: ['Escritório'],
     cta: 'Abrir →',
+    href: '/dashboard/copiloto',
   },
   {
     title: 'Narrativa Jurídica',
@@ -418,6 +420,7 @@ const HIGHLIGHT_ITEMS: BentoItem[] = [
     status: 'Disponível',
     tags: ['Análise', 'IA'],
     cta: 'Ver →',
+    href: '/dashboard/casos',
   },
   {
     title: 'Detecção de Teses',
@@ -426,6 +429,7 @@ const HIGHLIGHT_ITEMS: BentoItem[] = [
     status: 'Disponível',
     tags: ['Casos', 'Estratégia'],
     cta: 'Analisar →',
+    href: '/dashboard/casos',
     colSpan: 2,
   },
   {
@@ -436,6 +440,7 @@ const HIGHLIGHT_ITEMS: BentoItem[] = [
     tags: ['Pesquisa', 'pgvector'],
     meta: 'busca vetorial',
     cta: 'Pesquisar →',
+    href: '/dashboard/jurisprudencias',
   },
 ];
 

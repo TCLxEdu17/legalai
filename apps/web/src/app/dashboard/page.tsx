@@ -232,6 +232,7 @@ export default function DashboardPage() {
       tags: ['Casos', 'RAG'],
       meta: 'IA por caso',
       cta: 'Acessar →',
+      href: '/dashboard/casos',
       colSpan: 2,
       hasPersistentHover: true,
     },
@@ -242,6 +243,7 @@ export default function DashboardPage() {
       status: 'Disponível',
       tags: ['Escritório', 'IA'],
       cta: 'Acessar →',
+      href: '/dashboard/copiloto',
     },
     {
       title: 'Motor de Provas',
@@ -250,6 +252,7 @@ export default function DashboardPage() {
       status: 'Disponível',
       tags: ['Análise'],
       cta: 'Acessar →',
+      href: '/dashboard/casos',
       colSpan: 2,
     },
     {
@@ -259,6 +262,7 @@ export default function DashboardPage() {
       status: 'Disponível',
       tags: ['Copiloto'],
       cta: 'Calcular →',
+      href: '/dashboard/copiloto',
     },
     {
       title: 'Narrativa Jurídica',
@@ -267,6 +271,7 @@ export default function DashboardPage() {
       status: 'Disponível',
       tags: ['Casos', 'IA'],
       cta: 'Ver →',
+      href: '/dashboard/casos',
     },
     {
       title: 'Consulta de Processos',
@@ -276,6 +281,7 @@ export default function DashboardPage() {
       tags: ['DataJud', 'CNJ'],
       meta: '67 tribunais',
       cta: 'Consultar →',
+      href: '/dashboard/processos',
     },
   ];
 
