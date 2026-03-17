@@ -16,10 +16,16 @@ import {
   Activity,
   Settings2,
   X,
+  Brain,
+  Bot,
+  Calculator,
+  Gavel,
+  ShieldAlert,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { getStoredUser } from '@/lib/auth';
 import { FadeIn, StaggerContainer, StaggerItem, InteractiveCard } from '@/components/ui/motion';
+import { BentoGrid, type BentoItem } from '@/components/ui/bento-grid';
 import type { DocumentStats, User } from '@/types';
 
 // Hook de contador animado (count-up com easing)
@@ -217,6 +223,62 @@ export default function DashboardPage() {
       : []),
   ];
 
+  const featuredItems: BentoItem[] = [
+    {
+      title: 'Chat com os Autos',
+      description: 'Converse com seu processo em linguagem natural. A IA lê os autos e responde com as fontes.',
+      icon: <MessageSquare className="w-4 h-4 text-brand-400" />,
+      status: 'Disponível',
+      tags: ['Casos', 'RAG'],
+      meta: 'IA por caso',
+      cta: 'Acessar →',
+      colSpan: 2,
+      hasPersistentHover: true,
+    },
+    {
+      title: 'Copiloto IA',
+      description: 'Briefing diário com prazos urgentes, casos de risco e ações recomendadas.',
+      icon: <Bot className="w-4 h-4 text-violet-400" />,
+      status: 'Disponível',
+      tags: ['Escritório', 'IA'],
+      cta: 'Acessar →',
+    },
+    {
+      title: 'Motor de Provas',
+      description: 'A IA lista as provas necessárias, identifica as que faltam e alerta sobre riscos probatórios.',
+      icon: <ShieldAlert className="w-4 h-4 text-amber-400" />,
+      status: 'Disponível',
+      tags: ['Análise'],
+      cta: 'Acessar →',
+      colSpan: 2,
+    },
+    {
+      title: 'Previsão de Indenização',
+      description: 'Quanto vale o caso? Cálculo baseado em jurisprudência real do tribunal.',
+      icon: <Calculator className="w-4 h-4 text-emerald-400" />,
+      status: 'Disponível',
+      tags: ['Copiloto'],
+      cta: 'Calcular →',
+    },
+    {
+      title: 'Narrativa Jurídica',
+      description: 'Constrói a narrativa cronológica, enquadramento jurídico e pontos-chave automaticamente.',
+      icon: <Brain className="w-4 h-4 text-purple-400" />,
+      status: 'Disponível',
+      tags: ['Casos', 'IA'],
+      cta: 'Ver →',
+    },
+    {
+      title: 'Consulta de Processos',
+      description: 'Acompanhe andamento processual em tempo real via DataJud para todos os tribunais do Brasil.',
+      icon: <Gavel className="w-4 h-4 text-sky-400" />,
+      status: 'Disponível',
+      tags: ['DataJud', 'CNJ'],
+      meta: '67 tribunais',
+      cta: 'Consultar →',
+    },
+  ];
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
@@ -341,6 +403,15 @@ export default function DashboardPage() {
         <p className="text-xs text-slate-500">
           Fontes RSS ativas coletam novos julgados diariamente. Sínteses temáticas geradas por IA consolidam o conhecimento por área do direito.
         </p>
+      </div>
+
+      {/* Recursos em destaque — BentoGrid */}
+      <div>
+        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-1">
+          Recursos em destaque
+        </h2>
+        <p className="text-xs text-slate-600 mb-4">Acesse as principais funcionalidades da plataforma</p>
+        <BentoGrid items={featuredItems} />
       </div>
 
       {/* Vertentes jurídicas */}
