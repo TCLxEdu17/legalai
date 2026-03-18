@@ -30,6 +30,21 @@ export interface CnjComponents {
   oooo: string;
 }
 
+export interface ProcessSummary {
+  number: string;
+  classe: string;
+  assunto: string;
+  partes: string;
+  dataAtualizacao: string;
+}
+
+export interface OabProcessList {
+  processes: ProcessSummary[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}
+
 const CNJ_REGEX = /^(\d{7})-(\d{2})\.(\d{4})\.(\d)\.(\d{2})\.(\d{4})$/;
 const ESAJ_BASE = 'https://esaj.tjsp.jus.br';
 
@@ -149,6 +164,77 @@ export class EsajTjspConnector {
     }
 
     return { number: numeroDisplay || numero, classe, assunto, juiz, situacao, movimentacoes };
+  }
+
+  async listProcessesByOab(oabNumber: string, session: EsajSession, page = 0): Promise<OabProcessList> {
+    // eSAJ TJSP search by OAB number — CPOPG (1ª instância)
+    const params = new URLSearchParams({
+      conversationId: '',
+      cbPesquisa: 'NUMOAB',
+      'dadosConsulta.valorConsultaNuOAB': oabNumber,
+      'dadosConsulta.tipoNuProcesso': 'UNIFICADO',
+      paginaConsulta: page.toString(),
+    });
+
+    const url = `${ESAJ_BASE}/cpopg/search.do?${params.toString()}`;
+    this.logger.log(`[eSAJ] Listar processos OAB ${oabNumber} página ${page}`);
+
+    const resp = await this.http.get(url, {
+      headers: { Cookie: session.cookie },
+    });
+
+    const $ = cheerio.load(resp.data);
+
+    // Detectar redirecionamento para login
+    const pageTitle = $('title').text().toLowerCase();
+    if (pageTitle.includes('login') || pageTitle.includes('autenticação')) {
+      throw new Error('Sessão eSAJ expirada — faça login novamente');
+    }
+
+    const processes: ProcessSummary[] = [];
+
+    // eSAJ tabela de resultados — linhas ímpares são dados, pares são detalhes expandidos
+    $('table.resultTable tr.fundoClaro, table.resultTable tr.fundoEscuro').each((_, row) => {
+      const cells = $(row).find('td');
+      if (cells.length < 3) return;
+
+      const number = $(cells[0]).find('a').text().trim() || $(cells[0]).text().trim();
+      const classe = $(cells[1]).text().trim();
+      const assunto = $(cells[2]).text().trim();
+      const partes = $(cells[3])?.text().trim() ?? '';
+      const dataAtualizacao = $(cells[4])?.text().trim() ?? '';
+
+      if (number) {
+        processes.push({ number, classe, assunto, partes, dataAtualizacao });
+      }
+    });
+
+    // Fallback: tabela genérica se a acima não encontrou nada
+    if (processes.length === 0) {
+      $('tbody tr').each((_, row) => {
+        const cells = $(row).find('td');
+        if (cells.length < 2) return;
+        const number = $(cells[0]).find('a').text().trim() || $(cells[0]).text().trim();
+        if (number && /\d{7}-\d{2}\.\d{4}/.test(number)) {
+          processes.push({
+            number,
+            classe: $(cells[1]).text().trim(),
+            assunto: $(cells[2])?.text().trim() ?? '',
+            partes: $(cells[3])?.text().trim() ?? '',
+            dataAtualizacao: $(cells[4])?.text().trim() ?? '',
+          });
+        }
+      });
+    }
+
+    // Total de resultados (texto tipo "Resultado: 1 a 25 de 142 processos")
+    const totalText = $('td.resultadoTexto, .resultadoTexto').text();
+    const totalMatch = totalText.match(/de\s+(\d+)/i);
+    const total = totalMatch ? parseInt(totalMatch[1], 10) : processes.length;
+
+    const hasNextPage = $('a[title="Próxima página"], a.next').length > 0;
+
+    return { processes, total, page, hasMore: hasNextPage };
   }
 
   private extractCookies(setCookieHeaders: string[] | undefined): string {

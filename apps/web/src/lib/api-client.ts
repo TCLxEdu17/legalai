@@ -259,6 +259,11 @@ class ApiClient {
     await this.client.delete(`/private-processos/${encodeURIComponent(numero)}`);
   }
 
+  async listProcessesByOab(page = 0) {
+    const { data } = await this.client.get(`/private-processos/by-oab?page=${page}`);
+    return data as { processes: { number: string; classe: string; assunto: string; partes: string; dataAtualizacao: string }[]; total: number; page: number; hasMore: boolean };
+  }
+
   async updateProfile(payload: { name?: string; prefix?: string; oabNumber?: string }) {
     const { data } = await this.client.patch('/users/profile', payload);
     return data;

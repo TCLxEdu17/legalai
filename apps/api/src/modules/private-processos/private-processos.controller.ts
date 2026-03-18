@@ -5,6 +5,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   Request,
   HttpCode,
@@ -49,6 +50,11 @@ export class PrivateProcessosController {
   @Post('query')
   async queryProcess(@Request() req: any, @Body() dto: QueryPrivateProcessDto) {
     return this.privateProcessosService.queryPrivateProcess(req.user.id, dto.numero);
+  }
+
+  @Get('by-oab')
+  async listByOab(@Request() req: any, @Query('page') page?: string) {
+    return this.privateProcessosService.listByOab(req.user.id, page ? parseInt(page, 10) : 0);
   }
 
   // ── Saved Processes (monitoring) ──────────────────────────────────

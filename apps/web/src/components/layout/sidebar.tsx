@@ -9,7 +9,7 @@ import {
   Calendar, Users, ClipboardCheck, FileEdit, CreditCard,
   FileBarChart, GitCompare, Gavel, Flag, FolderOpen, X,
   TrendingUp, FileSignature, DollarSign, CheckSquare, Scroll,
-  BookOpen, StickyNote, Brain, Mic, Handshake, Zap, ShieldCheck,
+  BookOpen, StickyNote, Brain, Mic, Handshake, Zap, ShieldCheck, ClipboardList,
   Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -65,6 +65,7 @@ const navGroups: NavGroup[] = [
       { href: '/dashboard/jurisprudencias', icon: FileText, label: 'Jurisprudências' },
       { href: '/dashboard/processos', icon: Gavel, label: 'Processos' },
       { href: '/dashboard/processos-privados', icon: ShieldCheck, label: 'Processos Privados', badge: 'PRO', badgeColor: 'amber' },
+      { href: '/dashboard/processos-por-oab', icon: ClipboardList, label: 'Processos por OAB', badge: 'PRO', badgeColor: 'amber' },
       { href: '/dashboard/consultas', icon: Search, label: 'Consultas (CEP/CNPJ)' },
       { href: '/dashboard/comparador', icon: GitCompare, label: 'Comparador de Decisões' },
     ],
