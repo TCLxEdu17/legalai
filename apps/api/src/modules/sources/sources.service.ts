@@ -3,16 +3,26 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { REDIS_CLIENT } from '../../redis/redis.module';
 import { CreateSourceDto } from './dto/create-source.dto';
 import { UpdateSourceDto } from './dto/update-source.dto';
+import type Redis from 'ioredis';
+
+const SOURCE_TTL = 300; // 5 minutos
+const cacheKey = (id: string) => `source:${id}`;
 
 @Injectable()
 export class SourcesService {
   private readonly logger = new Logger(SourcesService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() @Inject(REDIS_CLIENT) private readonly redis?: Redis,
+  ) {}
 
   async create(dto: CreateSourceDto) {
     const source = await this.prisma.externalSource.create({
@@ -64,8 +74,18 @@ export class SourcesService {
   }
 
   async findById(id: string) {
+    if (this.redis) {
+      const cached = await this.redis.get(cacheKey(id)).catch(() => null);
+      if (cached) return JSON.parse(cached);
+    }
+
     const source = await this.prisma.externalSource.findUnique({ where: { id } });
     if (!source) throw new NotFoundException(`Fonte ${id} não encontrada`);
+
+    if (this.redis) {
+      await this.redis.set(cacheKey(id), JSON.stringify(source), 'EX', SOURCE_TTL).catch(() => null);
+    }
+
     return source;
   }
 
@@ -85,12 +105,14 @@ export class SourcesService {
       },
     });
 
+    if (this.redis) await this.redis.del(cacheKey(id)).catch(() => null);
     return updated;
   }
 
   async remove(id: string): Promise<void> {
     await this.findById(id);
     await this.prisma.externalSource.delete({ where: { id } });
+    if (this.redis) await this.redis.del(cacheKey(id)).catch(() => null);
     this.logger.log(`Fonte ${id} removida`);
   }
 

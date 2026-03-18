@@ -1,5 +1,6 @@
-import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional, Inject } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { REDIS_CLIENT } from '../../redis/redis.module';
 import { CollectorsFactory } from '../collectors/collectors.factory';
 import { ChunkingService } from '../rag/chunking.service';
 import { EmbeddingsService } from '../rag/embeddings.service';
@@ -8,6 +9,10 @@ import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
+import type Redis from 'ioredis';
+
+const SOURCE_TTL = 300;
+const sourceCacheKey = (id: string) => `source:${id}`;
 
 export interface AutoIngestionResult {
   jobId: string;
@@ -32,6 +37,7 @@ export class IngestionService {
     private readonly configService: ConfigService,
     @Optional() private readonly notificationsService?: NotificationsService,
     @Optional() private readonly webhooksService?: WebhooksService,
+    @Optional() @Inject(REDIS_CLIENT) private readonly redis?: Redis,
   ) {
     this.embeddingModel = configService.get('app.ai.openai.embeddingModel', 'text-embedding-3-small');
   }
@@ -40,8 +46,20 @@ export class IngestionService {
    * Executa ingestão automática para uma fonte específica.
    * Cria um IngestionJob, descobre itens novos, processa e indexa.
    */
-  async runForSource(sourceId: string, trigger: 'MANUAL' | 'AUTOMATIC'): Promise<AutoIngestionResult> {
+  private async getSource(sourceId: string) {
+    if (this.redis) {
+      const cached = await this.redis.get(sourceCacheKey(sourceId)).catch(() => null);
+      if (cached) return JSON.parse(cached);
+    }
     const source = await this.prisma.externalSource.findUnique({ where: { id: sourceId } });
+    if (source && this.redis) {
+      await this.redis.set(sourceCacheKey(sourceId), JSON.stringify(source), 'EX', SOURCE_TTL).catch(() => null);
+    }
+    return source;
+  }
+
+  async runForSource(sourceId: string, trigger: 'MANUAL' | 'AUTOMATIC'): Promise<AutoIngestionResult> {
+    const source = await this.getSource(sourceId);
     if (!source) throw new NotFoundException(`Fonte ${sourceId} não encontrada`);
 
     const logs: string[] = [];
@@ -266,6 +284,7 @@ export class IngestionService {
           ...(finalStatus === 'COMPLETED' && { lastSuccessAt: new Date() }),
         },
       });
+      if (this.redis) await this.redis.del(sourceCacheKey(sourceId)).catch(() => null);
 
       addLog(`Job ${job.id} concluído: ${itemsIndexed} indexados, ${errors.length} erros`);
 
@@ -300,6 +319,7 @@ export class IngestionService {
         where: { id: sourceId },
         data: { lastRunAt: new Date() },
       });
+      if (this.redis) await this.redis.del(sourceCacheKey(sourceId)).catch(() => null);
 
       errors.push(fatalErr.message);
     }
