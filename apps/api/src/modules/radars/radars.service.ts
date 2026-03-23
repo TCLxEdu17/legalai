@@ -99,4 +99,101 @@ export class RadarsService {
       where: { radar: { userId }, readAt: null },
     });
   }
+
+  /**
+   * Chamado pelo IngestionService após indexar um documento.
+   * Fire-and-forget — nunca lança exceção para o caller.
+   */
+  async checkDocument(documentId: string): Promise<void> {
+    const sql = `
+      SELECT
+        r.id           AS radar_id,
+        r.user_id,
+        u.email        AS user_email,
+        r.title,
+        r.threshold,
+        MAX(1 - (jc.embedding <=> r.thesis_embedding)) AS max_similarity
+      FROM radars r
+      INNER JOIN users u ON u.id = r.user_id
+      INNER JOIN jurisprudence_chunks jc ON jc.document_id = $1::uuid
+      WHERE
+        r.is_active = true
+        AND r.thesis_embedding IS NOT NULL
+        AND jc.embedding IS NOT NULL
+      GROUP BY r.id, r.user_id, u.email, r.title, r.threshold
+      HAVING MAX(1 - (jc.embedding <=> r.thesis_embedding)) >= r.threshold
+    `;
+
+    type RadarMatch = {
+      radar_id: string;
+      user_id: string;
+      user_email: string;
+      title: string;
+      threshold: number;
+      max_similarity: number;
+    };
+
+    let matches: RadarMatch[];
+    try {
+      matches = await this.prisma.$queryRawUnsafe<RadarMatch[]>(sql, documentId);
+    } catch (err) {
+      this.logger.error(`checkDocument: erro na query pgvector para doc ${documentId}`, err);
+      return;
+    }
+
+    if (!matches.length) return;
+
+    this.logger.log(`checkDocument: ${matches.length} radares matcharam para doc ${documentId}`);
+
+    for (const match of matches) {
+      try {
+        const alert = await this.prisma.radarAlert.create({
+          data: {
+            radarId: match.radar_id,
+            documentId,
+            similarity: Number(match.max_similarity),
+          },
+        });
+
+        // Gerar resumo automaticamente (LLM)
+        try {
+          const doc = await this.prisma.jurisprudenceDocument.findUnique({
+            where: { id: documentId },
+            select: { title: true, cleanedText: true, tribunal: true, judgmentDate: true },
+          });
+
+          if (doc?.cleanedText) {
+            const excerpt = doc.cleanedText.slice(0, 3000);
+            const { content } = await this.aiProvider.generateChatCompletion([
+              {
+                role: 'user',
+                content: `Resuma em 3-4 frases a seguinte decisão jurídica, focando nos pontos mais relevantes para advogados:\n\n${excerpt}`,
+              },
+            ], { maxTokens: 300, temperature: 0.3 });
+
+            await this.prisma.radarAlert.update({
+              where: { id: alert.id },
+              data: { summary: content },
+            });
+          }
+        } catch (summaryErr) {
+          this.logger.warn(`checkDocument: falha ao gerar resumo para alerta ${alert.id}`, summaryErr);
+        }
+
+        // Notificar in-app
+        await this.notificationsService.createForUser(
+          match.user_id,
+          `Radar "${match.title}" — nova decisão relevante`,
+          `Similaridade: ${Math.round(Number(match.max_similarity) * 100)}%`,
+          `/dashboard/radares/${match.radar_id}`,
+        );
+      } catch (err: any) {
+        if (err?.code === 'P2002') {
+          this.logger.debug(`checkDocument: alerta duplicado ignorado para radar ${match.radar_id}`);
+        } else {
+          this.logger.error(`checkDocument: erro ao criar alerta para radar ${match.radar_id}`, err);
+        }
+      }
+    }
+  }
 }

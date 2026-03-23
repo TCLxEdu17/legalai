@@ -149,4 +149,63 @@ describe('RadarsService', () => {
       );
     });
   });
+
+  describe('checkDocument', () => {
+    const MOCK_DOC_ID = 'doc-uuid-1';
+
+    it('não deve criar alerta se nenhum radar ativo com similaridade suficiente', async () => {
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
+      await service.checkDocument(MOCK_DOC_ID);
+      expect(mockPrisma.radarAlert.create).not.toHaveBeenCalled();
+    });
+
+    it('deve criar alerta quando similaridade >= threshold', async () => {
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([
+        {
+          radar_id: MOCK_RADAR_ID,
+          max_similarity: 0.91,
+          user_id: MOCK_USER_ID,
+          user_email: 'user@example.com',
+          title: 'Dano Moral',
+          threshold: 0.85,
+        },
+      ]);
+      mockPrisma.radarAlert.create.mockResolvedValue({ id: 'alert-1', radarId: MOCK_RADAR_ID });
+      mockPrisma.$executeRawUnsafe.mockResolvedValue(undefined);
+      mockAIProvider.generateChatCompletion.mockResolvedValue({
+        content: 'Resumo da decisão',
+        usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+      });
+      mockPrisma.radarAlert.update.mockResolvedValue({});
+      mockPrisma.jurisprudenceDocument.findUnique.mockResolvedValue({
+        title: 'Acórdão STJ',
+        cleanedText: 'texto da decisão',
+        tribunal: 'STJ',
+        judgmentDate: new Date(),
+      });
+
+      await service.checkDocument(MOCK_DOC_ID);
+
+      expect(mockPrisma.radarAlert.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ radarId: MOCK_RADAR_ID, documentId: MOCK_DOC_ID }),
+        }),
+      );
+      expect(mockNotificationsService.createForUser).toHaveBeenCalledWith(
+        MOCK_USER_ID,
+        expect.stringContaining('Dano Moral'),
+        expect.any(String),
+        expect.stringContaining(MOCK_RADAR_ID),
+      );
+    });
+
+    it('deve ignorar violação de unique constraint (duplicata) sem lançar erro', async () => {
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([
+        { radar_id: MOCK_RADAR_ID, max_similarity: 0.92, user_id: MOCK_USER_ID, user_email: 'u@e.com', title: 'Dano Moral', threshold: 0.85 },
+      ]);
+      mockPrisma.radarAlert.create.mockRejectedValue({ code: 'P2002' });
+
+      await expect(service.checkDocument(MOCK_DOC_ID)).resolves.not.toThrow();
+    });
+  });
 });
