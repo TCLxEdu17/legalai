@@ -80,10 +80,33 @@ describe('RadarsService', () => {
     });
   });
 
+  describe('findOne', () => {
+    it('deve rejeitar se radar não pertence ao usuário', async () => {
+      mockPrisma.radar.findUnique.mockResolvedValue({ id: MOCK_RADAR_ID, userId: 'other-user' });
+      await expect(service.findOne(MOCK_RADAR_ID, MOCK_USER_ID)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('deve lançar NotFoundException se radar não existe', async () => {
+      mockPrisma.radar.findUnique.mockResolvedValue(null);
+      await expect(service.findOne(MOCK_RADAR_ID, MOCK_USER_ID)).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve retornar radar se pertence ao usuário', async () => {
+      mockPrisma.radar.findUnique.mockResolvedValue({ id: MOCK_RADAR_ID, userId: MOCK_USER_ID });
+      const result = await service.findOne(MOCK_RADAR_ID, MOCK_USER_ID);
+      expect(result.id).toBe(MOCK_RADAR_ID);
+    });
+  });
+
   describe('update', () => {
     it('deve rejeitar se radar não pertence ao usuário', async () => {
       mockPrisma.radar.findUnique.mockResolvedValue({ id: MOCK_RADAR_ID, userId: 'other-user' });
       await expect(service.update(MOCK_RADAR_ID, {}, MOCK_USER_ID)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('deve lançar NotFoundException se radar não existe', async () => {
+      mockPrisma.radar.findUnique.mockResolvedValue(null);
+      await expect(service.update(MOCK_RADAR_ID, {}, MOCK_USER_ID)).rejects.toThrow(NotFoundException);
     });
 
     it('deve regenerar embedding se thesisText mudou', async () => {
@@ -101,6 +124,18 @@ describe('RadarsService', () => {
     it('deve rejeitar se radar não pertence ao usuário', async () => {
       mockPrisma.radar.findUnique.mockResolvedValue({ id: MOCK_RADAR_ID, userId: 'other-user' });
       await expect(service.remove(MOCK_RADAR_ID, MOCK_USER_ID)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('deve lançar NotFoundException se radar não existe', async () => {
+      mockPrisma.radar.findUnique.mockResolvedValue(null);
+      await expect(service.remove(MOCK_RADAR_ID, MOCK_USER_ID)).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve deletar radar se pertence ao usuário', async () => {
+      mockPrisma.radar.findUnique.mockResolvedValue({ id: MOCK_RADAR_ID, userId: MOCK_USER_ID });
+      mockPrisma.radar.delete.mockResolvedValue({});
+      await service.remove(MOCK_RADAR_ID, MOCK_USER_ID);
+      expect(mockPrisma.radar.delete).toHaveBeenCalledWith({ where: { id: MOCK_RADAR_ID } });
     });
   });
 
