@@ -627,7 +627,7 @@ model Radar {
   thesisText String   @map("thesis_text") @db.Text
   // thesis_embedding vector(1536) — adicionado via raw SQL após migration
   threshold  Float    @default(0.8)
-  active     Boolean  @default(true)
+  isActive   Boolean  @default(true) @map("is_active")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
@@ -636,7 +636,7 @@ model Radar {
   alerts RadarAlert[]
 
   @@index([userId])
-  @@index([active])
+  @@index([userId, isActive])
   @@map("radars")
 }
 

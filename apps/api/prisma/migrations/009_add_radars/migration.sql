@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS "radars" (
     "title" TEXT NOT NULL,
     "thesis_text" TEXT NOT NULL,
     "threshold" DOUBLE PRECISION NOT NULL DEFAULT 0.8,
-    "active" BOOLEAN NOT NULL DEFAULT true,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS "radar_alerts" (
 CREATE INDEX IF NOT EXISTS "radars_user_id_idx" ON "radars"("user_id");
 
 -- CreateIndex
-CREATE INDEX IF NOT EXISTS "radars_active_idx" ON "radars"("active");
+CREATE INDEX IF NOT EXISTS "radars_user_id_is_active_idx" ON "radars"("user_id", "is_active");
 
 -- CreateIndex
 CREATE UNIQUE INDEX IF NOT EXISTS "radar_alerts_radar_id_document_id_key" ON "radar_alerts"("radar_id", "document_id");
