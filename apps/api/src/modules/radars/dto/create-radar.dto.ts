@@ -1,10 +1,12 @@
-import { IsString, IsOptional, IsNumber, IsBoolean, Min, Max, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, Min, Max, MaxLength, IsNotEmpty } from 'class-validator';
 
 export class CreateRadarDto {
+  @IsNotEmpty()
   @IsString()
   @MaxLength(200)
   title: string;
 
+  @IsNotEmpty()
   @IsString()
   @MaxLength(2000)
   thesisText: string;
