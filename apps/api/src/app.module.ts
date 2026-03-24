@@ -40,6 +40,7 @@ import { NotificacoesClientesModule } from './modules/notificacoes-clientes/noti
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NewsModule } from './modules/news/news.module';
 import { PrivateProcessosModule } from './modules/private-processos/private-processos.module';
+import { RadarsModule } from './modules/radars/radars.module';
 // import { RedisModule } from './redis/redis.module';   // TODO sexta
 // import { QueueModule } from './modules/queue/queue.module';  // TODO sexta
 
@@ -141,6 +142,9 @@ import { PrivateProcessosModule } from './modules/private-processos/private-proc
 
     // Processos Privados (PRO) — e-SAJ TJSP
     PrivateProcessosModule,
+
+    // Radar de Jurisprudência
+    RadarsModule,
   ],
   providers: [
     {

@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
+import { RadarsService } from '../radars/radars.service';
 
 export interface AutoIngestionResult {
   jobId: string;
@@ -32,6 +33,7 @@ export class IngestionService {
     private readonly configService: ConfigService,
     @Optional() private readonly notificationsService?: NotificationsService,
     @Optional() private readonly webhooksService?: WebhooksService,
+    @Optional() private readonly radarsService?: RadarsService,
   ) {
     this.embeddingModel = configService.get('app.ai.openai.embeddingModel', 'text-embedding-3-small');
   }
@@ -230,6 +232,11 @@ export class IngestionService {
           itemsProcessed++;
           itemsIndexed++;
           addLog(`Indexado: "${collected.title}" (${chunks.length} chunks)`);
+
+          // Disparar radar check de forma assíncrona (fire-and-forget)
+          this.radarsService?.checkDocument(document.id).catch((err) =>
+            this.logger.error(`Radar check falhou para doc ${document.id}`, err),
+          );
         } catch (err) {
           errors.push(`${item.url}: ${err.message}`);
           addLog(`Erro em ${item.url}: ${err.message}`);

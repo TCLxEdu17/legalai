@@ -32,6 +32,14 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
     enabled: mounted,
   });
 
+  const { data: radarUnread } = useQuery({
+    queryKey: ['radar-unread'],
+    queryFn: () => apiClient.getRadarUnreadCount(),
+    refetchInterval: 60000,
+    enabled: mounted,
+  });
+  const radarUnreadCount = radarUnread?.count ?? 0;
+
   const markReadMutation = useMutation({
     mutationFn: (id: string) => apiClient.markNotificationRead(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
@@ -42,7 +50,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
-  const unreadCount = notifications.filter((n: any) => !n.read).length;
+  const unreadCount = notifications.filter((n: any) => !n.read).length + radarUnreadCount;
 
   const isDark = resolvedTheme === 'dark';
 
