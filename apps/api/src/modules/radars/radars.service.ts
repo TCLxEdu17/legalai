@@ -108,6 +108,66 @@ export class RadarsService {
    * Chamado pelo IngestionService após indexar um documento.
    * Fire-and-forget — nunca lança exceção para o caller.
    */
+  async listAlerts(radarId: string, userId: string) {
+    const radar = await this.prisma.radar.findUnique({ where: { id: radarId } });
+    if (!radar) throw new NotFoundException('Radar não encontrado');
+    if (radar.userId !== userId) throw new ForbiddenException();
+
+    return this.prisma.radarAlert.findMany({
+      where: { radarId },
+      include: {
+        document: {
+          select: {
+            id: true, title: true, tribunal: true, processNumber: true,
+            judgmentDate: true, summary: true, cleanedText: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+  }
+
+  async markAlertRead(radarId: string, alertId: string, userId: string) {
+    const radar = await this.prisma.radar.findUnique({ where: { id: radarId } });
+    if (!radar) throw new NotFoundException();
+    if (radar.userId !== userId) throw new ForbiddenException();
+
+    await this.prisma.radarAlert.update({
+      where: { id: alertId },
+      data: { readAt: new Date() },
+    });
+  }
+
+  async generateImpactAnalysis(radarId: string, alertId: string, userId: string): Promise<string> {
+    const radar = await this.prisma.radar.findUnique({ where: { id: radarId } });
+    if (!radar) throw new NotFoundException('Radar não encontrado');
+    if (radar.userId !== userId) throw new ForbiddenException();
+
+    const alert = await this.prisma.radarAlert.findUnique({
+      where: { id: alertId },
+      include: { document: { select: { cleanedText: true, title: true } } },
+    });
+    if (!alert) throw new NotFoundException('Alerta não encontrado');
+
+    if (alert.impactAnalysis) return alert.impactAnalysis;
+
+    const excerpt = alert.document.cleanedText?.slice(0, 4000) ?? '';
+    const { content } = await this.aiProvider.generateChatCompletion([
+      {
+        role: 'user',
+        content: `Tese monitorada: "${radar.thesisText}"\n\nDecisão:\n${excerpt}\n\nAnalise o impacto desta decisão para advogados que trabalham com a tese acima. Seja direto e prático, em 4-5 frases.`,
+      },
+    ], { maxTokens: 400, temperature: 0.4 });
+
+    await this.prisma.radarAlert.update({
+      where: { id: alertId },
+      data: { impactAnalysis: content },
+    });
+
+    return content;
+  }
+
   async checkDocument(documentId: string): Promise<void> {
     const sql = `
       SELECT
