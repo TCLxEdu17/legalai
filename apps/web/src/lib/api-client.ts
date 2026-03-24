@@ -793,6 +793,51 @@ class ApiClient {
     const { data } = await this.client.get('/metrics/tokens');
     return data;
   }
+
+  // ─── RADARES ────────────────────────────────────────────────────────────────
+
+  async getRadars() {
+    const res = await this.client.get('/radars');
+    return res.data;
+  }
+
+  async createRadar(data: { title: string; thesisText: string; threshold?: number; caseId?: string }) {
+    const res = await this.client.post('/radars', data);
+    return res.data;
+  }
+
+  async getRadar(id: string) {
+    const res = await this.client.get(`/radars/${id}`);
+    return res.data;
+  }
+
+  async updateRadar(id: string, data: Partial<{ title: string; thesisText: string; threshold: number; caseId: string; isActive: boolean }>) {
+    const res = await this.client.patch(`/radars/${id}`, data);
+    return res.data;
+  }
+
+  async deleteRadar(id: string) {
+    await this.client.delete(`/radars/${id}`);
+  }
+
+  async getRadarAlerts(radarId: string) {
+    const res = await this.client.get(`/radars/${radarId}/alerts`);
+    return res.data;
+  }
+
+  async markRadarAlertRead(radarId: string, alertId: string) {
+    await this.client.patch(`/radars/${radarId}/alerts/${alertId}/read`);
+  }
+
+  async analyzeRadarAlert(radarId: string, alertId: string) {
+    const res = await this.client.post(`/radars/${radarId}/alerts/${alertId}/analyze`);
+    return res.data;
+  }
+
+  async getRadarUnreadCount(): Promise<{ count: number }> {
+    const res = await this.client.get('/radar-alerts/unread-count');
+    return res.data;
+  }
 }
 
 export const apiClient = new ApiClient();
