@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import {
   ArrowLeft,
   Upload,
@@ -28,6 +29,7 @@ import {
   Lightbulb,
   TrendingUp,
   BarChart3,
+  Radio,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
@@ -249,6 +251,12 @@ export default function CaseDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['case-chat', id] });
       toast.success('Histórico limpo');
     },
+  });
+
+  const { data: caseRadars = [] } = useQuery({
+    queryKey: ['radars'],
+    queryFn: () => apiClient.getRadars(),
+    select: (radars: any[]) => radars.filter((r) => r.caseId === id),
   });
 
   useEffect(() => {
@@ -1063,6 +1071,33 @@ export default function CaseDetailPage() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* ─── RADARES VINCULADOS ────────────────────────────────────────── */}
+      {(caseRadars as any[]).length > 0 && (
+        <div className="mt-6 space-y-3 px-6 pb-6">
+          <h3 className="text-slate-400 text-xs font-semibold uppercase tracking-widest">Radares vinculados</h3>
+          {(caseRadars as any[]).map((r: any) => {
+            const unread = r._count?.alerts ?? 0;
+            return (
+              <Link
+                key={r.id}
+                href={`/dashboard/radares/${r.id}`}
+                className="flex items-center justify-between bg-[#141414] border border-white/[0.07] rounded-xl px-4 py-3 hover:border-white/[0.14] transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Radio className="w-3.5 h-3.5 text-brand-400" />
+                  <span className="text-slate-200 text-sm">{r.title}</span>
+                </div>
+                {unread > 0 && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold">
+                    {unread} novo{unread > 1 ? 's' : ''}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </div>
       )}
 
