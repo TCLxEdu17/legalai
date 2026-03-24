@@ -25,6 +25,7 @@ const mockPrisma = {
   jurisprudenceDocument: {
     findUnique: jest.fn(),
   },
+  $executeRaw: jest.fn(),
   $executeRawUnsafe: jest.fn(),
   $queryRawUnsafe: jest.fn(),
 };
@@ -70,12 +71,12 @@ describe('RadarsService', () => {
     it('deve criar radar e gerar embedding da tese', async () => {
       const dto = { title: 'Dano Moral', thesisText: 'negativação indevida', threshold: 0.85 };
       mockPrisma.radar.create.mockResolvedValue({ id: MOCK_RADAR_ID, ...dto });
-      mockPrisma.$executeRawUnsafe.mockResolvedValue(undefined);
+      mockPrisma.$executeRaw.mockResolvedValue(undefined);
 
       const result = await service.create(dto, MOCK_USER_ID);
 
       expect(mockAIProvider.generateEmbedding).toHaveBeenCalledWith(dto.thesisText);
-      expect(mockPrisma.$executeRawUnsafe).toHaveBeenCalled();
+      expect(mockPrisma.$executeRaw).toHaveBeenCalled();
       expect(result.id).toBe(MOCK_RADAR_ID);
     });
   });
@@ -123,7 +124,7 @@ describe('RadarsService', () => {
     it('deve regenerar embedding se thesisText mudou', async () => {
       mockPrisma.radar.findUnique.mockResolvedValue({ id: MOCK_RADAR_ID, userId: MOCK_USER_ID });
       mockPrisma.radar.update.mockResolvedValue({ id: MOCK_RADAR_ID });
-      mockPrisma.$executeRawUnsafe.mockResolvedValue(undefined);
+      mockPrisma.$executeRaw.mockResolvedValue(undefined);
 
       await service.update(MOCK_RADAR_ID, { thesisText: 'nova tese' }, MOCK_USER_ID);
 
@@ -182,7 +183,7 @@ describe('RadarsService', () => {
         },
       ]);
       mockPrisma.radarAlert.create.mockResolvedValue({ id: 'alert-1', radarId: MOCK_RADAR_ID });
-      mockPrisma.$executeRawUnsafe.mockResolvedValue(undefined);
+      mockPrisma.$executeRaw.mockResolvedValue(undefined);
       mockAIProvider.generateChatCompletion.mockResolvedValue({
         content: 'Resumo da decisão',
         usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },

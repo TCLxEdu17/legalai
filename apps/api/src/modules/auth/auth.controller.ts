@@ -40,6 +40,7 @@ export class AuthController {
   @Post('refresh')
   @Public()
   @HttpCode(HttpStatus.OK)
+  @Throttle({ short: { ttl: 60000, limit: 5 } })
   @ApiOperation({ summary: 'Renovar access token usando refresh token' })
   @ApiResponse({ status: 200, description: 'Tokens renovados' })
   @ApiResponse({ status: 401, description: 'Refresh token inválido' })

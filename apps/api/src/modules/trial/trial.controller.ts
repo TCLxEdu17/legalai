@@ -12,6 +12,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -27,6 +28,7 @@ export class TrialController {
   constructor(private readonly trialService: TrialService) {}
 
   @Post()
+  @Throttle({ short: { ttl: 60000, limit: 3 } })
   @ApiOperation({ summary: 'Create a trial user (public)' })
   create(@Body() dto: CreateTrialDto) {
     this.logger.log(`POST /trial — prefix=${dto.prefix} name=${dto.name}`);
@@ -81,6 +83,7 @@ export class TrialController {
 
   @Post(':id/feedback')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @ApiOperation({ summary: 'Submit feedback for trial user (public)' })
   submitFeedback(
     @Param('id', ParseUUIDPipe) id: string,
@@ -92,6 +95,7 @@ export class TrialController {
 
   @Post(':id/track')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ long: { ttl: 60000, limit: 60 } })
   @ApiOperation({ summary: 'Track a metric event for a trial user (public)' })
   trackMetric(
     @Param('id', ParseUUIDPipe) id: string,

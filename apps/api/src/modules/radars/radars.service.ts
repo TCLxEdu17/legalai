@@ -2,6 +2,7 @@ import {
   Injectable, Logger, NotFoundException, ForbiddenException, Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AI_PROVIDER_TOKEN, IAIProvider } from '../rag/providers/ai-provider.interface';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -35,9 +36,8 @@ export class RadarsService {
       },
     });
 
-    const embeddingLiteral = `'[${embedding.join(',')}]'::vector`;
-    await this.prisma.$executeRawUnsafe(
-      `UPDATE radars SET thesis_embedding = ${embeddingLiteral} WHERE id = '${radar.id}'::uuid`,
+    await this.prisma.$executeRaw(
+      Prisma.sql`UPDATE radars SET thesis_embedding = ${Prisma.raw(`'[${embedding.join(',')}]'::vector`)} WHERE id = ${Prisma.raw(`'${radar.id}'::uuid`)}`,
     );
 
     return radar;
@@ -82,9 +82,8 @@ export class RadarsService {
 
     if (dto.thesisText) {
       const { embedding } = await this.aiProvider.generateEmbedding(dto.thesisText);
-      const embeddingLiteral = `'[${embedding.join(',')}]'::vector`;
-      await this.prisma.$executeRawUnsafe(
-        `UPDATE radars SET thesis_embedding = ${embeddingLiteral} WHERE id = '${id}'::uuid`,
+      await this.prisma.$executeRaw(
+        Prisma.sql`UPDATE radars SET thesis_embedding = ${Prisma.raw(`'[${embedding.join(',')}]'::vector`)} WHERE id = ${Prisma.raw(`'${id}'::uuid`)}`,
       );
     }
 

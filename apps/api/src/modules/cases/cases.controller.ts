@@ -18,7 +18,9 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UserThrottlerGuard } from '../../common/guards/user-throttler.guard';
 import { CasesService } from './cases.service';
 import { CreateCaseDto } from './dto/create-case.dto';
 import { UpdateCaseDto } from './dto/update-case.dto';
@@ -50,16 +52,22 @@ export class CasesController {
   // ─── ROTAS SEM :id (devem vir ANTES de :id) ───────────────────────────────
 
   @Get('radar')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   detectOpportunities(@Request() req: any) {
     return this.casesService.detectOpportunities(req.user.id);
   }
 
   @Get('copilot')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   getOfficeCopilot(@Request() req: any) {
     return this.casesService.getOfficeCopilot(req.user.id);
   }
 
   @Post('predict-compensation')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   predictCompensation(@Body() dto: PredictCompensationDto, @Request() req: any) {
     return this.casesService.predictCompensation(dto, req.user.id);
   }
@@ -81,26 +89,36 @@ export class CasesController {
   }
 
   @Get(':id/summary')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   getCaseSummary(@Param('id') id: string, @Request() req: any) {
     return this.casesService.getCaseSummary(id, req.user.id);
   }
 
   @Post(':id/narrative')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   buildLegalNarrative(@Param('id') id: string, @Request() req: any) {
     return this.casesService.buildLegalNarrative(id, req.user.id);
   }
 
   @Get(':id/evidence')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   analyzeEvidence(@Param('id') id: string, @Request() req: any) {
     return this.casesService.analyzeEvidence(id, req.user.id);
   }
 
   @Get(':id/theses')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   detectLegalTheses(@Param('id') id: string, @Request() req: any) {
     return this.casesService.detectLegalTheses(id, req.user.id);
   }
 
   @Post(':id/hearing')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   generateHearingQuestions(
     @Param('id') id: string,
     @Body() dto: GenerateHearingDto,
@@ -110,6 +128,8 @@ export class CasesController {
   }
 
   @Get(':id/settlement')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   analyzeSettlement(@Param('id') id: string, @Request() req: any) {
     return this.casesService.analyzeSettlement(id, req.user.id);
   }
@@ -149,6 +169,8 @@ export class CasesController {
   // ─── CHAT ─────────────────────────────────────────────────────────────────
 
   @Post(':id/chat')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   chat(@Param('id') caseId: string, @Body() dto: ChatCaseDto, @Request() req: any) {
     return this.casesService.chat(caseId, dto, req.user.id);
   }
@@ -167,6 +189,8 @@ export class CasesController {
   // ─── PEÇAS ────────────────────────────────────────────────────────────────
 
   @Post(':id/pieces')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   generatePiece(@Param('id') caseId: string, @Body() dto: GeneratePieceDto, @Request() req: any) {
     return this.casesService.generatePiece(caseId, dto, req.user.id);
   }
