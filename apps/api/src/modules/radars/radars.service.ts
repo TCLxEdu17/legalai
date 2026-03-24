@@ -130,8 +130,13 @@ export class RadarsService {
 
   async markAlertRead(radarId: string, alertId: string, userId: string) {
     const radar = await this.prisma.radar.findUnique({ where: { id: radarId } });
-    if (!radar) throw new NotFoundException();
+    if (!radar) throw new NotFoundException('Radar não encontrado');
     if (radar.userId !== userId) throw new ForbiddenException();
+
+    const alert = await this.prisma.radarAlert.findUnique({
+      where: { id: alertId },
+    });
+    if (!alert || alert.radarId !== radarId) throw new NotFoundException('Alerta não encontrado');
 
     await this.prisma.radarAlert.update({
       where: { id: alertId },
@@ -148,7 +153,7 @@ export class RadarsService {
       where: { id: alertId },
       include: { document: { select: { cleanedText: true, title: true } } },
     });
-    if (!alert) throw new NotFoundException('Alerta não encontrado');
+    if (!alert || alert.radarId !== radarId) throw new NotFoundException('Alerta não encontrado');
 
     if (alert.impactAnalysis) return alert.impactAnalysis;
 
