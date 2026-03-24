@@ -15,7 +15,7 @@ export class RadarEmailService {
     if (host && user && pass) {
       this.transporter = nodemailer.createTransport({
         host,
-        port: config.get<number>('SMTP_PORT', 587),
+        port: parseInt(config.get<string>('SMTP_PORT', '587'), 10),
         secure: false,
         auth: { user, pass },
       });

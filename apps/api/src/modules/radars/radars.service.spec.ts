@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { RadarsService } from './radars.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AI_PROVIDER_TOKEN } from '../rag/providers/ai-provider.interface';
@@ -56,6 +57,10 @@ describe('RadarsService', () => {
         { provide: AI_PROVIDER_TOKEN, useValue: mockAIProvider },
         { provide: NotificationsService, useValue: mockNotificationsService },
         { provide: RadarEmailService, useValue: mockRadarEmailService },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn((key: string, def?: string) => def ?? '') },
+        },
       ],
     }).compile();
     service = module.get(RadarsService);
@@ -202,6 +207,12 @@ describe('RadarsService', () => {
         expect.stringContaining('Dano Moral'),
         expect.any(String),
         expect.stringContaining(MOCK_RADAR_ID),
+      );
+      expect(mockRadarEmailService.sendAlert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: expect.any(String),
+          radarTitle: expect.any(String),
+        }),
       );
     });
 

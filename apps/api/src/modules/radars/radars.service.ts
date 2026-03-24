@@ -1,6 +1,7 @@
 import {
   Injectable, Logger, NotFoundException, ForbiddenException, Inject,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AI_PROVIDER_TOKEN, IAIProvider } from '../rag/providers/ai-provider.interface';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -17,6 +18,7 @@ export class RadarsService {
     @Inject(AI_PROVIDER_TOKEN) private readonly aiProvider: IAIProvider,
     private readonly notificationsService: NotificationsService,
     private readonly radarEmailService: RadarEmailService,
+    private readonly config: ConfigService,
   ) {}
 
   async create(dto: CreateRadarDto, userId: string) {
@@ -202,7 +204,7 @@ export class RadarsService {
             tribunal: doc.tribunal ?? undefined,
             similarity: Number(match.max_similarity),
             summary: alert.summary ?? undefined,
-            alertUrl: `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/dashboard/radares/${match.radar_id}`,
+            alertUrl: `${this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')}/dashboard/radares/${match.radar_id}`,
           }).catch(() => {});
         }
       } catch (err: any) {
