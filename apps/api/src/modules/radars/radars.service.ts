@@ -4,6 +4,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { AI_PROVIDER_TOKEN, IAIProvider } from '../rag/providers/ai-provider.interface';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RadarEmailService } from './radar-email.service';
 import { CreateRadarDto } from './dto/create-radar.dto';
 import { UpdateRadarDto } from './dto/update-radar.dto';
 
@@ -15,6 +16,7 @@ export class RadarsService {
     private readonly prisma: PrismaService,
     @Inject(AI_PROVIDER_TOKEN) private readonly aiProvider: IAIProvider,
     private readonly notificationsService: NotificationsService,
+    private readonly radarEmailService: RadarEmailService,
   ) {}
 
   async create(dto: CreateRadarDto, userId: string) {
@@ -147,7 +149,7 @@ export class RadarsService {
 
     for (const match of matches) {
       try {
-        const alert = await this.prisma.radarAlert.create({
+        let alert = await this.prisma.radarAlert.create({
           data: {
             radarId: match.radar_id,
             documentId,
@@ -156,8 +158,9 @@ export class RadarsService {
         });
 
         // Gerar resumo automaticamente (LLM)
+        let doc: { title: string; cleanedText: string | null; tribunal: string | null; judgmentDate: Date | null } | null = null;
         try {
-          const doc = await this.prisma.jurisprudenceDocument.findUnique({
+          doc = await this.prisma.jurisprudenceDocument.findUnique({
             where: { id: documentId },
             select: { title: true, cleanedText: true, tribunal: true, judgmentDate: true },
           });
@@ -175,6 +178,8 @@ export class RadarsService {
               where: { id: alert.id },
               data: { summary: content },
             });
+
+            alert = { ...alert, summary: content };
           }
         } catch (summaryErr) {
           this.logger.warn(`checkDocument: falha ao gerar resumo para alerta ${alert.id}`, summaryErr);
@@ -187,6 +192,19 @@ export class RadarsService {
           `Similaridade: ${Math.round(Number(match.max_similarity) * 100)}%`,
           `/dashboard/radares/${match.radar_id}`,
         );
+
+        // Email notification (fire-and-forget)
+        if (doc) {
+          this.radarEmailService.sendAlert({
+            to: match.user_email,
+            radarTitle: match.title,
+            documentTitle: doc.title,
+            tribunal: doc.tribunal ?? undefined,
+            similarity: Number(match.max_similarity),
+            summary: alert.summary ?? undefined,
+            alertUrl: `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/dashboard/radares/${match.radar_id}`,
+          }).catch(() => {});
+        }
       } catch (err: any) {
         if (err?.code === 'P2002') {
           this.logger.debug(`checkDocument: alerta duplicado ignorado para radar ${match.radar_id}`);

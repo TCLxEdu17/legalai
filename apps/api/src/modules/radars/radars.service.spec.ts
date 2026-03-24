@@ -4,6 +4,7 @@ import { RadarsService } from './radars.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AI_PROVIDER_TOKEN } from '../rag/providers/ai-provider.interface';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RadarEmailService } from './radar-email.service';
 
 const mockPrisma = {
   radar: {
@@ -36,6 +37,10 @@ const mockNotificationsService = {
   createForUser: jest.fn().mockResolvedValue(undefined),
 };
 
+const mockRadarEmailService = {
+  sendAlert: jest.fn().mockResolvedValue(undefined),
+};
+
 const MOCK_USER_ID = 'user-uuid-1';
 const MOCK_RADAR_ID = 'radar-uuid-1';
 
@@ -50,6 +55,7 @@ describe('RadarsService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AI_PROVIDER_TOKEN, useValue: mockAIProvider },
         { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: RadarEmailService, useValue: mockRadarEmailService },
       ],
     }).compile();
     service = module.get(RadarsService);
