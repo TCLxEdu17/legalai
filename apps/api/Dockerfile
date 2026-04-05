@@ -10,12 +10,12 @@ FROM base AS builder
 COPY package*.json ./
 RUN npm install
 COPY . .
-# DATABASE_URL só é necessária em runtime — placeholder evita erro do Prisma no build
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-RUN npx prisma generate
+# Passa DATABASE_URL só para este comando — Prisma exige no generate mas não conecta de verdade
+RUN DATABASE_URL="postgresql://placeholder:x@localhost:5432/placeholder" npx prisma generate
 RUN npm run build
 
-FROM base AS runner
+FROM node:20-alpine AS runner
+RUN apk add --no-cache openssl
 ENV NODE_ENV=production
 WORKDIR /app
 
@@ -28,4 +28,5 @@ RUN mkdir -p uploads logs
 
 EXPOSE 3001
 
+# prisma migrate deploy roda em runtime com DATABASE_URL real do ambiente
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
