@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { event as pixelEvent } from '@/lib/pixel';
+import { analytics } from '@/lib/analytics';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { PlanetLoader } from '@/components/ui/planet-loader';
 import { Scale, Copy, Check, Clock, AlertTriangle } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage } from '@/lib/utils';
+import { login } from '@/lib/auth';
+import { toast } from 'sonner';
 import { CookieBanner } from '@/components/ui/cookie-banner';
 
 const TRIAL_KEY = 'legalai_trial';
@@ -123,12 +127,15 @@ function FeedbackModal({
 }
 
 export default function TrialPage() {
+  const router = useRouter();
   const [trial, setTrial] = useState<TrialData | null>(null);
   const [loadedFromStorage, setLoadedFromStorage] = useState(false);
 
   // Creation form state
   const [prefix, setPrefix] = useState<'Dr.' | 'Dra.'>('Dr.');
   const [name, setName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -166,9 +173,15 @@ export default function TrialPage() {
     }
     setLoading(true);
     setError('');
+    analytics.trialFormSubmitted(!!contactEmail.trim(), !!phone.trim());
 
     try {
-      const result = await apiClient.createTrial({ prefix, name: name.trim() });
+      const result = await apiClient.createTrial({
+        prefix,
+        name: name.trim(),
+        contactEmail: contactEmail.trim() || undefined,
+        phone: phone.trim() || undefined,
+      });
       const data: TrialData = {
         id: result.id,
         prefix: result.prefix ?? prefix,
@@ -182,6 +195,17 @@ export default function TrialPage() {
       setTrial(data);
       setJustCreated(true);
       pixelEvent('Lead');
+      analytics.trialCreated(!!contactEmail.trim(), !!phone.trim());
+
+      // Auto-login com as credenciais da trial para permitir acesso ao dashboard
+      try {
+        await login(data.email, data.password);
+        localStorage.setItem('legalai_last_activity', String(Date.now()));
+        toast.success('Conta trial criada com sucesso! Login automático realizado.');
+      } catch (loginErr) {
+        // Se o auto-login falhar, o usuário ainda pode fazer login manualmente
+        console.warn('Auto-login falhou, usuário deverá fazer login manualmente:', loginErr);
+      }
     } catch (err) {
       setError(extractApiErrorMessage(err));
     } finally {
@@ -261,6 +285,30 @@ export default function TrialPage() {
                 />
               </div>
 
+              {/* Email input */}
+              <div>
+                <label className="text-slate-400 text-xs font-medium mb-2 block">E-mail</label>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-slate-100 placeholder:text-slate-600 text-sm focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/30 transition-colors"
+                />
+              </div>
+
+              {/* Phone input */}
+              <div>
+                <label className="text-slate-400 text-xs font-medium mb-2 block">WhatsApp / Telefone</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="(11) 91234-5678"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-slate-100 placeholder:text-slate-600 text-sm focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/30 transition-colors"
+                />
+              </div>
+
               {error && (
                 <p className="text-red-400 text-xs flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
@@ -335,12 +383,12 @@ export default function TrialPage() {
               >
                 Ver tour guiado →
               </Link>
-              <Link
-                href="/login"
+              <button
+                onClick={() => router.push('/dashboard')}
                 className="block w-full py-3 bg-white/5 hover:bg-white/8 border border-white/10 text-slate-300 font-medium rounded-xl transition-colors text-sm text-center"
               >
-                Ir direto para o login
-              </Link>
+                Ir para o Dashboard →
+              </button>
             </div>
           </div>
         )}
