@@ -13,6 +13,7 @@ import { ChatMessageBubble } from '@/components/chat/chat-message-bubble';
 import { extractApiErrorMessage, formatRelativeTime } from '@/lib/utils';
 import type { ChatMessage, ChatSession } from '@/types';
 import { cn } from '@/lib/utils';
+import { analytics } from '@/lib/analytics';
 import { getStoredUser } from '@/lib/auth';
 
 const EXAMPLE_QUESTIONS = [
@@ -288,6 +289,7 @@ export default function ChatPage() {
       }
     }
 
+    analytics.aiChatMessageSent(messageText.length, !activeSessionId);
     sendMutation.mutate({ message: messageText, sessionId: activeSessionId });
   };
 

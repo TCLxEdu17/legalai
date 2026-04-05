@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useRouter } from 'next/navigation';
+import { PlanetLoader } from '@/components/ui/planet-loader';
 import {
   Scale, MessageSquare, FileText, Upload, Key, Clock,
   ChevronLeft, ChevronRight, ExternalLink, Globe, Activity,
@@ -11,6 +11,8 @@ import {
   ScanSearch, CheckCircle,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { isAuthenticated, login } from '@/lib/auth';
+import { toast } from 'sonner';
 
 const TRIAL_KEY = 'legalai_trial';
 const ONBOARDING_STEP_KEY = 'legalai_onboarding_step';
@@ -22,6 +24,41 @@ interface TrialData {
   email: string;
   password: string;
   expiresAt: string;
+}
+
+/**
+ * Ensures user is authenticated before navigating to a dashboard route.
+ * If not authenticated, attempts auto-login using trial credentials from localStorage.
+ */
+async function ensureAuthenticated(
+  navigateTo: string,
+  router: ReturnType<typeof useRouter>,
+): Promise<void> {
+  // Already authenticated, just navigate
+  if (isAuthenticated()) {
+    router.push(navigateTo);
+    return;
+  }
+
+  // Try auto-login with trial credentials
+  try {
+    const raw = localStorage.getItem(TRIAL_KEY);
+    if (!raw) {
+      toast.info('Faça login para acessar esta funcionalidade.');
+      router.push('/login');
+      return;
+    }
+
+    const trial: TrialData = JSON.parse(raw);
+    await login(trial.email, trial.password);
+    localStorage.setItem('legalai_last_activity', String(Date.now()));
+    toast.success('Login automático realizado!');
+    router.push(navigateTo);
+  } catch (err) {
+    console.warn('Auto-login failed during navigation:', err);
+    toast.info('Faça login para acessar esta funcionalidade.');
+    router.push('/login');
+  }
 }
 
 function formatCountdown(ms: number): string {
@@ -223,8 +260,14 @@ function StepWelcome({ trial, onNext }: { trial: TrialData; onNext: () => void }
 }
 
 function StepFeature({ feature, index }: { feature: typeof FEATURES[0]; index: number }) {
+  const router = useRouter();
   const c = COLOR_MAP[feature.color];
   const Icon = feature.icon;
+
+  const handleNavigate = async () => {
+    await ensureAuthenticated(feature.href, router);
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -251,19 +294,29 @@ function StepFeature({ feature, index }: { feature: typeof FEATURES[0]; index: n
 
       {/* CTA */}
       <div className="flex justify-center">
-        <Link
-          href={feature.href}
+        <button
+          onClick={handleNavigate}
           className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-medium rounded-xl transition-colors text-sm"
         >
           {feature.cta}
           <ExternalLink className="w-3.5 h-3.5" />
-        </Link>
+        </button>
       </div>
     </div>
   );
 }
 
 function StepDone({ trial }: { trial: TrialData }) {
+  const router = useRouter();
+
+  const handleGoToDashboard = async () => {
+    await ensureAuthenticated('/dashboard', router);
+  };
+
+  const handleGoToFeature = async (href: string) => {
+    await ensureAuthenticated(href, router);
+  };
+
   return (
     <div className="flex flex-col items-center text-center gap-6">
       <div className="text-5xl">🎉</div>
@@ -282,25 +335,25 @@ function StepDone({ trial }: { trial: TrialData }) {
           const c = COLOR_MAP[f.color];
           const Icon = f.icon;
           return (
-            <Link
+            <button
               key={f.id}
-              href={f.href}
+              onClick={() => handleGoToFeature(f.href)}
               className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border ${c.border} ${c.bg} hover:opacity-80 transition-opacity`}
             >
               <Icon className={`w-4 h-4 ${c.icon}`} />
               <span className="text-slate-400 text-center leading-tight" style={{ fontSize: '10px' }}>{f.title.split(' ').slice(0, 3).join(' ')}</span>
-            </Link>
+            </button>
           );
         })}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
-        <Link
-          href="/dashboard"
+        <button
+          onClick={handleGoToDashboard}
           className="flex-1 py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-colors text-sm text-center"
         >
           Ir para o Dashboard →
-        </Link>
+        </button>
         <a
           href="https://wa.me/5513997708569?text=Ol%C3%A1%2C%20Edu!%20Estou%20testando%20o%20LegalAI%20e%20tenho%20d%C3%BAvidas!"
           target="_blank"

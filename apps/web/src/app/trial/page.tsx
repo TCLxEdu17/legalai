@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { event as pixelEvent } from '@/lib/pixel';
+import { analytics } from '@/lib/analytics';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { PlanetLoader } from '@/components/ui/planet-loader';
 import { Scale, Copy, Check, Clock, AlertTriangle } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage } from '@/lib/utils';
+import { login } from '@/lib/auth';
+import { toast } from 'sonner';
 import { CookieBanner } from '@/components/ui/cookie-banner';
 
 const TRIAL_KEY = 'legalai_trial';
@@ -123,6 +127,7 @@ function FeedbackModal({
 }
 
 export default function TrialPage() {
+  const router = useRouter();
   const [trial, setTrial] = useState<TrialData | null>(null);
   const [loadedFromStorage, setLoadedFromStorage] = useState(false);
 
@@ -168,6 +173,7 @@ export default function TrialPage() {
     }
     setLoading(true);
     setError('');
+    analytics.trialFormSubmitted(!!contactEmail.trim(), !!phone.trim());
 
     try {
       const result = await apiClient.createTrial({
@@ -189,6 +195,17 @@ export default function TrialPage() {
       setTrial(data);
       setJustCreated(true);
       pixelEvent('Lead');
+      analytics.trialCreated(!!contactEmail.trim(), !!phone.trim());
+
+      // Auto-login com as credenciais da trial para permitir acesso ao dashboard
+      try {
+        await login(data.email, data.password);
+        localStorage.setItem('legalai_last_activity', String(Date.now()));
+        toast.success('Conta trial criada com sucesso! Login automático realizado.');
+      } catch (loginErr) {
+        // Se o auto-login falhar, o usuário ainda pode fazer login manualmente
+        console.warn('Auto-login falhou, usuário deverá fazer login manualmente:', loginErr);
+      }
     } catch (err) {
       setError(extractApiErrorMessage(err));
     } finally {
@@ -366,12 +383,12 @@ export default function TrialPage() {
               >
                 Ver tour guiado →
               </Link>
-              <Link
-                href="/login"
+              <button
+                onClick={() => router.push('/dashboard')}
                 className="block w-full py-3 bg-white/5 hover:bg-white/8 border border-white/10 text-slate-300 font-medium rounded-xl transition-colors text-sm text-center"
               >
-                Ir direto para o login
-              </Link>
+                Ir para o Dashboard →
+              </button>
             </div>
           </div>
         )}

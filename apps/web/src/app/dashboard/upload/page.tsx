@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { analytics } from '@/lib/analytics';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, formatFileSize } from '@/lib/utils';
@@ -64,6 +65,7 @@ export default function UploadPage() {
       toast.success('Upload iniciado! O documento está sendo processado.');
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['document-stats'] });
+      if (file) analytics.documentUploaded(file.type, +(file.size / 1_048_576).toFixed(2));
       reset();
       setFile(null);
     },
