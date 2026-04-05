@@ -129,6 +129,8 @@ export default function TrialPage() {
   // Creation form state
   const [prefix, setPrefix] = useState<'Dr.' | 'Dra.'>('Dr.');
   const [name, setName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -168,7 +170,12 @@ export default function TrialPage() {
     setError('');
 
     try {
-      const result = await apiClient.createTrial({ prefix, name: name.trim() });
+      const result = await apiClient.createTrial({
+        prefix,
+        name: name.trim(),
+        contactEmail: contactEmail.trim() || undefined,
+        phone: phone.trim() || undefined,
+      });
       const data: TrialData = {
         id: result.id,
         prefix: result.prefix ?? prefix,
@@ -257,6 +264,30 @@ export default function TrialPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome completo"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-slate-100 placeholder:text-slate-600 text-sm focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/30 transition-colors"
+                />
+              </div>
+
+              {/* Email input */}
+              <div>
+                <label className="text-slate-400 text-xs font-medium mb-2 block">E-mail</label>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-slate-100 placeholder:text-slate-600 text-sm focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/30 transition-colors"
+                />
+              </div>
+
+              {/* Phone input */}
+              <div>
+                <label className="text-slate-400 text-xs font-medium mb-2 block">WhatsApp / Telefone</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="(11) 91234-5678"
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-slate-100 placeholder:text-slate-600 text-sm focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/30 transition-colors"
                 />
               </div>

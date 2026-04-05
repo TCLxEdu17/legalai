@@ -427,7 +427,7 @@ class ApiClient {
   }
 
   // ==================== TRIAL ====================
-  async createTrial(data: { prefix: string; name: string }) {
+  async createTrial(data: { prefix: string; name: string; contactEmail?: string; phone?: string }) {
     const { data: res } = await this.client.post('/trial', data);
     return res;
   }

@@ -4,10 +4,16 @@ import Link from 'next/link';
 import {
   Scale, Search, ShieldCheck, ArrowRight, CheckCircle,
   Zap, FileText, Users, FolderOpen, BookOpen,
-  Shield, Brain, Gavel,
+  Shield, Brain, Gavel, MessageCircle, LogIn,
 } from 'lucide-react';
 import { GradientButton } from '@/components/ui/gradient-button';
 import { motion, type Variants } from 'framer-motion';
+
+const WA_SPECIALIST_URL =
+  'https://wa.me/5513997708569?text=' +
+  encodeURIComponent(
+    'Olá, Edu! Vi o LegalAI e gostaria de saber mais sobre os planos e como ele pode ajudar meu escritório.',
+  );
 
 const RECURSOS = [
   {
@@ -145,14 +151,21 @@ export default function LandingPage() {
         >
           <Link href="/trial">
             <GradientButton className="h-12 px-8 text-sm rounded-xl gap-2">
-              Começar agora
+              Testar por 24h grátis
               <ArrowRight className="w-4 h-4" />
             </GradientButton>
           </Link>
-          <Link href="/login">
-            <GradientButton variant="variant" className="h-12 px-8 text-sm rounded-xl">
-              Acessar o sistema
+          <a href={WA_SPECIALIST_URL} target="_blank" rel="noopener noreferrer">
+            <GradientButton variant="variant" className="h-12 px-8 text-sm rounded-xl gap-2">
+              <MessageCircle className="w-4 h-4" />
+              Falar com especialista
             </GradientButton>
+          </a>
+          <Link href="/login">
+            <button className="h-12 px-7 text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors">
+              <LogIn className="w-4 h-4" />
+              Entrar
+            </button>
           </Link>
         </motion.div>
 
@@ -276,14 +289,21 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link href="/trial">
                   <GradientButton className="h-11 px-7 text-sm rounded-xl gap-2">
-                    Começar agora
+                    Testar por 24h grátis
                     <ArrowRight className="w-4 h-4" />
                   </GradientButton>
                 </Link>
-                <Link href="/login">
-                  <GradientButton variant="variant" className="h-11 px-7 text-sm rounded-xl">
-                    Já tenho conta
+                <a href={WA_SPECIALIST_URL} target="_blank" rel="noopener noreferrer">
+                  <GradientButton variant="variant" className="h-11 px-7 text-sm rounded-xl gap-2">
+                    <MessageCircle className="w-4 h-4" />
+                    Falar com especialista
                   </GradientButton>
+                </a>
+                <Link href="/login">
+                  <button className="h-11 px-6 text-sm font-medium text-slate-400 hover:text-slate-200 flex items-center gap-2 transition-colors">
+                    <LogIn className="w-4 h-4" />
+                    Entrar
+                  </button>
                 </Link>
               </div>
             </div>

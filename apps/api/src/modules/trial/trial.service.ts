@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTrialDto } from './dto/create-trial.dto';
 import { FeedbackTrialDto } from './dto/feedback-trial.dto';
+import { OwnerNotifyService } from './owner-notify.service';
 import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 
@@ -12,7 +13,10 @@ const NOUNS = ['jurista', 'advogado', 'doutor', 'consul', 'legis', 'iuris', 'tog
 export class TrialService {
   private readonly logger = new Logger(TrialService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ownerNotify: OwnerNotifyService,
+  ) {}
 
   private generateUsername(): string {
     const adjective = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
@@ -57,10 +61,22 @@ export class TrialService {
         passwordHash,
         expiresAt,
         systemUserId: systemUser.id,
+        contactEmail: dto.contactEmail ?? null,
+        phone: dto.phone ?? null,
       },
     });
 
     this.logger.log(`Trial user created: ${username} (expires: ${expiresAt.toISOString()})`);
+
+    // Notificar owner de forma assíncrona (não bloqueia a resposta)
+    this.ownerNotify.notifyNewTrial({
+      prefix: trialUser.prefix,
+      name: trialUser.name,
+      contactEmail: trialUser.contactEmail ?? undefined,
+      phone: trialUser.phone ?? undefined,
+      trialEmail: trialUser.email,
+      expiresAt: trialUser.expiresAt,
+    }).catch(() => {/* já logado internamente */});
 
     return {
       id: trialUser.id,
