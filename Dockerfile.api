@@ -12,9 +12,7 @@ RUN npm ci
 # ── Build ──────────────────────────────────────────────────────────────────────
 FROM deps AS builder
 COPY apps/api ./apps/api
-# DATABASE_URL só é necessária em runtime — placeholder evita erro do Prisma no build
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-RUN cd apps/api && npx prisma generate
+RUN cd apps/api && DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" npx prisma generate
 RUN cd apps/api && npx nest build
 
 # ── Runner ─────────────────────────────────────────────────────────────────────
