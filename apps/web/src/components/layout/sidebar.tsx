@@ -9,8 +9,8 @@ import {
   Calendar, Users, ClipboardCheck, FileEdit, CreditCard,
   FileBarChart, GitCompare, Gavel, Flag, FolderOpen, X,
   TrendingUp, FileSignature, DollarSign, CheckSquare, Scroll,
-  BookOpen, StickyNote, Brain, Mic, Handshake, Zap, ShieldCheck,
-  Search,
+  BookOpen, StickyNote, Brain, Mic, Handshake, Zap, ShieldCheck, ClipboardList,
+  Search, Radio,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAdmin } from '@/lib/auth';
@@ -51,6 +51,7 @@ const navGroups: NavGroup[] = [
     label: 'IA & Casos',
     items: [
       { href: '/dashboard/casos', icon: FolderOpen, label: 'Meus Casos', children: CASE_CHILDREN },
+      { href: '/dashboard/radares', icon: Radio, label: 'Radar de Jurisprudência', badge: 'New!', badgeColor: 'emerald' },
       { href: '/dashboard/copiloto', icon: Bot, label: 'Augustus AI' },
       { href: '/dashboard/chat', icon: MessageSquare, label: 'Lexis' },
       { href: '/dashboard/analise', icon: ScanSearch, label: 'Análise de Documento' },
@@ -65,6 +66,7 @@ const navGroups: NavGroup[] = [
       { href: '/dashboard/jurisprudencias', icon: FileText, label: 'Jurisprudências' },
       { href: '/dashboard/processos', icon: Gavel, label: 'Processos' },
       { href: '/dashboard/processos-privados', icon: ShieldCheck, label: 'Processos Privados', badge: 'PRO', badgeColor: 'amber' },
+      { href: '/dashboard/processos-por-oab', icon: ClipboardList, label: 'Processos por OAB', badge: 'PRO', badgeColor: 'amber' },
       { href: '/dashboard/consultas', icon: Search, label: 'Consultas (CEP/CNPJ)' },
       { href: '/dashboard/comparador', icon: GitCompare, label: 'Comparador de Decisões' },
     ],

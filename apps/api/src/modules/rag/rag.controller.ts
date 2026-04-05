@@ -1,7 +1,9 @@
 import { Controller, Post, Body, UseGuards, Inject, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UserThrottlerGuard } from '../../common/guards/user-throttler.guard';
 import { AI_PROVIDER_TOKEN, IAIProvider } from './providers/ai-provider.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as pdfParse from 'pdf-parse';
@@ -9,7 +11,8 @@ import * as mammoth from 'mammoth';
 
 @ApiTags('rag')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, UserThrottlerGuard)
+@Throttle({ default: { ttl: 60000, limit: 10 } })
 @Controller('rag')
 export class RagController {
   constructor(

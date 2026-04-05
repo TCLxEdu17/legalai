@@ -1,7 +1,7 @@
 import { Injectable, Logger, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OabCredentialsService } from './oab-credentials.service';
-import { EsajTjspConnector, ProcessDetails } from './connectors/esaj-tjsp.connector';
+import { EsajTjspConnector, ProcessDetails, OabProcessList } from './connectors/esaj-tjsp.connector';
 
 const PRO_PLANS = ['pro', 'enterprise'];
 
@@ -39,6 +39,24 @@ export class PrivateProcessosService {
 
     const session = await this.esajConnector.login(creds!.oabNumber, creds!.password);
     return this.esajConnector.queryProcess(numero, session);
+  }
+
+  async listByOab(userId: string, page = 0): Promise<OabProcessList> {
+    const pro = await this.isPro(userId);
+    if (!pro) {
+      throw new ForbiddenException('Consulta de processos por OAB requer plano PRO');
+    }
+
+    const hasCreds = await this.oabCredentials.hasCredentials(userId);
+    if (!hasCreds) {
+      throw new NotFoundException('Credenciais OAB não configuradas. Configure em Configurações → OAB');
+    }
+
+    const creds = await this.oabCredentials.getDecryptedCredentials(userId);
+    this.logger.log(`[PrivateProcessos] userId=${userId} listar por OAB ${creds!.oabNumber} p=${page}`);
+
+    const session = await this.esajConnector.login(creds!.oabNumber, creds!.password);
+    return this.esajConnector.listProcessesByOab(creds!.oabNumber, session, page);
   }
 
   async savePrivateProcess(userId: string, numero: string, title?: string): Promise<any> {

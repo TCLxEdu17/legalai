@@ -6,9 +6,10 @@ import { IngestionService } from './ingestion.service';
 import { IngestionController } from './ingestion.controller';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import { RadarsModule } from '../radars/radars.module';
 
 @Module({
-  imports: [PrismaModule, CollectorsModule, RagModule, NotificationsModule, WebhooksModule],
+  imports: [PrismaModule, CollectorsModule, RagModule, NotificationsModule, WebhooksModule, RadarsModule],
   providers: [IngestionService],
   controllers: [IngestionController],
   exports: [IngestionService],

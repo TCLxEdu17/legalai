@@ -10,6 +10,7 @@ import * as crypto from 'crypto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import type Redis from 'ioredis';
+import { RadarsService } from '../radars/radars.service';
 
 const SOURCE_TTL = 300;
 const sourceCacheKey = (id: string) => `source:${id}`;
@@ -38,6 +39,7 @@ export class IngestionService {
     @Optional() private readonly notificationsService?: NotificationsService,
     @Optional() private readonly webhooksService?: WebhooksService,
     @Optional() @Inject(REDIS_CLIENT) private readonly redis?: Redis,
+    @Optional() private readonly radarsService?: RadarsService,
   ) {
     this.embeddingModel = configService.get('app.ai.openai.embeddingModel', 'text-embedding-3-small');
   }
@@ -248,6 +250,11 @@ export class IngestionService {
           itemsProcessed++;
           itemsIndexed++;
           addLog(`Indexado: "${collected.title}" (${chunks.length} chunks)`);
+
+          // Disparar radar check de forma assíncrona (fire-and-forget)
+          this.radarsService?.checkDocument(document.id).catch((err) =>
+            this.logger.error(`Radar check falhou para doc ${document.id}`, err),
+          );
         } catch (err) {
           errors.push(`${item.url}: ${err.message}`);
           addLog(`Erro em ${item.url}: ${err.message}`);

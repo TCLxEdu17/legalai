@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { event as pixelEvent } from '@/lib/pixel';
 import Link from 'next/link';
 import { PlanetLoader } from '@/components/ui/planet-loader';
 import { Scale, Copy, Check, Clock, AlertTriangle } from 'lucide-react';
@@ -180,6 +181,7 @@ export default function TrialPage() {
       localStorage.setItem(TRIAL_KEY, JSON.stringify(data));
       setTrial(data);
       setJustCreated(true);
+      pixelEvent('Lead');
     } catch (err) {
       setError(extractApiErrorMessage(err));
     } finally {
