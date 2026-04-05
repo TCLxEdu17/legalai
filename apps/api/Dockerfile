@@ -10,6 +10,8 @@ FROM base AS builder
 COPY package*.json ./
 RUN npm install
 COPY . .
+# DATABASE_URL só é necessária em runtime — placeholder evita erro do Prisma no build
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 RUN npx prisma generate
 RUN npm run build
 
