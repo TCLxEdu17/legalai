@@ -30,38 +30,45 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
-import { IsString, IsOptional, IsArray, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsBoolean, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
 class UploadDocumentDto {
   @ApiProperty({ description: 'Título do documento' })
-  @IsString()
+  @IsString({ message: 'O título deve ser um texto' })
+  @IsNotEmpty({ message: 'O título é obrigatório' })
+  @MinLength(3, { message: 'O título deve ter pelo menos 3 caracteres' })
+  @MaxLength(200, { message: 'O título deve ter no máximo 200 caracteres' })
   title: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'O tribunal deve ser um texto' })
+  @MaxLength(100, { message: 'O tribunal deve ter no máximo 100 caracteres' })
   tribunal?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'O número do processo deve ser um texto' })
+  @MaxLength(100, { message: 'O número do processo deve ter no máximo 100 caracteres' })
   processNumber?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'O relator deve ser um texto' })
+  @MaxLength(200, { message: 'O nome do relator deve ter no máximo 200 caracteres' })
   relator?: string;
 
   @ApiProperty({ required: false, description: 'Formato: YYYY-MM-DD' })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'A data de julgamento deve ser um texto' })
   judgmentDate?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'O tema deve ser um texto' })
+  @MaxLength(200, { message: 'O tema deve ter no máximo 200 caracteres' })
   theme?: string;
 
   @ApiProperty({ required: false, type: [String] })

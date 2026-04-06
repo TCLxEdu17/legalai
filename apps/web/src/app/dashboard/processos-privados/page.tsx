@@ -8,9 +8,15 @@ import {
   Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { FadeIn } from '@/components/ui/motion';
 import { PlanetLoader } from '@/components/ui/planet-loader';
 import { apiClient } from '@/lib/api-client';
+
+const oabCredentialSchema = z.object({
+  oabNumber: z.string().min(5, 'O numero da OAB deve ter pelo menos 5 caracteres').max(20, 'O numero da OAB deve ter no maximo 20 caracteres'),
+  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
+});
 
 const CNJ_REGEX = /^\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2}\.\d{4}$/;
 
@@ -64,8 +70,10 @@ function CredentialsSection({ configured, onSaved, onRemoved }: {
   const [removing, setRemoving] = useState(false);
 
   const handleSave = async () => {
-    if (!oabNumber.trim() || !password.trim()) {
-      toast.error('Preencha todos os campos');
+    const result = oabCredentialSchema.safeParse({ oabNumber: oabNumber.trim(), password });
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
     setSaving(true);

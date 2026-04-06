@@ -2,6 +2,14 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+const predicaoSchema = z.object({
+  area: z.string().min(1, 'A area do direito e obrigatoria'),
+  tribunal: z.string().min(1, 'O tribunal e obrigatoria'),
+  pedido: z.string().min(10, 'O pedido deve ter pelo menos 10 caracteres').max(2000, 'O pedido deve ter no maximo 2000 caracteres'),
+  resumoFatos: z.string().max(5000, 'O resumo dos fatos deve ter no maximo 5000 caracteres').optional().or(z.literal('')),
+});
 
 interface PredictionResult {
   probabilidade: number;
@@ -59,8 +67,10 @@ export default function PredicaoPage() {
   const [resultado, setResultado] = useState<PredictionResult | null>(null);
 
   async function analisar() {
-    if (!form.area || !form.tribunal || !form.pedido) {
-      toast.error('Preencha área, tribunal e pedido principal');
+    const result = predicaoSchema.safeParse(form);
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
     setLoading(true);

@@ -27,8 +27,10 @@ export class CreateSourceDto {
   description?: string;
 
   @ApiProperty({ example: 'https://stj.jus.br/sites/portalp/Paginas/jurisprudencia.aspx' })
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'A URL base deve ser um texto' })
+  @IsNotEmpty({ message: 'A URL base é obrigatória' })
+  @IsUrl({}, { message: 'A URL base deve ser uma URL válida' })
+  @MaxLength(500, { message: 'A URL base deve ter no máximo 500 caracteres' })
   baseUrl: string;
 
   @ApiProperty({ enum: Object.values(COLLECTOR_TYPES), example: 'html-list' })

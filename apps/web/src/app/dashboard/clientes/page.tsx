@@ -5,10 +5,22 @@ import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, Plus, Search, Trash2, Edit2, X, MapPin, Building2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
 import { fetchCep, fetchCnpj, fetchUfs, fetchMunicipios, type IbgeUf, type IbgeMunicipio } from '@/lib/lookups';
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/ui/motion';
+
+const clienteSchema = z.object({
+  name: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres').max(200, 'O nome deve ter no maximo 200 caracteres'),
+  email: z.string().email('O e-mail deve ser um e-mail valido').max(200, 'O e-mail deve ter no maximo 200 caracteres').optional().or(z.literal('')),
+  phone: z.string().max(50, 'O telefone deve ter no maximo 50 caracteres').optional().or(z.literal('')),
+  cpfCnpj: z.string().max(20, 'O CPF/CNPJ deve ter no maximo 20 caracteres').optional().or(z.literal('')),
+  address: z.string().max(500, 'O endereco deve ter no maximo 500 caracteres').optional().or(z.literal('')),
+  uf: z.string().length(2, 'A UF deve ter 2 caracteres').optional().or(z.literal('')),
+  municipio: z.string().max(200, 'O municipio deve ter no maximo 200 caracteres').optional().or(z.literal('')),
+  notes: z.string().max(1000, 'As observacoes devem ter no maximo 1000 caracteres').optional().or(z.literal('')),
+});
 
 interface Client {
   id: string;
@@ -59,13 +71,31 @@ export default function ClientesPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => apiClient.createClient(buildPayload()),
+    mutationFn: () => {
+      const payload = buildPayload();
+      const result = clienteSchema.safeParse(payload);
+      if (!result.success) {
+        const firstError = result.error.errors[0];
+        toast.error(firstError.message);
+        throw new Error(firstError.message);
+      }
+      return apiClient.createClient(payload);
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['clients'] }); toast.success('Cliente criado'); closeModal(); },
     onError: (e) => toast.error(extractApiErrorMessage(e)),
   });
 
   const updateMutation = useMutation({
-    mutationFn: () => apiClient.updateClient(editingClient!.id, buildPayload()),
+    mutationFn: () => {
+      const payload = buildPayload();
+      const result = clienteSchema.safeParse(payload);
+      if (!result.success) {
+        const firstError = result.error.errors[0];
+        toast.error(firstError.message);
+        throw new Error(firstError.message);
+      }
+      return apiClient.updateClient(editingClient!.id, payload);
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['clients'] }); toast.success('Cliente atualizado'); closeModal(); },
     onError: (e) => toast.error(extractApiErrorMessage(e)),
   });
