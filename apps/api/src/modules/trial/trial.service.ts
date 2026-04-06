@@ -38,7 +38,9 @@ export class TrialService {
   async create(dto: CreateTrialDto) {
     const username = this.generateUsername();
     const rawPassword = this.generatePassword();
-    const email = `${username}@trial.legalai.com.br`;
+    // UUID no email evita força-bruta por combinações previsíveis
+    const emailToken = crypto.randomBytes(8).toString('hex');
+    const email = `trial-${emailToken}@trial.legalai.com.br`;
     const passwordHash = await argon2.hash(rawPassword);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 

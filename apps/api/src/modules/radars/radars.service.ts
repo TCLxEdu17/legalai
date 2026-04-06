@@ -261,7 +261,7 @@ export class RadarsService {
           `/dashboard/radares/${match.radar_id}`,
         );
 
-        // Email notification (fire-and-forget)
+        // Email notification (fire-and-forget) + marcar notifiedByEmail
         if (doc) {
           this.radarEmailService.sendAlert({
             to: match.user_email,
@@ -271,6 +271,11 @@ export class RadarsService {
             similarity: Number(match.max_similarity),
             summary: alert.summary ?? undefined,
             alertUrl: `${this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')}/dashboard/radares/${match.radar_id}`,
+          }).then(() => {
+            return this.prisma.radarAlert.update({
+              where: { id: alert.id },
+              data: { notifiedByEmail: true },
+            });
           }).catch(() => {});
         }
       } catch (err: any) {
