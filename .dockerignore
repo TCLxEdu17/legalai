@@ -5,4 +5,7 @@
 **/.git
 **/coverage
 **/*.log
-apps/web
+apps/web/.next
+apps/web/src
+apps/web/public
+apps/web/node_modules

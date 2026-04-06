@@ -1,100 +1,50 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
+import { cn } from '@/lib/utils';
+import React, { ReactNode } from 'react';
 
-export function AuroraBackground() {
-  const mountRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!mountRef.current) return;
-    const currentMount = mountRef.current;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.domElement.style.position = 'fixed';
-    renderer.domElement.style.top = '0';
-    renderer.domElement.style.left = '0';
-    renderer.domElement.style.zIndex = '0';
-    renderer.domElement.style.display = 'block';
-    currentMount.appendChild(renderer.domElement);
-
-    const material = new THREE.ShaderMaterial({
-      uniforms: {
-        iTime: { value: 0 },
-        iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-      },
-      vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`,
-      fragmentShader: `
-        uniform float iTime;
-        uniform vec2 iResolution;
-        #define NUM_OCTAVES 3
-        float rand(vec2 n) { return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453); }
-        float noise(vec2 p) {
-          vec2 ip = floor(p); vec2 u = fract(p);
-          u = u * u * (3.0 - 2.0 * u);
-          float res = mix(mix(rand(ip), rand(ip + vec2(1.0, 0.0)), u.x), mix(rand(ip + vec2(0.0, 1.0)), rand(ip + vec2(1.0, 1.0)), u.x), u.y);
-          return res * res;
-        }
-        float fbm(vec2 x) {
-          float v = 0.0; float a = 0.3; vec2 shift = vec2(100);
-          mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.50));
-          for (int i = 0; i < NUM_OCTAVES; ++i) { v += a * noise(x); x = rot * x * 2.0 + shift; a *= 0.4; }
-          return v;
-        }
-        void main() {
-          vec2 p = ((gl_FragCoord.xy) - iResolution.xy * 0.5) / iResolution.y * mat2(6., -4., 4., 6.);
-          vec4 o = vec4(0.);
-          float f = 2.0 + fbm(p + vec2(iTime * 5.0, 0.0)) * 0.5;
-          for (float i = 0.; i++ < 35.;) {
-            vec2 v = p + cos(i * i + (iTime + p.x * 0.08) * 0.025 + i * vec2(13., 11.)) * 3.5;
-            float tailNoise = fbm(v + vec2(iTime * 0.5, i)) * 0.3 * (1.0 - (i / 35.0));
-            vec4 auroraColors = vec4(
-              0.1 + 0.3 * sin(i * 0.2 + iTime * 0.4),
-              0.3 + 0.5 * cos(i * 0.3 + iTime * 0.5),
-              0.7 + 0.3 * sin(i * 0.4 + iTime * 0.3),
-              1.0
-            );
-            vec4 currentContribution = auroraColors * exp(sin(i * i + iTime * 0.8)) / length(max(v, vec2(v.x * f * 0.015, v.y * 1.5)));
-            float thinnessFactor = smoothstep(0.0, 1.0, i / 35.0) * 0.6;
-            o += currentContribution * (1.0 + tailNoise * 0.8) * thinnessFactor;
-          }
-          o = tanh(pow(o / 100.0, vec4(1.6)));
-          gl_FragColor = o * 1.5;
-        }
-      `,
-    });
-
-    const geometry = new THREE.PlaneGeometry(2, 2);
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
-
-    let animationFrameId: number;
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-      material.uniforms.iTime.value += 0.016;
-      renderer.render(scene, camera);
-    };
-
-    const handleResize = () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
-    };
-
-    window.addEventListener('resize', handleResize);
-    animate();
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', handleResize);
-      if (currentMount.contains(renderer.domElement)) currentMount.removeChild(renderer.domElement);
-      renderer.dispose();
-      material.dispose();
-      geometry.dispose();
-    };
-  }, []);
-
-  return <div ref={mountRef} />;
+interface AuroraBackgroundProps extends React.HTMLProps<HTMLDivElement> {
+  children?: ReactNode;
+  showRadialGradient?: boolean;
 }
+
+export const AuroraBackground = ({
+  className,
+  children,
+  showRadialGradient = true,
+  ...props
+}: AuroraBackgroundProps) => {
+  return (
+    <div
+      className={cn(
+        'relative flex flex-col h-[100vh] items-center justify-center bg-white text-slate-950 transition-bg',
+        className,
+      )}
+      {...props}
+    >
+      <div className="absolute inset-0 overflow-hidden">
+        <div
+          className={cn(
+            `[--white-gradient:repeating-linear-gradient(100deg,var(--white)_0%,var(--white)_7%,var(--transparent)_10%,var(--transparent)_12%,var(--white)_16%)]
+            [--dark-gradient:repeating-linear-gradient(100deg,var(--black)_0%,var(--black)_7%,var(--transparent)_10%,var(--transparent)_12%,var(--black)_16%)]
+            [--aurora:repeating-linear-gradient(100deg,var(--blue-500)_10%,var(--indigo-300)_15%,var(--blue-300)_20%,var(--violet-200)_25%,var(--blue-400)_30%)]
+            [background-image:var(--white-gradient),var(--aurora)]
+            dark:[background-image:var(--dark-gradient),var(--aurora)]
+            [background-size:300%,_200%]
+            [background-position:50%_50%,50%_50%]
+            filter blur-[10px] invert dark:invert-0
+            after:content-[""] after:absolute after:inset-0 after:[background-image:var(--white-gradient),var(--aurora)]
+            after:dark:[background-image:var(--dark-gradient),var(--aurora)]
+            after:[background-size:200%,_100%]
+            after:animate-aurora after:[background-attachment:fixed] after:mix-blend-difference
+            pointer-events-none
+            absolute -inset-[10px] opacity-50 will-change-transform`,
+            showRadialGradient &&
+              `[mask-image:radial-gradient(ellipse_at_100%_0%,black_10%,var(--transparent)_70%)]`,
+          )}
+        />
+      </div>
+      {children}
+    </div>
+  );
+};

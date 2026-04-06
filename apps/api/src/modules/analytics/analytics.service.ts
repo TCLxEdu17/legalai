@@ -111,6 +111,73 @@ Com base na jurisprudência consolidada do ${tribunal} e nos dados fornecidos, r
     }
   }
 
+  async getUserEngagementMetrics() {
+    // Últimos 90 dias — suficiente para dashboards sem sobrecarregar
+    const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        isActive: true,
+        email: { not: 'system@legalai.internal' },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        userEvents: {
+          where: { createdAt: { gte: since } },
+          select: { event: true, page: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return users.map((u) => {
+      const events = u.userEvents;
+      const pageViews = events.filter((e) => e.event === 'page_view').length;
+      const clicks = events.filter((e) => e.event === 'click').length;
+      const lastSeen = events[0]?.createdAt ?? null;
+
+      const activeDays = new Set(
+        events.map((e) => e.createdAt.toISOString().split('T')[0]),
+      ).size;
+
+      // Top 3 páginas por frequência
+      const pageCounts: Record<string, number> = {};
+      events
+        .filter((e) => e.event === 'page_view' && e.page)
+        .forEach((e) => { pageCounts[e.page!] = (pageCounts[e.page!] ?? 0) + 1; });
+      const topPages = Object.entries(pageCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([page]) => page);
+
+      // Breakdown por feature (tudo que não é page_view/click)
+      const featureUsage: Record<string, number> = {};
+      events
+        .filter((e) => e.event !== 'page_view' && e.event !== 'click')
+        .forEach((e) => { featureUsage[e.event] = (featureUsage[e.event] ?? 0) + 1; });
+
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        pageViews,
+        clicks,
+        totalEvents: events.length,
+        activeDays,
+        lastSeen,
+        topPages,
+        featureUsage,
+        memberSince: u.createdAt,
+      };
+    });
+  }
+
   async getPrediction(params: PredictionPromptParams): Promise<PredictionResult> {
     try {
       const prompt = this.buildPredictionPrompt(params);

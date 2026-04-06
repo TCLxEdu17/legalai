@@ -15,6 +15,9 @@ import {
   Clock,
   UserPlus,
   DollarSign,
+  MousePointerClick,
+  Eye,
+  CalendarDays,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { isAdmin } from '@/lib/auth';
@@ -46,6 +49,21 @@ interface TrialMetricsResponse {
   feedbackYes: number;
   feedbackNo: number;
   users: TrialUserRow[];
+}
+
+interface UserEngagement {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  pageViews: number;
+  clicks: number;
+  totalEvents: number;
+  activeDays: number;
+  lastSeen: string | null;
+  topPages: string[];
+  featureUsage: Record<string, number>;
+  memberSince: string;
 }
 
 interface UsageKey {
@@ -246,6 +264,15 @@ export default function MetricasPage() {
   });
 
   const {
+    data: engagementData,
+    isLoading: engagementLoading,
+  } = useQuery<UserEngagement[]>({
+    queryKey: ['user-engagement'],
+    queryFn: () => apiClient.getUserEngagementMetrics(),
+    enabled: admin,
+  });
+
+  const {
     data: usageData,
     isLoading: usageLoading,
     isError: usageError,
@@ -425,6 +452,110 @@ export default function MetricasPage() {
                       </tr>
                     );
                   })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Usuários Reais ──────────────────────────────────────────────────── */}
+      <div>
+        <div className="mb-3">
+          <h2 className="text-base font-semibold text-slate-200">Engajamento — Usuários Reais</h2>
+          <p className="text-slate-500 text-xs mt-0.5">Últimos 90 dias · page_view e click rastreados via dashboard layout</p>
+        </div>
+        <div className="bg-[#141414] border border-white/[0.07] rounded-xl overflow-hidden">
+          {engagementLoading ? (
+            <div className="flex items-center justify-center py-12 text-slate-500 gap-2">
+              <PlanetLoader size="sm" />
+              Carregando...
+            </div>
+          ) : !engagementData?.length ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Users className="w-10 h-10 text-slate-600 mb-3" />
+              <p className="text-slate-400 font-medium">Nenhum evento registrado ainda</p>
+              <p className="text-slate-600 text-xs mt-1">Os eventos começam a aparecer após o deploy da migration 009</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/[0.05] bg-white/[0.02]">
+                    {['Usuário', 'Role', 'Views', 'Cliques', 'Dias ativos', 'Último acesso', 'Top páginas', 'Features'].map((col) => (
+                      <th key={col} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.05]">
+                  {(engagementData ?? [])
+                    .sort((a, b) => (b.lastSeen ?? '').localeCompare(a.lastSeen ?? ''))
+                    .map((u) => (
+                    <tr key={u.id} className="hover:bg-white/[0.03] transition-colors">
+                      <td className="px-4 py-3">
+                        <p className="text-slate-200 font-medium text-sm leading-tight">{u.name}</p>
+                        <p className="text-slate-600 text-xs">{u.email}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={cn(
+                          'text-[10px] font-semibold px-1.5 py-0.5 rounded-full',
+                          u.role === 'ADMIN' ? 'bg-violet-500/15 text-violet-400' : 'bg-slate-500/15 text-slate-400',
+                        )}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <Eye className="w-3 h-3 text-slate-600" />
+                          <span className="text-slate-300 tabular-nums">{u.pageViews.toLocaleString('pt-BR')}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <MousePointerClick className="w-3 h-3 text-slate-600" />
+                          <span className="text-slate-300 tabular-nums">{u.clicks.toLocaleString('pt-BR')}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <CalendarDays className="w-3 h-3 text-slate-600" />
+                          <span className="text-slate-300 tabular-nums">{u.activeDays}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="text-slate-400 text-xs">
+                          {u.lastSeen ? formatDateTime(u.lastSeen) : '—'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {u.topPages.length === 0 ? (
+                            <span className="text-slate-600 text-xs">—</span>
+                          ) : u.topPages.map((p) => (
+                            <span key={p} className="text-[10px] px-1.5 py-0.5 bg-brand-600/10 text-brand-400 border border-brand-500/15 rounded font-mono">
+                              {p.replace('/dashboard/', '').replace('/dashboard', 'home') || 'home'}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(u.featureUsage).length === 0 ? (
+                            <span className="text-slate-600 text-xs">—</span>
+                          ) : Object.entries(u.featureUsage)
+                              .sort((a, b) => b[1] - a[1])
+                              .slice(0, 3)
+                              .map(([feat, count]) => (
+                                <span key={feat} className="text-[10px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/15 rounded">
+                                  {feat} ×{count}
+                                </span>
+                              ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

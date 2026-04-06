@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
 import { GradientButton } from '@/components/ui/gradient-button';
+import { AuroraBackground } from '@/components/ui/aurora-background';
+import { GlowingShadow } from '@/components/ui/glowing-shadow';
 import { motion, type Variants } from 'framer-motion';
 
 const WA_SPECIALIST_URL =
@@ -110,81 +112,82 @@ export default function LandingPage() {
       </motion.header>
 
       {/* ── HERO ─────────────────────────────────────── */}
-      <section className="relative max-w-6xl mx-auto px-6 pt-24 pb-28 text-center">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-violet-50/40 to-transparent rounded-full blur-3xl opacity-60" />
+      <AuroraBackground
+        className="h-auto min-h-0 bg-white text-slate-900 pt-24 pb-28 items-center justify-center"
+        showRadialGradient
+      >
+        <div className="relative max-w-6xl mx-auto px-6 w-full text-center">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold mb-8 tracking-wide">
+              <Zap className="w-3 h-3" />
+              IA Jurídica · Busca Semântica · RAG
+            </span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="relative text-5xl md:text-6xl font-bold tracking-tight leading-[1.08] text-slate-900 mb-6"
+          >
+            Pesquisa jurídica com<br />
+            <span className="bg-gradient-to-r from-blue-600 via-violet-600 to-blue-700 bg-clip-text text-transparent">
+              inteligência artificial
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="relative text-lg text-slate-500 max-w-xl mx-auto mb-10 leading-relaxed"
+          >
+            Encontre jurisprudências, analise documentos e fundamente suas teses
+            com um assistente especializado que sempre cita as fontes.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="relative flex flex-col sm:flex-row gap-3 justify-center items-center"
+          >
+            <Link href="/trial" onClick={() => analytics.landingCtaClicked('trial', 'hero')}>
+              <GradientButton className="h-12 px-8 text-sm rounded-xl gap-2">
+                Testar por 24h grátis
+                <ArrowRight className="w-4 h-4" />
+              </GradientButton>
+            </Link>
+            <a href={WA_SPECIALIST_URL} target="_blank" rel="noopener noreferrer"
+               onClick={() => analytics.landingCtaClicked('whatsapp', 'hero')}>
+              <GradientButton variant="variant" className="h-12 px-8 text-sm rounded-xl gap-2">
+                <MessageCircle className="w-4 h-4" />
+                Falar com especialista
+              </GradientButton>
+            </a>
+            <Link href="/login" onClick={() => analytics.landingCtaClicked('login', 'hero')}>
+              <button className="h-12 px-7 text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors">
+                <LogIn className="w-4 h-4" />
+                Entrar
+              </button>
+            </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="relative mt-16 flex flex-wrap justify-center gap-x-12 gap-y-4"
+          >
+            {STATS.map(({ value, label }) => (
+              <div key={label} className="text-center">
+                <p className="text-2xl font-bold text-slate-900">{value}</p>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">{label}</p>
+              </div>
+            ))}
+          </motion.div>
         </div>
-
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold mb-8 tracking-wide">
-            <Zap className="w-3 h-3" />
-            IA Jurídica · Busca Semântica · RAG
-          </span>
-        </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="relative text-5xl md:text-6xl font-bold tracking-tight leading-[1.08] text-slate-900 mb-6"
-        >
-          Pesquisa jurídica com<br />
-          <span className="bg-gradient-to-r from-blue-600 via-violet-600 to-blue-700 bg-clip-text text-transparent">
-            inteligência artificial
-          </span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="relative text-lg text-slate-500 max-w-xl mx-auto mb-10 leading-relaxed"
-        >
-          Encontre jurisprudências, analise documentos e fundamente suas teses
-          com um assistente especializado que sempre cita as fontes.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="relative flex flex-col sm:flex-row gap-3 justify-center items-center"
-        >
-          <Link href="/trial" onClick={() => analytics.landingCtaClicked('trial', 'hero')}>
-            <GradientButton className="h-12 px-8 text-sm rounded-xl gap-2">
-              Testar por 24h grátis
-              <ArrowRight className="w-4 h-4" />
-            </GradientButton>
-          </Link>
-          <a href={WA_SPECIALIST_URL} target="_blank" rel="noopener noreferrer"
-             onClick={() => analytics.landingCtaClicked('whatsapp', 'hero')}>
-            <GradientButton variant="variant" className="h-12 px-8 text-sm rounded-xl gap-2">
-              <MessageCircle className="w-4 h-4" />
-              Falar com especialista
-            </GradientButton>
-          </a>
-          <Link href="/login" onClick={() => analytics.landingCtaClicked('login', 'hero')}>
-            <button className="h-12 px-7 text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors">
-              <LogIn className="w-4 h-4" />
-              Entrar
-            </button>
-          </Link>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-          className="relative mt-16 flex flex-wrap justify-center gap-x-12 gap-y-4"
-        >
-          {STATS.map(({ value, label }) => (
-            <div key={label} className="text-center">
-              <p className="text-2xl font-bold text-slate-900">{value}</p>
-              <p className="text-xs text-slate-400 font-medium mt-0.5">{label}</p>
-            </div>
-          ))}
-        </motion.div>
-      </section>
+      </AuroraBackground>
 
       <div className="max-w-6xl mx-auto px-6">
         <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
@@ -268,63 +271,56 @@ export default function LandingPage() {
 
       {/* ── CTA FINAL ────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-20">
-        <motion.div
-          initial="hidden" animate="show" variants={fadeUp}
-          className="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-10 md:p-14 relative overflow-hidden"
-        >
-          <div className="absolute -top-24 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 right-1/4 w-80 h-80 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Gavel className="w-5 h-5 text-blue-400" />
-                <span className="text-blue-400 text-sm font-semibold">Direito brasileiro</span>
-              </div>
-              <h2 className="text-3xl font-bold text-white mb-4 leading-tight">
-                A nova era do direito<br />já começou.
-              </h2>
-              <p className="text-slate-400 text-sm mb-8 leading-relaxed">
-                Feito para o direito brasileiro. A IA nunca inventa jurisprudência
-                e informa quando não encontra base suficiente.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link href="/trial" onClick={() => analytics.landingCtaClicked('trial', 'cta_section')}>
-                  <GradientButton className="h-11 px-7 text-sm rounded-xl gap-2">
-                    Testar por 24h grátis
-                    <ArrowRight className="w-4 h-4" />
-                  </GradientButton>
-                </Link>
-                <a href={WA_SPECIALIST_URL} target="_blank" rel="noopener noreferrer"
-                   onClick={() => analytics.landingCtaClicked('whatsapp', 'cta_section')}>
-                  <GradientButton variant="variant" className="h-11 px-7 text-sm rounded-xl gap-2">
-                    <MessageCircle className="w-4 h-4" />
-                    Falar com especialista
-                  </GradientButton>
-                </a>
-                <Link href="/login" onClick={() => analytics.landingCtaClicked('login', 'cta_section')}>
-                  <button className="h-11 px-6 text-sm font-medium text-slate-400 hover:text-slate-200 flex items-center gap-2 transition-colors">
-                    <LogIn className="w-4 h-4" />
-                    Entrar
+        <motion.div initial="hidden" animate="show" variants={fadeUp}>
+          <GlowingShadow fullWidth>
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Gavel className="w-5 h-5 text-blue-400" />
+                  <span className="text-blue-400 text-sm font-semibold">Direito brasileiro</span>
+                </div>
+                <h2 className="text-3xl font-bold text-white mb-4 leading-tight">
+                  A nova era do direito<br />já começou.
+                </h2>
+                <p className="text-white text-sm mb-8 leading-relaxed">
+                  Feito para o direito brasileiro. A IA nunca inventa jurisprudência
+                  e informa quando não encontra base suficiente.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href="/trial" onClick={() => analytics.landingCtaClicked('trial', 'cta_section')}>
+                    <GradientButton className="h-11 px-7 text-sm rounded-xl gap-2">
+                      Testar por 24h grátis
+                      <ArrowRight className="w-4 h-4" />
+                    </GradientButton>
+                  </Link>
+                  <a href={WA_SPECIALIST_URL} target="_blank" rel="noopener noreferrer"
+                     onClick={() => analytics.landingCtaClicked('whatsapp', 'cta_section')}>
+                    <GradientButton variant="variant" className="h-11 px-7 text-sm rounded-xl gap-2">
+                      <MessageCircle className="w-4 h-4" />
+                      Falar com especialista
+                    </GradientButton>
+                  </a>
+                  <Link href="/login" onClick={() => analytics.landingCtaClicked('login', 'cta_section')}>
+                    <button className="h-11 px-6 text-sm font-medium text-slate-400 hover:text-slate-200 flex items-center gap-2 transition-colors">
+                      <LogIn className="w-4 h-4" />
+                      Entrar
                   </button>
                 </Link>
               </div>
             </div>
 
-            <div className="space-y-3">
-              {CHECKLIST.map((item, i) => (
-                <motion.div
-                  key={item} initial="hidden" animate="show" variants={fadeUp}
-                  className="flex items-center gap-3"
-                >
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
-                    <CheckCircle className="w-3 h-3 text-emerald-400" />
+              <div className="space-y-3">
+                {CHECKLIST.map((item) => (
+                  <div key={item} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                      <CheckCircle className="w-3 h-3 text-emerald-400" />
+                    </div>
+                    <span className="text-white text-sm">{item}</span>
                   </div>
-                  <span className="text-slate-300 text-sm">{item}</span>
-                </motion.div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          </GlowingShadow>
         </motion.div>
       </section>
 

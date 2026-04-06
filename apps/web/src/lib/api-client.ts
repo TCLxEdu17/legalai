@@ -454,6 +454,24 @@ class ApiClient {
     await this.client.post('/analytics/track', payload);
   }
 
+  async getUserEngagementMetrics() {
+    const { data } = await this.client.get('/analytics/metrics/users');
+    return data as Array<{
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      pageViews: number;
+      clicks: number;
+      totalEvents: number;
+      activeDays: number;
+      lastSeen: string | null;
+      topPages: string[];
+      featureUsage: Record<string, number>;
+      memberSince: string;
+    }>;
+  }
+
   // ==================== WEBHOOKS ====================
   async getWebhooks() {
     const { data } = await this.client.get('/webhooks');
