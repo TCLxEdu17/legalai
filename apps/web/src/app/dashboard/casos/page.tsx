@@ -20,6 +20,7 @@ import { z } from 'zod';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
 import { FadeIn, StaggerContainer, StaggerItem, InteractiveCard } from '@/components/ui/motion';
+import { analytics } from '@/lib/analytics';
 
 const casoSchema = z.object({
   title: z.string().min(2, 'O titulo deve ter pelo menos 2 caracteres').max(200, 'O titulo deve ter no maximo 200 caracteres'),
@@ -86,6 +87,7 @@ export default function CasosPage() {
     onSuccess: (created: Case) => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
       toast.success('Caso criado com sucesso');
+      analytics.caseCreated();
       setShowModal(false);
       setForm(emptyForm);
       router.push(`/dashboard/casos/${created.id}`);

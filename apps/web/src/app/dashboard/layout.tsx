@@ -10,6 +10,7 @@ import { TrialCountdown } from '@/components/ui/trial-countdown';
 import { WifiOff } from 'lucide-react';
 import { DollarTicker } from '@/components/ui/dollar-ticker';
 import { apiClient } from '@/lib/api-client';
+import { ErrorBoundary } from '@/components/layout/error-boundary';
 
 const ACTIVITY_KEY = 'legalai_last_activity';
 const TRIAL_KEY = 'legalai_trial';
@@ -118,7 +119,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Você está offline — algumas funcionalidades podem estar indisponíveis
           </div>
         )}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 relative z-10">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 relative z-10">
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+        </main>
         <DollarTicker />
       </div>
       <CookieBanner />

@@ -41,6 +41,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NewsModule } from './modules/news/news.module';
 import { PrivateProcessosModule } from './modules/private-processos/private-processos.module';
 import { RadarsModule } from './modules/radars/radars.module';
+import { FeedbackModule } from './modules/feedback/feedback.module';
 // import { RedisModule } from './redis/redis.module';   // TODO sexta
 // import { QueueModule } from './modules/queue/queue.module';  // TODO sexta
 
@@ -145,6 +146,9 @@ import { RadarsModule } from './modules/radars/radars.module';
 
     // Radar de Jurisprudência
     RadarsModule,
+
+    // Feedback do usuário
+    FeedbackModule,
   ],
   providers: [
     {
