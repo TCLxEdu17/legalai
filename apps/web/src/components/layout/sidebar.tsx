@@ -362,8 +362,15 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen?: boolean; onClose
       {/* Footer */}
       <motion.div
         animate={{ opacity: (alwaysOpen || open) ? 1 : 0 }}
-        className="px-4 py-3 border-t border-white/[0.06] shrink-0"
+        className="px-3 py-3 border-t border-white/[0.06] shrink-0 space-y-2"
       >
+        <Link
+          href="/dashboard/feedback"
+          className="flex items-center gap-3 px-2 py-2 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors border border-transparent"
+        >
+          <MessageSquare className="w-4 h-4 shrink-0" />
+          <SidebarLabel>Reportar Problema</SidebarLabel>
+        </Link>
         <p className="text-slate-700 text-xs text-center">v2.3.4</p>
       </motion.div>
     </SidebarContext.Provider>

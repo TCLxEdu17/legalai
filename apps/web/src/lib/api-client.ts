@@ -856,6 +856,12 @@ class ApiClient {
     const res = await this.client.get('/radar-alerts/unread-count');
     return res.data;
   }
+
+  // ==================== FEEDBACK ====================
+  async submitFeedback(payload: { description: string; category: string; severity: string }) {
+    const { data } = await this.client.post('/feedback', payload);
+    return data;
+  }
 }
 
 export const apiClient = new ApiClient();

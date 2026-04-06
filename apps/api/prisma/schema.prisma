@@ -160,6 +160,7 @@ model User {
   lancamentos            LancamentoFinanceiro[]
   tarefas                Tarefa[]
   userEvents             UserEvent[]
+  feedbacks              Feedback[]
 
   @@index([tenantId])
   @@map("users")
@@ -893,4 +894,24 @@ model UserEvent {
   @@index([event])
   @@index([createdAt])
   @@map("user_events")
+}
+
+// ============================================================
+// FEEDBACK
+// ============================================================
+
+model Feedback {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    String   // bug, feature, ux, performance, other
+  severity    String   // low, medium, high, critical
+  description String
+  status      String   @default("new") // new, reviewed, resolved
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([status])
+  @@index([severity])
+  @@map("feedbacks")
 }

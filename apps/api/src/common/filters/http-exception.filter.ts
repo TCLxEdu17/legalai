@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import * as Sentry from '@sentry/nestjs';
 
 const SENSITIVE_FIELDS = ['password', 'passwordHash', 'token', 'refreshToken', 'secret'];
 
@@ -66,6 +67,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
         prefix,
         exception instanceof Error ? exception.stack : String(exception),
       );
+      Sentry.captureException(exception, {
+        extra: {
+          request: { method: request.method, url: request.url, body: sanitizeBody(request.body), query: request.query, userId },
+        },
+      });
     } else if (status >= 400) {
       this.logger.warn(`${prefix} | ${JSON.stringify(message)}`);
     }

@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, User as UserIcon, ChevronDown, Sun, Moon, Bell, CheckCheck, Menu } from 'lucide-react';
+import { LogOut, User as UserIcon, ChevronDown, Sun, Moon, Bell, CheckCheck, Menu, MessageSquare } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -86,6 +87,16 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         )}
+
+        {/* Feedback button */}
+        <Link
+          href="/dashboard/feedback"
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors text-slate-500 hover:text-slate-300 text-xs font-medium"
+          title="Reportar Problema"
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span>Feedback</span>
+        </Link>
 
         {/* Notifications bell */}
         {mounted && (
