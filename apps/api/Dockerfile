@@ -9,6 +9,7 @@ RUN npm install --omit=dev
 FROM base AS builder
 COPY package*.json ./
 RUN npm install
+ARG CACHEBUST=2
 COPY . .
 # Passa DATABASE_URL só para este comando — Prisma exige no generate mas não conecta de verdade
 RUN DATABASE_URL="postgresql://placeholder:x@localhost:5432/placeholder" npx prisma generate

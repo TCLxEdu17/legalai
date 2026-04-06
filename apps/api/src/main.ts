@@ -17,13 +17,20 @@ async function bootstrap() {
   });
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('app.port', 3001);
+  const port = parseInt(process.env.PORT || '0') || configService.get<number>('app.port', 3001);
   const corsOrigins = configService.get<string>('app.corsOrigins', 'http://localhost:3000');
 
-  // JWT secret length validation — warn loudly on startup if weak
+  // JWT secret validation — FAIL startup if secret is weak in production
   const jwtSecret = configService.get<string>('app.jwt.secret') ?? process.env.JWT_SECRET ?? '';
   if (jwtSecret.length < 32) {
-    console.error('⚠️  JWT_SECRET is too short (< 32 chars) — tokens can be forged! Change it immediately.');
+    const isProd = configService.get<string>('app.nodeEnv') === 'production';
+    const msg = `⛔ JWT_SECRET is too short (< 32 chars) — tokens can be forged! Use a cryptographically secure secret of at least 32 characters.`;
+    if (isProd) {
+      console.error(msg);
+      process.exit(1); // Fail in production
+    } else {
+      console.warn(`⚠️  ${msg} (Warning only in development)`);
+    }
   }
 
   // Segurança HTTP
