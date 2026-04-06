@@ -100,7 +100,7 @@ export default function LandingPage() {
           <nav className="hidden md:flex items-center gap-8 text-sm text-slate-500 font-medium">
             <a href="#recursos" className="hover:text-slate-900 transition-colors">Recursos</a>
             <a href="#como-funciona" className="hover:text-slate-900 transition-colors">Como funciona</a>
-            <Link href="/dashboard/planos" className="hover:text-slate-900 transition-colors">Planos</Link>
+            <Link href="/planos" className="hover:text-slate-900 transition-colors">Planos</Link>
           </nav>
 
           <Link href="/login">
