@@ -55,7 +55,7 @@ function CopyButton({ value }: { value: string }) {
 }
 
 function useCountdown(expiresAt: string | null) {
-  const [remaining, setRemaining] = useState<number>(0);
+  const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -144,7 +144,7 @@ export default function TrialPage() {
   const [justCreated, setJustCreated] = useState(false);
 
   const remaining = useCountdown(trial?.expiresAt ?? null);
-  const isExpired = trial !== null && remaining === 0;
+  const isExpired = trial !== null && remaining !== null && remaining === 0;
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -364,7 +364,7 @@ export default function TrialPage() {
               <Clock className="w-4 h-4 text-brand-400" />
               <span className="text-slate-400 text-sm">Tempo restante:</span>
               <span className="text-brand-400 font-mono font-bold text-lg">
-                {formatCountdown(remaining)}
+                {remaining !== null ? formatCountdown(remaining) : '--:--:--'}
               </span>
             </div>
 
@@ -419,7 +419,7 @@ export default function TrialPage() {
                   <Clock className="w-4 h-4 text-brand-400" />
                   <span className="text-slate-400 text-sm">Tempo restante:</span>
                   <span className="text-brand-400 font-mono font-bold text-lg">
-                    {formatCountdown(remaining)}
+                    {remaining !== null ? formatCountdown(remaining) : '--:--:--'}
                   </span>
                 </div>
                 <Link

@@ -71,7 +71,7 @@ function formatCountdown(ms: number): string {
 }
 
 function useCountdown(expiresAt: string | null) {
-  const [remaining, setRemaining] = useState<number>(0);
+  const [remaining, setRemaining] = useState<number | null>(null);
   useEffect(() => {
     if (!expiresAt) return;
     const tick = () => setRemaining(Math.max(0, new Date(expiresAt).getTime() - Date.now()));
@@ -88,7 +88,7 @@ function CountdownBadge({ expiresAt }: { expiresAt: string }) {
     <div className="inline-flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2">
       <Clock className="w-4 h-4 text-brand-400" />
       <span className="text-slate-400 text-sm">Tempo restante:</span>
-      <span className="text-brand-400 font-mono font-bold">{formatCountdown(remaining)}</span>
+      <span className="text-brand-400 font-mono font-bold">{remaining !== null ? formatCountdown(remaining) : '--:--:--'}</span>
     </div>
   );
 }
