@@ -196,7 +196,7 @@ export default function LandingPage() {
       {/* ── RECURSOS ─────────────────────────────────── */}
       <section id="recursos" className="max-w-6xl mx-auto px-6 py-24">
         <motion.div
-          initial="hidden" animate="show" variants={fadeUp}
+          initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} variants={fadeUp}
           className="text-center mb-14"
         >
           <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-3">Plataforma completa</p>
@@ -209,7 +209,7 @@ export default function LandingPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {RECURSOS.map(({ icon: Icon, title, description, color, bg, border }, i) => (
             <motion.div
-              key={title} initial="hidden" animate="show" variants={fadeUp}
+              key={title} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} variants={fadeUp}
               className={`rounded-2xl p-6 border ${border} ${bg} group hover:shadow-md transition-shadow`}
             >
               <div className={`w-10 h-10 rounded-xl ${bg} border ${border} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
@@ -229,7 +229,7 @@ export default function LandingPage() {
       {/* ── COMO FUNCIONA ────────────────────────────── */}
       <section id="como-funciona" className="max-w-6xl mx-auto px-6 py-24">
         <motion.div
-          initial="hidden" animate="show" variants={fadeUp}
+          initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} variants={fadeUp}
           className="text-center mb-16"
         >
           <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-3">Pipeline RAG</p>
@@ -247,7 +247,7 @@ export default function LandingPage() {
             { num: '4', icon: ShieldCheck, title: 'Resposta', desc: 'Entrega fundamentada com citação das fontes oficiais.' },
           ].map(({ num, icon: Icon, title, desc }, i) => (
             <motion.div
-              key={num} initial="hidden" animate="show" variants={fadeUp}
+              key={num} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} variants={fadeUp}
               className="text-center group"
             >
               <div className="relative inline-flex mb-5">
@@ -271,7 +271,7 @@ export default function LandingPage() {
 
       {/* ── CTA FINAL ────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-20">
-        <motion.div initial="hidden" animate="show" variants={fadeUp}>
+        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} variants={fadeUp}>
           <GlowingShadow fullWidth>
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
