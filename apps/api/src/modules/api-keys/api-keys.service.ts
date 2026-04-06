@@ -89,6 +89,11 @@ export class ApiKeysService {
 
   /**
    * Valida uma API Key recebida em uma requisição.
+   * 
+   * PERFORMANCE: This loads ALL active API keys into memory and verifies each
+   * with argon2 (intentionally slow ~50ms). For large deployments, add a 
+   * `keyHashFast` (SHA-256) column for O(1) lookup.
+   * 
    * Atualiza lastUsedAt quando válida.
    */
   async validate(rawKey: string): Promise<{ userId: string; keyId: string } | null> {
@@ -101,7 +106,7 @@ export class ApiKeysService {
 
     // Filtrar pelo prefixo primeiro (otimização)
     const prefix = rawKey.slice(0, 10);
-    const candidates = allActive.filter((k: typeof allActive[0]) => k.keyPrefix === prefix);
+    const candidates = allActive.filter((k) => k.keyPrefix === prefix);
 
     for (const candidate of candidates) {
       const valid = await argon2.verify(candidate.keyHash, rawKey);

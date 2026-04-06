@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { HearingsService } from './hearings.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CreateHearingDto, UpdateHearingDto } from './dto';
 
 @ApiTags('hearings')
 @ApiBearerAuth('access-token')
@@ -19,14 +20,14 @@ export class HearingsController {
 
   @Post()
   @ApiOperation({ summary: 'Criar audiência' })
-  create(@CurrentUser('id') userId: string, @Body() body: any) {
-    return this.hearingsService.create(userId, body);
+  create(@CurrentUser('id') userId: string, @Body() dto: CreateHearingDto) {
+    return this.hearingsService.create(userId, dto);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar audiência' })
-  update(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() body: any) {
-    return this.hearingsService.update(userId, id, body);
+  update(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() dto: UpdateHearingDto) {
+    return this.hearingsService.update(userId, id, dto);
   }
 
   @Delete(':id')

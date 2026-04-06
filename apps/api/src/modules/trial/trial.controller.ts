@@ -16,6 +16,7 @@ import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { TrialService } from './trial.service';
 import { CreateTrialDto } from './dto/create-trial.dto';
 import { FeedbackTrialDto } from './dto/feedback-trial.dto';
@@ -28,7 +29,8 @@ export class TrialController {
   constructor(private readonly trialService: TrialService) {}
 
   @Post()
-  @Throttle({ short: { ttl: 60000, limit: 3 } })
+  @Public()
+  @Throttle({ short: { ttl: 3600000, limit: 3 } })
   @ApiOperation({ summary: 'Create a trial user (public)' })
   create(@Body() dto: CreateTrialDto) {
     this.logger.log(`POST /trial — prefix=${dto.prefix} name=${dto.name}`);

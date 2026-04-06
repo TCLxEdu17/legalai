@@ -11,7 +11,8 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { TarefasService, CreateTarefaDto } from './tarefas.service';
+import { TarefasService } from './tarefas.service';
+import { CreateTarefaDto, UpdateTarefaDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '@prisma/client';
@@ -53,14 +54,7 @@ export class TarefasController {
   updateTarefa(
     @CurrentUser() user: User,
     @Param('id') id: string,
-    @Body() dto: Partial<{
-      titulo: string;
-      descricao: string;
-      prazo: string;
-      prioridade: string;
-      status: string;
-      concluidaEm: string;
-    }>,
+    @Body() dto: UpdateTarefaDto,
   ) {
     return this.tarefasService.updateTarefa(id, user.id, dto);
   }

@@ -36,8 +36,9 @@ export class RadarsService {
       },
     });
 
+    const embeddingLiteral = `[${embedding.join(',')}]`;
     await this.prisma.$executeRaw(
-      Prisma.sql`UPDATE radars SET thesis_embedding = ${Prisma.raw(`'[${embedding.join(',')}]'::vector`)} WHERE id = ${Prisma.raw(`'${radar.id}'::uuid`)}`,
+      Prisma.sql`UPDATE radars SET thesis_embedding = ${embeddingLiteral}::vector WHERE id = ${radar.id}::uuid`,
     );
 
     return radar;
@@ -82,8 +83,9 @@ export class RadarsService {
 
     if (dto.thesisText) {
       const { embedding } = await this.aiProvider.generateEmbedding(dto.thesisText);
+      const embeddingLiteral = `[${embedding.join(',')}]`;
       await this.prisma.$executeRaw(
-        Prisma.sql`UPDATE radars SET thesis_embedding = ${Prisma.raw(`'[${embedding.join(',')}]'::vector`)} WHERE id = ${Prisma.raw(`'${id}'::uuid`)}`,
+        Prisma.sql`UPDATE radars SET thesis_embedding = ${embeddingLiteral}::vector WHERE id = ${id}::uuid`,
       );
     }
 
@@ -173,25 +175,6 @@ export class RadarsService {
   }
 
   async checkDocument(documentId: string): Promise<void> {
-    const sql = `
-      SELECT
-        r.id           AS radar_id,
-        r.user_id,
-        u.email        AS user_email,
-        r.title,
-        r.threshold,
-        MAX(1 - (jc.embedding <=> r.thesis_embedding)) AS max_similarity
-      FROM radars r
-      INNER JOIN users u ON u.id = r.user_id
-      INNER JOIN jurisprudence_chunks jc ON jc.document_id = $1::uuid
-      WHERE
-        r.is_active = true
-        AND r.thesis_embedding IS NOT NULL
-        AND jc.embedding IS NOT NULL
-      GROUP BY r.id, r.user_id, u.email, r.title, r.threshold
-      HAVING MAX(1 - (jc.embedding <=> r.thesis_embedding)) >= r.threshold
-    `;
-
     type RadarMatch = {
       radar_id: string;
       user_id: string;
@@ -203,7 +186,26 @@ export class RadarsService {
 
     let matches: RadarMatch[];
     try {
-      matches = await this.prisma.$queryRawUnsafe<RadarMatch[]>(sql, documentId);
+      matches = await this.prisma.$queryRaw<RadarMatch[]>(
+        Prisma.sql`
+          SELECT
+            r.id           AS radar_id,
+            r.user_id,
+            u.email        AS user_email,
+            r.title,
+            r.threshold,
+            MAX(1 - (jc.embedding <=> r.thesis_embedding)) AS max_similarity
+          FROM radars r
+          INNER JOIN users u ON u.id = r.user_id
+          INNER JOIN jurisprudence_chunks jc ON jc.document_id = ${documentId}::uuid
+          WHERE
+            r.is_active = true
+            AND r.thesis_embedding IS NOT NULL
+            AND jc.embedding IS NOT NULL
+          GROUP BY r.id, r.user_id, u.email, r.title, r.threshold
+          HAVING MAX(1 - (jc.embedding <=> r.thesis_embedding)) >= r.threshold
+        `,
+      );
     } catch (err) {
       this.logger.error(`checkDocument: erro na query pgvector para doc ${documentId}`, err);
       return;

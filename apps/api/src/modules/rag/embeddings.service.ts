@@ -1,4 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AI_PROVIDER_TOKEN, IAIProvider } from './providers/ai-provider.interface';
 import { TextChunk } from './chunking.service';
@@ -66,10 +67,10 @@ export class EmbeddingsService {
           },
         });
 
-        // Atualizar com o vetor via SQL raw (pgvector requer interpolação direta — não pode ser parâmetro)
-        const embeddingLiteral = `'[${embedding.join(',')}]'::vector`;
-        await this.prisma.$executeRawUnsafe(
-          `UPDATE jurisprudence_chunks SET embedding = ${embeddingLiteral} WHERE id = '${created.id}'::uuid`,
+        // Update with the vector via parameterized SQL (pgvector requires raw SQL for vector type)
+        const embeddingLiteral = `[${embedding.join(',')}]`;
+        await this.prisma.$executeRaw(
+          Prisma.sql`UPDATE jurisprudence_chunks SET embedding = ${embeddingLiteral}::vector WHERE id = ${created.id}::uuid`,
         );
       }
 

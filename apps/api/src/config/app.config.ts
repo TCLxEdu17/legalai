@@ -6,11 +6,15 @@ export default registerAs('app', () => ({
   corsOrigins: process.env.CORS_ORIGINS || 'http://localhost:3000',
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'fallback_secret_change_in_production',
+    secret: process.env.JWT_SECRET ?? (() => {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET environment variable is required in production');
+      }
+      return 'dev-only-fallback-not-for-production';
+    })(),
     expiresIn: process.env.JWT_EXPIRES_IN || '15m',
-    refreshSecret:
-      process.env.JWT_REFRESH_SECRET ||
-      'fallback_refresh_secret_change_in_production',
+    // NOTE: Refresh tokens are UUIDs stored in DB, not JWTs.
+    // JWT_REFRESH_SECRET env var is ignored and kept for backward compatibility only.
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
 

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
+import { AppController, HealthController } from './app.controller';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -45,7 +45,7 @@ import { RadarsModule } from './modules/radars/radars.module';
 // import { QueueModule } from './modules/queue/queue.module';  // TODO sexta
 
 @Module({
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   imports: [
     // Configuração global
     ConfigModule.forRoot({

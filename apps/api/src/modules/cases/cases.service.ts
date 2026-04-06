@@ -6,6 +6,7 @@ import {
   BadRequestException,
   Inject,
 } from '@nestjs/common';
+import { Prisma, CaseStatus, CaseDocType, MessageRole, UploadStatus, ProcessingStatus, PieceType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ChunkingService, TextChunk } from '../rag/chunking.service';
 import { AI_PROVIDER_TOKEN, IAIProvider } from '../rag/providers/ai-provider.interface';
@@ -19,14 +20,6 @@ import { ChatCaseDto } from './dto/chat-case.dto';
 import { GeneratePieceDto } from './dto/generate-piece.dto';
 import { GenerateHearingDto } from './dto/generate-hearing.dto';
 import { PredictCompensationDto } from './dto/predict-compensation.dto';
-import {
-  CaseStatus,
-  CaseDocType,
-  MessageRole,
-  UploadStatus,
-  ProcessingStatus,
-  PieceType,
-} from '@prisma/client';
 
 const PIECE_PROMPTS: Record<PieceType, string> = {
   CONTESTACAO: `Você é um advogado experiente redigindo uma CONTESTAÇÃO.
@@ -294,9 +287,9 @@ export class CasesService {
             },
           });
 
-          const embeddingLiteral = `'[${embedding.join(',')}]'::vector`;
-          await this.prisma.$executeRawUnsafe(
-            `UPDATE case_chunks SET embedding = ${embeddingLiteral} WHERE id = '${created.id}'::uuid`,
+          const embeddingLiteral = `[${embedding.join(',')}]`;
+          await this.prisma.$executeRaw(
+            Prisma.sql`UPDATE case_chunks SET embedding = ${embeddingLiteral}::vector WHERE id = ${created.id}::uuid`,
           );
         }
 
@@ -356,9 +349,10 @@ export class CasesService {
 
     // Busca semântica nos chunks do caso
     const { embedding } = await this.aiProvider.generateEmbedding(dto.message);
-    const embeddingLiteral = `'[${embedding.join(',')}]'::vector`;
 
-    const chunks = await this.prisma.$queryRawUnsafe<
+    const embeddingLiteral = `[${embedding.join(',')}]`;
+
+    const chunks = await this.prisma.$queryRaw<
       Array<{
         id: string;
         document_id: string;
@@ -368,25 +362,27 @@ export class CasesService {
         doc_title: string;
         doc_type: string;
       }>
-    >(`
-      SELECT
-        cc.id,
-        cc.document_id,
-        cc.chunk_index,
-        cc.content,
-        1 - (cc.embedding <=> ${embeddingLiteral}) AS similarity,
-        cd.title AS doc_title,
-        cd.doc_type AS doc_type
-      FROM case_chunks cc
-      INNER JOIN case_documents cd ON cd.id = cc.document_id
-      WHERE
-        cc.embedding IS NOT NULL
-        AND cd.case_id = '${caseId}'::uuid
-        AND cd.processing_status = 'INDEXED'
-        AND (1 - (cc.embedding <=> ${embeddingLiteral})) >= 0.65
-      ORDER BY cc.embedding <=> ${embeddingLiteral}
-      LIMIT 8
-    `);
+    >(
+      Prisma.sql`
+        SELECT
+          cc.id,
+          cc.document_id,
+          cc.chunk_index,
+          cc.content,
+          1 - (cc.embedding <=> ${embeddingLiteral}::vector) AS similarity,
+          cd.title AS doc_title,
+          cd.doc_type AS doc_type
+        FROM case_chunks cc
+        INNER JOIN case_documents cd ON cd.id = cc.document_id
+        WHERE
+          cc.embedding IS NOT NULL
+          AND cd.case_id = ${caseId}::uuid
+          AND cd.processing_status = 'INDEXED'
+          AND (1 - (cc.embedding <=> ${embeddingLiteral}::vector)) >= 0.65
+        ORDER BY cc.embedding <=> ${embeddingLiteral}::vector
+        LIMIT 8
+      `,
+    );
 
     const hasContext = chunks.length > 0;
 
@@ -497,21 +493,23 @@ ${hasContext ? `\n--- TRECHOS DOS AUTOS ---\n${contextText}` : '\n[Nenhum docume
     });
 
     // Recupera todos os chunks indexados do caso para contexto da peça
-    const allChunks = await this.prisma.$queryRawUnsafe<
+    const allChunks = await this.prisma.$queryRaw<
       Array<{ content: string; doc_title: string; doc_type: string; chunk_index: number }>
-    >(`
-      SELECT
-        cc.content,
-        cd.title AS doc_title,
-        cd.doc_type AS doc_type,
-        cc.chunk_index
-      FROM case_chunks cc
-      INNER JOIN case_documents cd ON cd.id = cc.document_id
-      WHERE cd.case_id = '${caseId}'::uuid
-        AND cd.processing_status = 'INDEXED'
-      ORDER BY cd.created_at ASC, cc.chunk_index ASC
-      LIMIT 60
-    `);
+    >(
+      Prisma.sql`
+        SELECT
+          cc.content,
+          cd.title AS doc_title,
+          cd.doc_type AS doc_type,
+          cc.chunk_index
+        FROM case_chunks cc
+        INNER JOIN case_documents cd ON cd.id = cc.document_id
+        WHERE cd.case_id = ${caseId}::uuid
+          AND cd.processing_status = 'INDEXED'
+        ORDER BY cd.created_at ASC, cc.chunk_index ASC
+        LIMIT 60
+      `,
+    );
 
     if (allChunks.length === 0) {
       throw new BadRequestException(
@@ -627,10 +625,10 @@ ${contextText}`;
     });
 
     // Pega os primeiros chunks para gerar resumo
-    const sampleChunks = await this.prisma.$queryRawUnsafe<Array<{ content: string }>>(
-      `SELECT cc.content FROM case_chunks cc
+    const sampleChunks = await this.prisma.$queryRaw<Array<{ content: string }>>(
+      Prisma.sql`SELECT cc.content FROM case_chunks cc
        INNER JOIN case_documents cd ON cd.id = cc.document_id
-       WHERE cd.case_id = '${caseId}'::uuid AND cd.processing_status = 'INDEXED'
+       WHERE cd.case_id = ${caseId}::uuid AND cd.processing_status = 'INDEXED'
        ORDER BY cd.created_at ASC, cc.chunk_index ASC
        LIMIT 15`,
     );
@@ -670,10 +668,10 @@ ${contextText}`;
       select: { title: true, area: true, plaintiff: true, defendant: true, court: true, processNumber: true },
     });
 
-    const chunks = await this.prisma.$queryRawUnsafe<Array<{ content: string }>>(
-      `SELECT cc.content FROM case_chunks cc
+    const chunks = await this.prisma.$queryRaw<Array<{ content: string }>>(
+      Prisma.sql`SELECT cc.content FROM case_chunks cc
        INNER JOIN case_documents cd ON cd.id = cc.document_id
-       WHERE cd.case_id = '${caseId}'::uuid AND cd.processing_status = 'INDEXED'
+       WHERE cd.case_id = ${caseId}::uuid AND cd.processing_status = 'INDEXED'
        ORDER BY cd.created_at ASC, cc.chunk_index ASC
        LIMIT 40`,
     );
@@ -724,11 +722,11 @@ Retorne APENAS um JSON válido com esta estrutura:
       select: { title: true, area: true, plaintiff: true, defendant: true },
     });
 
-    const chunks = await this.prisma.$queryRawUnsafe<Array<{ content: string; doc_title: string; doc_type: string }>>(
-      `SELECT cc.content, cd.title AS doc_title, cd.doc_type AS doc_type
+    const chunks = await this.prisma.$queryRaw<Array<{ content: string; doc_title: string; doc_type: string }>>(
+      Prisma.sql`SELECT cc.content, cd.title AS doc_title, cd.doc_type AS doc_type
        FROM case_chunks cc
        INNER JOIN case_documents cd ON cd.id = cc.document_id
-       WHERE cd.case_id = '${caseId}'::uuid AND cd.processing_status = 'INDEXED'
+       WHERE cd.case_id = ${caseId}::uuid AND cd.processing_status = 'INDEXED'
        ORDER BY cd.created_at ASC, cc.chunk_index ASC
        LIMIT 40`,
     );
@@ -780,10 +778,10 @@ Retorne APENAS um JSON válido com esta estrutura:
       select: { title: true, area: true, plaintiff: true, defendant: true, strategy: true },
     });
 
-    const chunks = await this.prisma.$queryRawUnsafe<Array<{ content: string }>>(
-      `SELECT cc.content FROM case_chunks cc
+    const chunks = await this.prisma.$queryRaw<Array<{ content: string }>>(
+      Prisma.sql`SELECT cc.content FROM case_chunks cc
        INNER JOIN case_documents cd ON cd.id = cc.document_id
-       WHERE cd.case_id = '${caseId}'::uuid AND cd.processing_status = 'INDEXED'
+       WHERE cd.case_id = ${caseId}::uuid AND cd.processing_status = 'INDEXED'
        ORDER BY cd.created_at ASC, cc.chunk_index ASC
        LIMIT 35`,
     );
@@ -839,10 +837,10 @@ Retorne APENAS um JSON válido com esta estrutura:
       select: { title: true, area: true, plaintiff: true, defendant: true, strategy: true },
     });
 
-    const chunks = await this.prisma.$queryRawUnsafe<Array<{ content: string }>>(
-      `SELECT cc.content FROM case_chunks cc
+    const chunks = await this.prisma.$queryRaw<Array<{ content: string }>>(
+      Prisma.sql`SELECT cc.content FROM case_chunks cc
        INNER JOIN case_documents cd ON cd.id = cc.document_id
-       WHERE cd.case_id = '${caseId}'::uuid AND cd.processing_status = 'INDEXED'
+       WHERE cd.case_id = ${caseId}::uuid AND cd.processing_status = 'INDEXED'
        ORDER BY cd.created_at ASC, cc.chunk_index ASC
        LIMIT 30`,
     );
@@ -1045,10 +1043,10 @@ Retorne APENAS um JSON válido com esta estrutura:
       },
     });
 
-    const chunks = await this.prisma.$queryRawUnsafe<Array<{ content: string }>>(
-      `SELECT cc.content FROM case_chunks cc
+    const chunks = await this.prisma.$queryRaw<Array<{ content: string }>>(
+      Prisma.sql`SELECT cc.content FROM case_chunks cc
        INNER JOIN case_documents cd ON cd.id = cc.document_id
-       WHERE cd.case_id = '${caseId}'::uuid AND cd.processing_status = 'INDEXED'
+       WHERE cd.case_id = ${caseId}::uuid AND cd.processing_status = 'INDEXED'
        ORDER BY cd.created_at ASC, cc.chunk_index ASC
        LIMIT 35`,
     );

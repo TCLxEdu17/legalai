@@ -7,7 +7,6 @@ import {
   Param,
   Body,
   UseGuards,
-  Request,
   UseInterceptors,
   UploadedFile,
   ParseFilePipe,
@@ -21,6 +20,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserThrottlerGuard } from '../../common/guards/user-throttler.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CasesService } from './cases.service';
 import { CreateCaseDto } from './dto/create-case.dto';
 import { UpdateCaseDto } from './dto/update-case.dto';
@@ -40,13 +40,13 @@ export class CasesController {
   // ─── CASOS ────────────────────────────────────────────────────────────────
 
   @Post()
-  createCase(@Body() dto: CreateCaseDto, @Request() req: any) {
-    return this.casesService.createCase(dto, req.user.id);
+  createCase(@Body() dto: CreateCaseDto, @CurrentUser('id') userId: string) {
+    return this.casesService.createCase(dto, userId);
   }
 
   @Get()
-  listCases(@Request() req: any) {
-    return this.casesService.listCases(req.user.id);
+  listCases(@CurrentUser('id') userId: string) {
+    return this.casesService.listCases(userId);
   }
 
   // ─── ROTAS SEM :id (devem vir ANTES de :id) ───────────────────────────────
@@ -54,66 +54,66 @@ export class CasesController {
   @Get('radar')
   @UseGuards(UserThrottlerGuard)
   @Throttle({ default: { ttl: 60000, limit: 10 } })
-  detectOpportunities(@Request() req: any) {
-    return this.casesService.detectOpportunities(req.user.id);
+  detectOpportunities(@CurrentUser('id') userId: string) {
+    return this.casesService.detectOpportunities(userId);
   }
 
   @Get('copilot')
   @UseGuards(UserThrottlerGuard)
   @Throttle({ default: { ttl: 60000, limit: 10 } })
-  getOfficeCopilot(@Request() req: any) {
-    return this.casesService.getOfficeCopilot(req.user.id);
+  getOfficeCopilot(@CurrentUser('id') userId: string) {
+    return this.casesService.getOfficeCopilot(userId);
   }
 
   @Post('predict-compensation')
   @UseGuards(UserThrottlerGuard)
   @Throttle({ default: { ttl: 60000, limit: 10 } })
-  predictCompensation(@Body() dto: PredictCompensationDto, @Request() req: any) {
-    return this.casesService.predictCompensation(dto, req.user.id);
+  predictCompensation(@Body() dto: PredictCompensationDto, @CurrentUser('id') userId: string) {
+    return this.casesService.predictCompensation(dto, userId);
   }
 
   @Get(':id')
-  getCase(@Param('id') id: string, @Request() req: any) {
-    return this.casesService.getCase(id, req.user.id);
+  getCase(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.casesService.getCase(id, userId);
   }
 
   @Patch(':id')
-  updateCase(@Param('id') id: string, @Body() dto: UpdateCaseDto, @Request() req: any) {
-    return this.casesService.updateCase(id, dto, req.user.id);
+  updateCase(@Param('id') id: string, @Body() dto: UpdateCaseDto, @CurrentUser('id') userId: string) {
+    return this.casesService.updateCase(id, dto, userId);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteCase(@Param('id') id: string, @Request() req: any) {
-    return this.casesService.deleteCase(id, req.user.id);
+  deleteCase(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.casesService.deleteCase(id, userId);
   }
 
   @Get(':id/summary')
   @UseGuards(UserThrottlerGuard)
   @Throttle({ default: { ttl: 60000, limit: 10 } })
-  getCaseSummary(@Param('id') id: string, @Request() req: any) {
-    return this.casesService.getCaseSummary(id, req.user.id);
+  getCaseSummary(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.casesService.getCaseSummary(id, userId);
   }
 
   @Post(':id/narrative')
   @UseGuards(UserThrottlerGuard)
   @Throttle({ default: { ttl: 60000, limit: 10 } })
-  buildLegalNarrative(@Param('id') id: string, @Request() req: any) {
-    return this.casesService.buildLegalNarrative(id, req.user.id);
+  buildLegalNarrative(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.casesService.buildLegalNarrative(id, userId);
   }
 
   @Get(':id/evidence')
   @UseGuards(UserThrottlerGuard)
   @Throttle({ default: { ttl: 60000, limit: 10 } })
-  analyzeEvidence(@Param('id') id: string, @Request() req: any) {
-    return this.casesService.analyzeEvidence(id, req.user.id);
+  analyzeEvidence(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.casesService.analyzeEvidence(id, userId);
   }
 
   @Get(':id/theses')
   @UseGuards(UserThrottlerGuard)
   @Throttle({ default: { ttl: 60000, limit: 10 } })
-  detectLegalTheses(@Param('id') id: string, @Request() req: any) {
-    return this.casesService.detectLegalTheses(id, req.user.id);
+  detectLegalTheses(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.casesService.detectLegalTheses(id, userId);
   }
 
   @Post(':id/hearing')
@@ -122,16 +122,16 @@ export class CasesController {
   generateHearingQuestions(
     @Param('id') id: string,
     @Body() dto: GenerateHearingDto,
-    @Request() req: any,
+    @CurrentUser('id') userId: string,
   ) {
-    return this.casesService.generateHearingQuestions(id, dto, req.user.id);
+    return this.casesService.generateHearingQuestions(id, dto, userId);
   }
 
   @Get(':id/settlement')
   @UseGuards(UserThrottlerGuard)
   @Throttle({ default: { ttl: 60000, limit: 10 } })
-  analyzeSettlement(@Param('id') id: string, @Request() req: any) {
-    return this.casesService.analyzeSettlement(id, req.user.id);
+  analyzeSettlement(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.casesService.analyzeSettlement(id, userId);
   }
 
   // ─── DOCUMENTOS ───────────────────────────────────────────────────────────
@@ -140,7 +140,7 @@ export class CasesController {
   @UseInterceptors(FileInterceptor('file'))
   uploadDocument(
     @Param('id') caseId: string,
-    @Request() req: any,
+    @CurrentUser('id') userId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -153,7 +153,7 @@ export class CasesController {
     @Query('docType') docType?: CaseDocType,
     @Query('title') title?: string,
   ) {
-    return this.casesService.uploadDocument(caseId, req.user.id, file, docType, title);
+    return this.casesService.uploadDocument(caseId, userId, file, docType, title);
   }
 
   @Delete(':id/documents/:docId')
@@ -161,9 +161,9 @@ export class CasesController {
   deleteDocument(
     @Param('id') caseId: string,
     @Param('docId') docId: string,
-    @Request() req: any,
+    @CurrentUser('id') userId: string,
   ) {
-    return this.casesService.deleteDocument(caseId, docId, req.user.id);
+    return this.casesService.deleteDocument(caseId, docId, userId);
   }
 
   // ─── CHAT ─────────────────────────────────────────────────────────────────
@@ -171,19 +171,19 @@ export class CasesController {
   @Post(':id/chat')
   @UseGuards(UserThrottlerGuard)
   @Throttle({ default: { ttl: 60000, limit: 10 } })
-  chat(@Param('id') caseId: string, @Body() dto: ChatCaseDto, @Request() req: any) {
-    return this.casesService.chat(caseId, dto, req.user.id);
+  chat(@Param('id') caseId: string, @Body() dto: ChatCaseDto, @CurrentUser('id') userId: string) {
+    return this.casesService.chat(caseId, dto, userId);
   }
 
   @Get(':id/chat/history')
-  getChatHistory(@Param('id') caseId: string, @Request() req: any) {
-    return this.casesService.getChatHistory(caseId, req.user.id);
+  getChatHistory(@Param('id') caseId: string, @CurrentUser('id') userId: string) {
+    return this.casesService.getChatHistory(caseId, userId);
   }
 
   @Delete(':id/chat/history')
   @HttpCode(HttpStatus.NO_CONTENT)
-  clearChatHistory(@Param('id') caseId: string, @Request() req: any) {
-    return this.casesService.clearChatHistory(caseId, req.user.id);
+  clearChatHistory(@Param('id') caseId: string, @CurrentUser('id') userId: string) {
+    return this.casesService.clearChatHistory(caseId, userId);
   }
 
   // ─── PEÇAS ────────────────────────────────────────────────────────────────
@@ -191,17 +191,17 @@ export class CasesController {
   @Post(':id/pieces')
   @UseGuards(UserThrottlerGuard)
   @Throttle({ default: { ttl: 60000, limit: 10 } })
-  generatePiece(@Param('id') caseId: string, @Body() dto: GeneratePieceDto, @Request() req: any) {
-    return this.casesService.generatePiece(caseId, dto, req.user.id);
+  generatePiece(@Param('id') caseId: string, @Body() dto: GeneratePieceDto, @CurrentUser('id') userId: string) {
+    return this.casesService.generatePiece(caseId, dto, userId);
   }
 
   @Get(':id/pieces/:pieceId')
   getPiece(
     @Param('id') caseId: string,
     @Param('pieceId') pieceId: string,
-    @Request() req: any,
+    @CurrentUser('id') userId: string,
   ) {
-    return this.casesService.getPiece(caseId, pieceId, req.user.id);
+    return this.casesService.getPiece(caseId, pieceId, userId);
   }
 
   @Delete(':id/pieces/:pieceId')
@@ -209,8 +209,8 @@ export class CasesController {
   deletePiece(
     @Param('id') caseId: string,
     @Param('pieceId') pieceId: string,
-    @Request() req: any,
+    @CurrentUser('id') userId: string,
   ) {
-    return this.casesService.deletePiece(caseId, pieceId, req.user.id);
+    return this.casesService.deletePiece(caseId, pieceId, userId);
   }
 }

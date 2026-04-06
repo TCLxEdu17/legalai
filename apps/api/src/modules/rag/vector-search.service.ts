@@ -1,5 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AI_PROVIDER_TOKEN, IAIProvider } from './providers/ai-provider.interface';
 
@@ -55,42 +56,16 @@ export class VectorSearchService {
     const embStart = Date.now();
     const { embedding } = await this.aiProvider.generateEmbedding(query);
     this.logger.debug(`[VectorSearch] Embedding gerado em ${Date.now() - embStart}ms`);
-    // Embedding gerado internamente — interpolação direta é segura
-    const embeddingLiteral = `'[${embedding.join(',')}]'::vector`;
+    // Validate embedding values to filter out NaN/Infinity
+    const safeEmbedding = embedding.filter((v) => typeof v === 'number' && isFinite(v));
+    const embeddingLiteral = `[${safeEmbedding.join(',')}]`;
 
-    // Busca por similaridade de cosseno via pgvector
+    // Build document filter safely using Prisma.sql fragments
     const documentFilter = options?.documentIds?.length
-      ? `AND jc.document_id = ANY(ARRAY[${options.documentIds.map((id) => `'${id}'::uuid`).join(',')}])`
-      : '';
+      ? Prisma.sql`AND jc.document_id = ANY(ARRAY[${Prisma.join(options.documentIds.map((id) => Prisma.sql`${id}::uuid`), ', ')}])`
+      : Prisma.sql``;
 
-    const sql = `
-      SELECT
-        jc.id,
-        jc.document_id,
-        jc.chunk_index,
-        jc.content,
-        1 - (jc.embedding <=> ${embeddingLiteral}) AS similarity,
-        jc.token_count,
-        jc.metadata,
-        jd.title AS doc_title,
-        jd.tribunal AS doc_tribunal,
-        jd.process_number AS doc_process_number,
-        jd.relator AS doc_relator,
-        jd.judgment_date AS doc_judgment_date,
-        jd.theme AS doc_theme,
-        jd.keywords AS doc_keywords
-      FROM jurisprudence_chunks jc
-      INNER JOIN jurisprudence_documents jd ON jd.id = jc.document_id
-      WHERE
-        jc.embedding IS NOT NULL
-        AND jd.processing_status = 'INDEXED'
-        AND (1 - (jc.embedding <=> ${embeddingLiteral})) >= ${threshold}
-        ${documentFilter}
-      ORDER BY jc.embedding <=> ${embeddingLiteral}
-      LIMIT ${topK}
-    `;
-
-    const results = await this.prisma.$queryRawUnsafe<
+    const results = await this.prisma.$queryRaw<
       Array<{
         id: string;
         document_id: string;
@@ -107,7 +82,34 @@ export class VectorSearchService {
         doc_theme: string | null;
         doc_keywords: string[];
       }>
-    >(sql);
+    >(
+      Prisma.sql`
+        SELECT
+          jc.id,
+          jc.document_id,
+          jc.chunk_index,
+          jc.content,
+          1 - (jc.embedding <=> ${embeddingLiteral}::vector) AS similarity,
+          jc.token_count,
+          jc.metadata,
+          jd.title AS doc_title,
+          jd.tribunal AS doc_tribunal,
+          jd.process_number AS doc_process_number,
+          jd.relator AS doc_relator,
+          jd.judgment_date AS doc_judgment_date,
+          jd.theme AS doc_theme,
+          jd.keywords AS doc_keywords
+        FROM jurisprudence_chunks jc
+        INNER JOIN jurisprudence_documents jd ON jd.id = jc.document_id
+        WHERE
+          jc.embedding IS NOT NULL
+          AND jd.processing_status = 'INDEXED'
+          AND (1 - (jc.embedding <=> ${embeddingLiteral}::vector)) >= ${threshold}
+          ${documentFilter}
+        ORDER BY jc.embedding <=> ${embeddingLiteral}::vector
+        LIMIT ${topK}
+      `,
+    );
 
     const chunks: RetrievedChunk[] = results.map((r) => ({
       id: r.id,

@@ -32,20 +32,31 @@ export class WebhooksService {
     });
 
     for (const wh of webhooks) {
-      try {
-        const body = JSON.stringify({ event, payload, timestamp: new Date().toISOString() });
-        const sig = crypto.createHmac('sha256', wh.secret).update(body).digest('hex');
-        await axios.post(wh.url, body, {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-LegalAI-Signature': `sha256=${sig}`,
-            'X-LegalAI-Event': event,
-          },
-          timeout: 10000,
-        });
-        this.logger.log(`Webhook ${wh.id} disparado para evento ${event}`);
-      } catch (err) {
-        this.logger.warn(`Falha no webhook ${wh.id}: ${err.message}`);
+      let delivered = false;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const body = JSON.stringify({ event, payload, timestamp: new Date().toISOString() });
+          const sig = crypto.createHmac('sha256', wh.secret).update(body).digest('hex');
+          await axios.post(wh.url, body, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-LegalAI-Signature': `sha256=${sig}`,
+              'X-LegalAI-Event': event,
+            },
+            timeout: 10000,
+          });
+          this.logger.log(`Webhook ${wh.id} disparado para evento ${event} (tentativa ${attempt})`);
+          delivered = true;
+          break;
+        } catch (err) {
+          if (attempt < 3) {
+            const delayMs = attempt * 2000;
+            this.logger.warn(`Falha no webhook ${wh.id} (tentativa ${attempt}/${3}), retry em ${delayMs}ms: ${err.message}`);
+            await new Promise((r) => setTimeout(r, delayMs));
+          } else {
+            this.logger.error(`Webhook ${wh.id} falhou definitivamente após ${attempt} tentativas: ${err.message}`);
+          }
+        }
       }
     }
   }

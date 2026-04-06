@@ -42,8 +42,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-legalai}:${POSTGRES_PASSWORD:-legalai_secret}@postgres:5432/${POSTGRES_DB:-legal_ai}
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-change_this_in_production}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change_this_refresh_in_production}
+      # Generate secure secrets if not provided via env vars
+      JWT_SECRET: ${JWT_SECRET:-$(openssl rand -base64 48 2>/dev/null || echo 'CHANGE_THIS_TO_SECURE_RANDOM_SECRET_32chars_min')}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       AI_PROVIDER: ${AI_PROVIDER:-openai}

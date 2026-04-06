@@ -38,28 +38,28 @@ export class AuthService {
 
   async login(dto: LoginDto): Promise<AuthTokens> {
     const email = dto.email.toLowerCase().trim();
-    this.logger.log(`Tentativa de login: ${email}`);
+    this.logger.log('Tentativa de login');
 
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      this.logger.warn(`Login falhou — usuário não encontrado: ${email}`);
+      this.logger.warn('Login falhou — usuário não encontrado');
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
     if (!user.isActive) {
-      this.logger.warn(`Login falhou — usuário inativo: ${email}`);
+      this.logger.warn('Login falhou — usuário inativo');
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
     const passwordValid = await argon2.verify(user.passwordHash, dto.password);
     if (!passwordValid) {
-      this.logger.warn(`Login falhou — senha incorreta: ${email}`);
+      this.logger.warn('Login falhou — senha incorreta');
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
-    this.logger.log(`Login bem-sucedido: ${user.email} | role=${user.role} | id=${user.id}`);
+    this.logger.log('Login bem-sucedido');
 
     // Se for trial, incluir trialId e expiresAt na resposta
     const trialUser = user.email.endsWith('@trial.legalai.com.br')
@@ -94,18 +94,18 @@ export class AuthService {
     }
 
     if (stored.expiresAt < new Date()) {
-      this.logger.warn(`Refresh token expirado para usuário: ${stored.user.email}`);
+      this.logger.warn('Refresh token expirado');
       throw new UnauthorizedException('Refresh token inválido ou expirado');
     }
 
     if (!stored.user.isActive) {
-      this.logger.warn(`Refresh token de usuário inativo: ${stored.user.email}`);
+      this.logger.warn('Refresh token de usuário inativo');
       throw new UnauthorizedException('Usuário inativo');
     }
 
     // Invalidar o token usado (rotação de tokens)
     await this.prisma.refreshToken.delete({ where: { token } });
-    this.logger.debug(`Token rotacionado para: ${stored.user.email}`);
+    this.logger.debug('Token rotacionado');
 
     const tokens = await this.generateTokens(
       stored.user.id,
@@ -136,7 +136,7 @@ export class AuthService {
         where: { userId },
       });
     }
-    this.logger.log(`Logout realizado para usuário: ${userId}`);
+    this.logger.log('Logout realizado');
   }
 
   private async generateTokens(
@@ -151,6 +151,7 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload, {
       secret: jwtConfig.secret,
       expiresIn: jwtConfig.expiresIn,
+      algorithm: 'HS256', // Explicitly set algorithm to prevent confusion attacks
     });
 
     const refreshToken = uuidv4();
@@ -172,10 +173,31 @@ export class AuthService {
       })
       .catch(() => {}); // Não bloquear se falhar
 
+    // Parse expiresIn to seconds for client-side usage
+    // Supports formats like '15m', '1h', '3600', etc.
+    let expiresInSeconds = 900; // fallback: 15 minutes
+    const expiresInStr = jwtConfig.expiresIn || '15m';
+    const match = expiresInStr.match(/^(\d+)([smh]?)$/);
+    if (match) {
+      const value = parseInt(match[1], 10);
+      const unit = match[2] || 's';
+      switch (unit) {
+        case 's':
+          expiresInSeconds = value;
+          break;
+        case 'm':
+          expiresInSeconds = value * 60;
+          break;
+        case 'h':
+          expiresInSeconds = value * 3600;
+          break;
+      }
+    }
+
     return {
       accessToken,
       refreshToken,
-      expiresIn: 900, // 15 minutos em segundos
+      expiresIn: expiresInSeconds,
     };
   }
 }

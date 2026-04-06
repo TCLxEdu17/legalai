@@ -15,6 +15,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         secret: config.get<string>('app.jwt.secret'),
         signOptions: {
           expiresIn: config.get<string>('app.jwt.expiresIn', '15m'),
+          algorithm: 'HS256', // Explicitly set algorithm to prevent confusion attacks
         },
       }),
     }),

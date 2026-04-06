@@ -20,6 +20,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { JwtPayload } from './strategies/jwt.strategy';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -64,7 +65,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Retorna dados do usuário autenticado' })
-  async me(@CurrentUser() user: any) {
-    return user;
+  async me(@CurrentUser() user: JwtPayload) {
+    return { id: user.sub, email: user.email, role: user.role };
   }
 }
