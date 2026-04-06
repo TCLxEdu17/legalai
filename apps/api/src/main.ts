@@ -9,12 +9,26 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { winstonConfig } from './config/logger.config';
+import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: WinstonModule.createLogger(winstonConfig),
     rawBody: true,
   });
+
+  // ─── Ensure critical columns exist on trial_users (fallback if migration didn't run) ───
+  const prisma = app.get(PrismaService);
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "trial_users"
+        ADD COLUMN IF NOT EXISTS "contact_email" TEXT,
+        ADD COLUMN IF NOT EXISTS "phone" TEXT;
+    `);
+    console.log('✅ Colunas contact_email/phone confirmadas em trial_users');
+  } catch (err: any) {
+    console.warn(`⚠️  Falha ao verificar colunas trial_users: ${err.message} (ignorando)`);
+  }
 
   const configService = app.get(ConfigService);
   const port = parseInt(process.env.PORT || '0') || configService.get<number>('app.port', 3001);
