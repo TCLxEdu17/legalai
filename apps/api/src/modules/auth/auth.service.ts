@@ -10,6 +10,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import * as argon2 from 'argon2';
 import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
+import { PasswordResetEmailService } from './password-reset-email.service';
 
 export interface AuthTokens {
   accessToken: string;
@@ -34,6 +36,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly passwordResetEmailService: PasswordResetEmailService,
   ) {}
 
   async login(dto: LoginDto): Promise<AuthTokens> {
@@ -137,6 +140,50 @@ export class AuthService {
       });
     }
     this.logger.log('Logout realizado');
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    // Responde igual mesmo se email não existir (evita user enumeration)
+    if (!user || !user.isActive) return;
+
+    // Invalidar tokens anteriores do usuário
+    await this.prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+    await this.prisma.passwordResetToken.create({
+      data: { userId: user.id, token, expiresAt },
+    });
+
+    await this.passwordResetEmailService.sendResetEmail(user.email, user.name, token);
+    this.logger.log(`Reset de senha solicitado para ${email}`);
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const record = await this.prisma.passwordResetToken.findUnique({ where: { token } });
+
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      throw new BadRequestException('Token inválido ou expirado');
+    }
+
+    const passwordHash = await argon2.hash(newPassword);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: record.userId },
+        data: { passwordHash },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { token },
+        data: { usedAt: new Date() },
+      }),
+      // Invalidar todos os refresh tokens (forçar re-login)
+      this.prisma.refreshToken.deleteMany({ where: { userId: record.userId } }),
+    ]);
+
+    this.logger.log(`Senha redefinida para userId=${record.userId}`);
   }
 
   private async generateTokens(

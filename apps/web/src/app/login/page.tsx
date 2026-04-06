@@ -109,6 +109,11 @@ export default function LoginPage() {
               {errors.password && (
                 <p className="text-red-400 text-xs mt-1.5">{errors.password.message}</p>
               )}
+              <div className="text-right mt-1">
+                <Link href="/forgot-password" className="text-xs text-blue-400 hover:text-blue-300 hover:underline transition-colors">
+                  Esqueceu a senha?
+                </Link>
+              </div>
             </div>
 
             {/* Submit */}

@@ -17,6 +17,8 @@ import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -67,5 +69,23 @@ export class AuthController {
   @ApiOperation({ summary: 'Retorna dados do usuário autenticado' })
   async me(@CurrentUser() user: JwtPayload) {
     return { id: user.sub, email: user.email, role: user.role };
+  }
+
+  @Post('forgot-password')
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ short: { ttl: 60000, limit: 3 } })
+  @ApiOperation({ summary: 'Solicitar reset de senha' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ short: { ttl: 60000, limit: 5 } })
+  @ApiOperation({ summary: 'Redefinir senha com token' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto.token, dto.password);
   }
 }
