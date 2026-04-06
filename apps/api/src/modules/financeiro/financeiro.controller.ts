@@ -12,6 +12,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FinanceiroService } from './financeiro.service';
+import { CreateLancamentoDto, UpdateLancamentoDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '@prisma/client';
@@ -45,15 +46,7 @@ export class FinanceiroController {
   @Post('lancamentos')
   createLancamento(
     @CurrentUser() user: User,
-    @Body() dto: {
-      tipo: 'ENTRADA' | 'SAIDA';
-      valor: number;
-      descricao: string;
-      clienteId?: string;
-      caseId?: string;
-      vencimento?: string;
-      categoria?: string;
-    },
+    @Body() dto: CreateLancamentoDto,
   ) {
     return this.financeiroService.createLancamento(user.id, dto);
   }
@@ -62,7 +55,7 @@ export class FinanceiroController {
   updateLancamento(
     @CurrentUser() user: User,
     @Param('id') id: string,
-    @Body() dto: Partial<{ status: string; pagoEm: string; descricao: string; valor: number }>,
+    @Body() dto: UpdateLancamentoDto,
   ) {
     return this.financeiroService.updateLancamento(id, user.id, dto);
   }

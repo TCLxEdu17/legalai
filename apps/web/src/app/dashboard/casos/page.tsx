@@ -16,9 +16,21 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
 import { FadeIn, StaggerContainer, StaggerItem, InteractiveCard } from '@/components/ui/motion';
+
+const casoSchema = z.object({
+  title: z.string().min(2, 'O titulo deve ter pelo menos 2 caracteres').max(200, 'O titulo deve ter no maximo 200 caracteres'),
+  area: z.string().optional().or(z.literal('')),
+  processNumber: z.string().max(100, 'O numero do processo deve ter no maximo 100 caracteres').optional().or(z.literal('')),
+  court: z.string().max(200, 'O tribunal deve ter no maximo 200 caracteres').optional().or(z.literal('')),
+  plaintiff: z.string().max(200, 'O autor deve ter no maximo 200 caracteres').optional().or(z.literal('')),
+  defendant: z.string().max(200, 'O reu deve ter no maximo 200 caracteres').optional().or(z.literal('')),
+  caseValue: z.coerce.number().min(0, 'O valor da causa deve ser maior ou igual a zero').optional().or(z.literal(0)),
+  notes: z.string().max(2000, 'As observacoes devem ter no maximo 2000 caracteres').optional().or(z.literal('')),
+});
 
 interface Case {
   id: string;
@@ -62,7 +74,15 @@ export default function CasosPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => apiClient.createCase(form),
+    mutationFn: () => {
+      const result = casoSchema.safeParse(form);
+      if (!result.success) {
+        const firstError = result.error.errors[0];
+        toast.error(firstError.message);
+        throw new Error(firstError.message);
+      }
+      return apiClient.createCase(form);
+    },
     onSuccess: (created: Case) => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
       toast.success('Caso criado com sucesso');

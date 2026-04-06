@@ -5,12 +5,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Radio, ArrowLeft, ChevronDown, ChevronUp, Sparkles, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/ui/motion';
 import { PlanetLoader } from '@/components/ui/planet-loader';
 
 type Tab = 'alertas' | 'configuracoes';
+
+const radarConfigSchema = z.object({
+  title: z.string().min(2, 'O titulo deve ter pelo menos 2 caracteres').max(200, 'O titulo deve ter no maximo 200 caracteres'),
+  thesisText: z.string().min(10, 'O texto da tese deve ter pelo menos 10 caracteres').max(2000, 'O texto da tese deve ter no maximo 2000 caracteres'),
+  threshold: z.coerce.number().min(0.6, 'O limiar deve ser pelo menos 0.6').max(1.0, 'O limiar deve ser no maximo 1.0'),
+  isActive: z.boolean(),
+  caseId: z.string().optional().or(z.literal('')),
+});
 
 export default function RadarDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -301,7 +310,15 @@ export default function RadarDetailPage({ params }: { params: { id: string } }) 
               </button>
             </div>
             <button
-              onClick={() => updateMutation.mutate({ ...configForm, caseId: configForm.caseId || null })}
+              onClick={() => {
+                const result = radarConfigSchema.safeParse(configForm);
+                if (!result.success) {
+                  const firstError = result.error.errors[0];
+                  toast.error(firstError.message);
+                  return;
+                }
+                updateMutation.mutate({ ...configForm, caseId: configForm.caseId || null });
+              }}
               disabled={updateMutation.isPending}
               className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors"
             >

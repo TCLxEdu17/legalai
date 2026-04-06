@@ -5,10 +5,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Radio, Plus, Search, Trash2, ChevronRight, X, ToggleLeft, ToggleRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
 import { FadeIn, StaggerContainer, StaggerItem, InteractiveCard } from '@/components/ui/motion';
 import { PlanetLoader } from '@/components/ui/planet-loader';
+
+const radarSchema = z.object({
+  title: z.string().min(2, 'O titulo deve ter pelo menos 2 caracteres').max(200, 'O titulo deve ter no maximo 200 caracteres'),
+  thesisText: z.string().min(10, 'O texto da tese deve ter pelo menos 10 caracteres').max(2000, 'O texto da tese deve ter no maximo 2000 caracteres'),
+  threshold: z.coerce.number().min(0.6, 'O limiar deve ser pelo menos 0.6').max(1.0, 'O limiar deve ser no maximo 1.0'),
+  caseId: z.string().optional().or(z.literal('')),
+});
 
 const emptyForm = { title: '', thesisText: '', threshold: 0.8, caseId: '' };
 
@@ -30,12 +38,25 @@ export default function RadaresPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => apiClient.createRadar({
-      title: form.title,
-      thesisText: form.thesisText,
-      threshold: form.threshold,
-      caseId: form.caseId || undefined,
-    }),
+    mutationFn: () => {
+      const result = radarSchema.safeParse({
+        title: form.title,
+        thesisText: form.thesisText,
+        threshold: form.threshold,
+        caseId: form.caseId || undefined,
+      });
+      if (!result.success) {
+        const firstError = result.error.errors[0];
+        toast.error(firstError.message);
+        throw new Error(firstError.message);
+      }
+      return apiClient.createRadar({
+        title: form.title,
+        thesisText: form.thesisText,
+        threshold: form.threshold,
+        caseId: form.caseId || undefined,
+      });
+    },
     onSuccess: (created: any) => {
       queryClient.invalidateQueries({ queryKey: ['radars'] });
       toast.success('Radar criado com sucesso');

@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ClientsService } from './clients.service';
+import { CreateClientDto, UpdateClientDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
@@ -25,14 +26,14 @@ export class ClientsController {
 
   @Post()
   @ApiOperation({ summary: 'Criar cliente' })
-  create(@CurrentUser('id') userId: string, @Body() body: any) {
-    return this.clientsService.create(userId, body);
+  create(@CurrentUser('id') userId: string, @Body() dto: CreateClientDto) {
+    return this.clientsService.create(userId, dto);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar cliente' })
-  update(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() body: any) {
-    return this.clientsService.update(userId, id, body);
+  update(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() dto: UpdateClientDto) {
+    return this.clientsService.update(userId, id, dto);
   }
 
   @Delete(':id')

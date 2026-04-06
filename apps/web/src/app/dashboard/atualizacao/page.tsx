@@ -2,12 +2,25 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import {
   corrigirPeloIPCA,
   calcularJurosMoratorios,
   calcularTabelaTJSP,
   formatCurrency,
 } from './atualizacao.utils';
+
+const atualizacaoSchema = z.object({
+  valor: z.coerce.number().min(0.01, 'O valor deve ser maior que zero'),
+  dataInicio: z.string().min(1, 'A data inicial e obrigatoria'),
+  dataFim: z.string().min(1, 'A data final e obrigatoria'),
+  indice: z.string().min(1, 'O indice e obrigatoria'),
+}).refine((data) => {
+  if (data.dataInicio && data.dataFim) {
+    return new Date(data.dataFim) > new Date(data.dataInicio);
+  }
+  return true;
+}, { message: 'A data final deve ser posterior a data inicial', path: ['dataFim'] });
 
 type Indice = 'IPCA' | 'SELIC' | 'TR' | 'TJSP';
 
@@ -46,12 +59,15 @@ export default function AtualizacaoPage() {
 
   function calcular() {
     const valorNum = parseFloat(valor.replace(',', '.'));
-    if (!valorNum || !dataInicio || !dataFim) {
-      toast.error('Preencha todos os campos');
-      return;
-    }
-    if (dataFim <= dataInicio) {
-      toast.error('Data final deve ser posterior à data inicial');
+    const result = atualizacaoSchema.safeParse({
+      valor: valorNum,
+      dataInicio,
+      dataFim,
+      indice,
+    });
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 

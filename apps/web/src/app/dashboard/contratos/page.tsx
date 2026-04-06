@@ -2,6 +2,18 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+const contratoSchema = z.object({
+  tipo: z.enum(['fixo', 'exito', 'misto'], { message: 'O tipo deve ser fixo, exito ou misto' }),
+  clienteNome: z.string().min(2, 'O nome do cliente deve ter pelo menos 2 caracteres').max(200, 'O nome do cliente deve ter no maximo 200 caracteres'),
+  advogadoNome: z.string().min(2, 'O nome do advogado deve ter pelo menos 2 caracteres').max(200, 'O nome do advogado deve ter no maximo 200 caracteres').optional().or(z.literal('')),
+  objeto: z.string().min(10, 'O objeto deve ter pelo menos 10 caracteres').max(2000, 'O objeto deve ter no maximo 2000 caracteres'),
+  valor: z.coerce.number().min(0, 'O valor deve ser maior ou igual a zero').optional().or(z.literal(0)),
+  percentual: z.coerce.number().min(0, 'O percentual deve ser maior ou igual a zero').max(100, 'O percentual deve ser no maximo 100').optional().or(z.literal(0)),
+  prazo: z.string().optional().or(z.literal('')),
+  oabAdvogado: z.string().max(20, 'A OAB deve ter no maximo 20 caracteres').optional().or(z.literal('')),
+});
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -27,28 +39,30 @@ export default function ContratosPage() {
   const [contrato, setContrato] = useState<string | null>(null);
 
   async function gerarContrato() {
-    if (!clienteNome || !objeto) {
-      toast.error('Preencha o nome do cliente e o objeto do contrato');
+    const payload: Record<string, unknown> = {
+      tipo,
+      clienteNome,
+      advogadoNome: advogadoNome || undefined,
+      objeto,
+      prazo: prazo || undefined,
+      oabAdvogado: oabAdvogado || undefined,
+    };
+    if ((tipo === 'fixo' || tipo === 'misto') && valor) {
+      payload.valor = parseFloat(valor);
+    }
+    if ((tipo === 'exito' || tipo === 'misto') && percentual) {
+      payload.percentual = parseFloat(percentual);
+    }
+
+    const result = contratoSchema.safeParse(payload);
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 
     setLoading(true);
     try {
-      const payload: Record<string, unknown> = {
-        tipo,
-        clienteNome,
-        advogadoNome: advogadoNome || undefined,
-        objeto,
-        prazo: prazo || undefined,
-        oabAdvogado: oabAdvogado || undefined,
-      };
-      if ((tipo === 'fixo' || tipo === 'misto') && valor) {
-        payload.valor = parseFloat(valor);
-      }
-      if ((tipo === 'exito' || tipo === 'misto') && percentual) {
-        payload.percentual = parseFloat(percentual);
-      }
-
       const res = await fetch(`${API_URL}/api/v1/contratos/gerar`, {
         method: 'POST',
         headers: authHeaders(),

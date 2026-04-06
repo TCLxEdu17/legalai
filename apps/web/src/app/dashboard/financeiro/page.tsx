@@ -2,6 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+const lancamentoSchema = z.object({
+  tipo: z.enum(['ENTRADA', 'SAIDA'], { message: 'O tipo deve ser ENTRADA ou SAIDA' }),
+  valor: z.coerce.number().min(0.01, 'O valor deve ser maior que zero'),
+  descricao: z.string().min(2, 'A descricao deve ter pelo menos 2 caracteres').max(500, 'A descricao deve ter no maximo 500 caracteres'),
+  vencimento: z.string().optional().or(z.literal('')),
+  categoria: z.string().max(100, 'A categoria deve ter no maximo 100 caracteres').optional().or(z.literal('')),
+});
 
 interface Lancamento {
   id: string;
@@ -66,8 +75,16 @@ export default function FinanceiroPage() {
   }
 
   async function criarLancamento() {
-    if (!form.descricao || !form.valor) {
-      toast.error('Preencha descrição e valor');
+    const result = lancamentoSchema.safeParse({
+      tipo: form.tipo,
+      valor: form.valor,
+      descricao: form.descricao,
+      vencimento: form.vencimento,
+      categoria: form.categoria,
+    });
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
     try {

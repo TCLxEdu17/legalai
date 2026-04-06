@@ -2,6 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+const tarefaSchema = z.object({
+  titulo: z.string().min(2, 'O titulo deve ter pelo menos 2 caracteres').max(200, 'O titulo deve ter no maximo 200 caracteres'),
+  descricao: z.string().max(1000, 'A descricao deve ter no maximo 1000 caracteres').optional().or(z.literal('')),
+  prazo: z.string().optional().or(z.literal('')),
+  prioridade: z.enum(['BAIXA', 'MEDIA', 'ALTA', 'URGENTE']).optional(),
+  caseId: z.string().optional().or(z.literal('')),
+});
 
 interface Tarefa {
   id: string;
@@ -61,7 +70,18 @@ export default function TarefasPage() {
   }
 
   async function criarTarefa() {
-    if (!form.titulo) { toast.error('Título é obrigatório'); return; }
+    const result = tarefaSchema.safeParse({
+      titulo: form.titulo,
+      descricao: form.descricao,
+      prazo: form.prazo,
+      prioridade: form.prioridade,
+      caseId: form.caseId,
+    });
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/api/v1/tarefas`, {
         method: 'POST',

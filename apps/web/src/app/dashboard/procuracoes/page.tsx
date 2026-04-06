@@ -2,6 +2,21 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+const procuracaoSchema = z.object({
+  outorgante: z.string().min(2, 'O nome do outorgante deve ter pelo menos 2 caracteres').max(200, 'O nome do outorgante deve ter no maximo 200 caracteres'),
+  cpf: z.string().max(14, 'O CPF deve ter no maximo 14 caracteres').optional().or(z.literal('')),
+  rg: z.string().max(30, 'O RG deve ter no maximo 30 caracteres').optional().or(z.literal('')),
+  nacionalidade: z.string().max(100, 'A nacionalidade deve ter no maximo 100 caracteres').optional().or(z.literal('')),
+  estadoCivil: z.string().max(100, 'O estado civil deve ter no maximo 100 caracteres').optional().or(z.literal('')),
+  advogado: z.string().min(2, 'O nome do advogado deve ter pelo menos 2 caracteres').max(200, 'O nome do advogado deve ter no maximo 200 caracteres'),
+  oab: z.string().min(2, 'A OAB deve ter pelo menos 2 caracteres').max(20, 'A OAB deve ter no maximo 20 caracteres'),
+  poderes: z.string().min(10, 'Os poderes devem ter pelo menos 10 caracteres').max(5000, 'Os poderes devem ter no maximo 5000 caracteres'),
+  processoNumero: z.string().max(100, 'O numero do processo deve ter no maximo 100 caracteres').optional().or(z.literal('')),
+  foro: z.string().max(200, 'O foro deve ter no maximo 200 caracteres').optional().or(z.literal('')),
+  emailAssinatura: z.string().email('O e-mail de assinatura deve ser um e-mail valido').optional().or(z.literal('')),
+});
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -30,8 +45,10 @@ export default function ProcuracoesPage() {
   const [procuracao, setProcuracao] = useState<string | null>(null);
 
   async function gerar() {
-    if (!form.outorgante || !form.advogado || !form.oab) {
-      toast.error('Preencha outorgante, advogado e OAB');
+    const result = procuracaoSchema.safeParse(form);
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
     setLoading(true);

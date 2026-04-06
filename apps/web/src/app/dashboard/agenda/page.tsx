@@ -5,8 +5,25 @@ import { PlanetLoader } from '@/components/ui/planet-loader';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calendar, Plus, Trash2, ChevronLeft, ChevronRight, List, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { apiClient } from '@/lib/api-client';
 import { extractApiErrorMessage, cn } from '@/lib/utils';
+
+const agendaSchema = z.object({
+  title: z.string().min(2, 'O titulo deve ter pelo menos 2 caracteres').max(200, 'O titulo deve ter no maximo 200 caracteres'),
+  client: z.string().max(200, 'O nome do cliente deve ter no maximo 200 caracteres').optional().or(z.literal('')),
+  processNumber: z.string().max(100, 'O numero do processo deve ter no maximo 100 caracteres').optional().or(z.literal('')),
+  court: z.string().max(200, 'O tribunal deve ter no maximo 200 caracteres').optional().or(z.literal('')),
+  date: z.string().min(1, 'A data e obrigatoria'),
+  location: z.string().max(200, 'O local deve ter no maximo 200 caracteres').optional().or(z.literal('')),
+  notes: z.string().max(1000, 'As observacoes devem ter no maximo 1000 caracteres').optional().or(z.literal('')),
+}).refine((data) => {
+  if (data.date) {
+    const d = new Date(data.date);
+    return !isNaN(d.getTime());
+  }
+  return true;
+}, { message: 'A data deve ser uma data valida', path: ['date'] });
 
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DAYS_SHORT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -48,7 +65,15 @@ export default function AgendaPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => apiClient.createHearing(form),
+    mutationFn: () => {
+      const result = agendaSchema.safeParse(form);
+      if (!result.success) {
+        const firstError = result.error.errors[0];
+        toast.error(firstError.message);
+        throw new Error(firstError.message);
+      }
+      return apiClient.createHearing(form);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hearings'] });
       toast.success('Audiência criada');
