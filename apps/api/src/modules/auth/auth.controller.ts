@@ -16,6 +16,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -28,6 +29,17 @@ import { JwtPayload } from './strategies/jwt.strategy';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('register')
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @Throttle({ short: { ttl: 60000, limit: 5 } })
+  @ApiOperation({ summary: 'Criar nova conta' })
+  @ApiResponse({ status: 201, description: 'Conta criada com sucesso — retorna tokens de acesso' })
+  @ApiResponse({ status: 409, description: 'E-mail já cadastrado' })
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
+  }
 
   @Post('login')
   @Public()

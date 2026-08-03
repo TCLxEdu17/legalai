@@ -3,6 +3,21 @@
 import { apiClient } from './api-client';
 import type { User, AuthTokens } from '@/types';
 
+export async function register(
+  name: string,
+  email: string,
+  password: string,
+  oabNumber?: string,
+): Promise<AuthTokens> {
+  const data = await apiClient.register(name, email, password, oabNumber);
+
+  localStorage.setItem('accessToken', data.accessToken);
+  localStorage.setItem('refreshToken', data.refreshToken);
+  localStorage.setItem('user', JSON.stringify(data.user));
+
+  return data;
+}
+
 export async function login(email: string, password: string): Promise<AuthTokens> {
   const data = await apiClient.login(email, password);
 

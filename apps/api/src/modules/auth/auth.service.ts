@@ -2,12 +2,14 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import * as argon2 from 'argon2';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
@@ -38,6 +40,45 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly passwordResetEmailService: PasswordResetEmailService,
   ) {}
+
+  async register(dto: RegisterDto): Promise<AuthTokens> {
+    const email = dto.email.toLowerCase().trim();
+
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      throw new ConflictException('E-mail já cadastrado');
+    }
+
+    const passwordHash = await argon2.hash(dto.password);
+
+    const user = await this.prisma.user.create({
+      data: {
+        name: dto.name.trim(),
+        email,
+        passwordHash,
+        oabNumber: dto.oabNumber?.trim() || null,
+        plan: 'trial',
+      },
+    });
+
+    this.logger.log(`Novo usuário registrado: ${email}`);
+
+    // Enviar email de boas-vindas (fire-and-forget)
+    this.passwordResetEmailService.sendWelcomeEmail(user.email, user.name).catch(() => {});
+
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
+
+    return {
+      ...tokens,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        prefix: user.prefix,
+      },
+    };
+  }
 
   async login(dto: LoginDto): Promise<AuthTokens> {
     const email = dto.email.toLowerCase().trim();

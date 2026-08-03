@@ -129,8 +129,11 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-slate-600 text-xs text-center mt-6">
-          Acesso restrito a usuários autorizados.
+        <p className="text-slate-500 text-sm text-center mt-6">
+          Não tem uma conta?{' '}
+          <Link href="/cadastro" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
+            Criar conta
+          </Link>
         </p>
       </div>
     </div>

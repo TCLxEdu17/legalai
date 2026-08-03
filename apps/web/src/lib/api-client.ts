@@ -96,6 +96,11 @@ class ApiClient {
   }
 
   // ==================== AUTH ====================
+  async register(name: string, email: string, password: string, oabNumber?: string) {
+    const { data } = await this.client.post('/auth/register', { name, email, password, oabNumber });
+    return data;
+  }
+
   async login(email: string, password: string) {
     const { data } = await this.client.post('/auth/login', { email, password });
     return data;

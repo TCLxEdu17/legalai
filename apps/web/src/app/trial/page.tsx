@@ -146,24 +146,34 @@ export default function TrialPage() {
   const remaining = useCountdown(trial?.expiresAt ?? null);
   const isExpired = trial !== null && remaining !== null && remaining === 0;
 
+  // Whether the trial was still active when the page loaded (used to gate the feedback modal)
+  const [trialWasActiveOnLoad, setTrialWasActiveOnLoad] = useState(false);
+
   // Load from localStorage on mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem(TRIAL_KEY);
       if (raw) {
         const parsed: TrialData = JSON.parse(raw);
-        setTrial(parsed);
+        const timeLeft = new Date(parsed.expiresAt).getTime() - Date.now();
+        if (timeLeft > 0) {
+          setTrial(parsed);
+          setTrialWasActiveOnLoad(true);
+        } else {
+          // Trial already expired — clear it so the user can start a new one
+          localStorage.removeItem(TRIAL_KEY);
+        }
       }
     } catch {}
     setLoadedFromStorage(true);
   }, []);
 
-  // Show feedback modal when trial expires
+  // Show feedback modal only when trial expires during this session (not on stale load)
   useEffect(() => {
-    if (isExpired && !showFeedback) {
+    if (isExpired && trialWasActiveOnLoad && !showFeedback) {
       setShowFeedback(true);
     }
-  }, [isExpired, showFeedback]);
+  }, [isExpired, trialWasActiveOnLoad, showFeedback]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
